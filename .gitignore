@@ -1,0 +1,81 @@
+# Build Folders
+bin/
+obj/
+out/
+
+# User-Specific Files
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+
+# Visual Studio
+.vs/
+.vscode/
+
+# Rider
+.idea/
+*.sln.iml
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+
+# Packages
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# Dependency Directories
+node_modules/
+bower_components/
+
+# Generated Files
+*.dll
+*.exe
+*.pdb
+*.mdb
+*.cache
+*.ilk
+*.log
+*.obj
+*.so
+*.idb
+*.class
+*.psess
+*.tlog
+*.tmp
+*.csproj.user
+*.csproj.nuget.g.props
+*.csproj.nuget.g.targets
+
+# Coverage Results
+coverage/
+*.coverage
+*.coveragexml
+*.codecov
+
+# Publish Output
+publish/
+wwwroot/
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# Azure Pipelines
+*.azure-pipelines.yml
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# Other
+*.swp
+*.bak
+*.tmp

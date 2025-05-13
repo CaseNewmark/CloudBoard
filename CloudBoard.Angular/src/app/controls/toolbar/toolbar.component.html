@@ -1,0 +1,15 @@
+<div class="btn-group-vertical">
+    @for (button of buttons; track button) {
+        <button
+            class="btn btn-outline-secondary"
+            type="button"
+            [title]="button.tooltip"
+            (click)="button.action()"
+            placement="end"
+	        ngbPopover="Vivamus sagittis lacus vel augue laoreet rutrum faucibus."
+	        popoverTitle="Popover on right"
+        >
+            <i [ngClass]="'bi bi-'+button.icon+' h3'"></i>
+        </button>
+    }
+</div>

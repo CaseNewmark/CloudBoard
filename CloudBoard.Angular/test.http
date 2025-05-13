@@ -1,0 +1,17 @@
+### Get all boards
+GET http://localhost:4200/api/cloudboard
+
+### Post a new board
+POST http://localhost:4200/api/cloudboard
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Test Board",
+  "content": "sdkalsjdkas"
+}
+
+
+### Post a new board
+POST http://localhost:5451/api/cloudboard
+Content-Type: : application/json
