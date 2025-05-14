@@ -1,4 +1,13 @@
 <div class="btn-group-vertical">
+    <ng-template #popoverTemplate>
+        <div class="list-group">
+            @for (board of this.availableBoards; track board) {
+                <a href="#" class="list-group-item list-group-item-action">
+                    {{board.name}}
+                </a>
+            }
+        </div>
+    </ng-template>
     @for (button of buttons; track button) {
         <button
             class="btn btn-outline-secondary"
@@ -6,8 +15,7 @@
             [title]="button.tooltip"
             (click)="button.action()"
             placement="end"
-	        ngbPopover="Vivamus sagittis lacus vel augue laoreet rutrum faucibus."
-	        popoverTitle="Popover on right"
+	        [ngbPopover]="button.popover ? popoverTemplate : null"
         >
             <i [ngClass]="'bi bi-'+button.icon+' h3'"></i>
         </button>

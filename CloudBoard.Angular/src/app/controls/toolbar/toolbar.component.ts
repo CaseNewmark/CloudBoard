@@ -42,13 +42,7 @@ export class ToolbarComponent implements OnInit {
   }
 
   onCreate(): void {
-    this.boardProviderService.createNewCloudBoard().subscribe(
-      response => {
-        console.log('Cloudboard created successfully', response);
-      },
-      error => {
-        console.error('Error creating cloudboard', error);
-      });
+    this.boardProviderService.createNewCloudBoard();
   }
 
   onOpen(): void {

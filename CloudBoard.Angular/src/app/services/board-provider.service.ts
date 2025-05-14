@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, output } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CloudBoard } from '../data/cloudboard';
@@ -7,9 +7,6 @@ import { CloudBoard } from '../data/cloudboard';
   providedIn: 'root'
 })
 export class BoardProviderService {
-  createCloudBoard() {
-    throw new Error('Method not implemented.');
-  }
   private readonly apiUrl = 'http://localhost:4200/api';
 
   private currentCloudBoard: CloudBoard | undefined;
@@ -19,6 +16,8 @@ export class BoardProviderService {
     name: 'test', 
     content: 'aasdd',
   };
+
+  public cloudBoardLoaded = output<CloudBoard>();
 
   constructor(private http: HttpClient) {}
 
@@ -30,8 +29,15 @@ export class BoardProviderService {
     return this.http.get<CloudBoard>(`${this.apiUrl}/cloudboard/${boardId}`);
   }
 
-  createNewCloudBoard(): Observable<any> {
-    return this.http.post<CloudBoard>(`${this.apiUrl}/cloudboard`, this.createCloudboardDocument);
+  createNewCloudBoard(): any {
+    this.http.post<CloudBoard>(`${this.apiUrl}/cloudboard`, this.createCloudboardDocument).subscribe(
+      (response) => {
+        this.currentCloudBoard = response;
+        this.cloudBoardLoaded.emit(response);
+      },
+      (error) => {
+        console.error('Error creating cloudboard', error);
+      });
   }
 
   saveCloudBoard(): Observable<any> {
