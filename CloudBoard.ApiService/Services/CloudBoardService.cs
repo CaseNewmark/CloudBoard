@@ -28,4 +28,28 @@ public class CloudBoardService : ICloudBoardService
         var documents = await _cloudBoardRepository.GetAllDocumentsAsync();
         return _mapper.Map<IEnumerable<CloudBoardDocumentDto>>(documents);
     }
+
+    public async Task<CloudBoardDocumentDto> GetCloudBoardDocumentByIdAsync(Guid id)
+    {
+        var document = await _cloudBoardRepository.GetDocumentByIdAsync(id);
+        return _mapper.Map<CloudBoardDocumentDto>(document);
+    }
+
+    public async Task<CloudBoardDocumentDto?> UpdateCloudBoardDocumentAsync(Guid id, CloudBoardDocumentDto updateDto)
+    {
+        var document = await _cloudBoardRepository.GetDocumentByIdAsync(id);
+        if (document == null) return null;
+
+        // Map updated fields (adjust as needed)
+        document.Name = updateDto.Name;
+        document.Content = updateDto.Content;
+
+        await _cloudBoardRepository.UpdateDocumentAsync(document);
+        return _mapper.Map<CloudBoardDocumentDto>(document);
+    }
+
+    public async Task<bool> DeleteCloudBoardDocumentAsync(Guid id)
+    {
+        return await _cloudBoardRepository.DeleteDocumentAsync(id);
+    }
 }

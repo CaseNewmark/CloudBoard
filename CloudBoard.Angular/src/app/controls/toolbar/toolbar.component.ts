@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, TemplateRef } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { BoardProviderService } from '../../services/board-provider.service';
-import { NgbPopover, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPopover, NgbModal, NgbModalConfig } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'toolbar',
@@ -16,6 +16,7 @@ export class ToolbarComponent implements OnInit {
   buttons: { icon: string; tooltip: string; action: () => void, popover: boolean | undefined }[] = [];
   devBoardId: string = '126a505a-512b-48a0-99bc-84d02a86d7e7'; // Static GUID
   availableBoards: any[] = [];
+  deletionBoard: any;
 
   boardProviderService: BoardProviderService = inject(BoardProviderService);
   
@@ -44,11 +45,11 @@ export class ToolbarComponent implements OnInit {
   }
 
   onCreate(): void {
-    this.boardProviderService.createNewCloudBoard();
+    this.boardProviderService.createNewCloudBoard().subscribe();
   }
 
   onOpen(boardId: string): void {
-    this.boardProviderService.getCloudBoardById(boardId);
+    this.boardProviderService.loadCloudBoardById(boardId).subscribe();
   }
 
   onSave(): void {
@@ -56,8 +57,12 @@ export class ToolbarComponent implements OnInit {
   }
 
   onDelete(boardId: string, content: TemplateRef<any>): void {
-    this.modalService.open(content, { ariaLabelledBy: 'modal-basic-title' }).result.then((result) => {
-      console.log('Delete board:', boardId);
+    this.deletionBoard = this.availableBoards.find(board => board.id === boardId);
+    this.modalService.open(content, { ariaLabelledBy: 'modal-basic-title',  }).result.then((result) => {
+      if (result === 'ok') {
+        this.boardProviderService.deleteCloudBoard(boardId).subscribe();
+        this.availableBoards = this.availableBoards.filter(board => board.id !== boardId);
+      }
     });
   }
 
@@ -66,10 +71,9 @@ export class ToolbarComponent implements OnInit {
     this.boardProviderService.listCloudBoards().subscribe(
       response => {
         this.availableBoards = response;
-        console.log('Cloudboard created successfully', response);
       },
       error => {
-        console.error('Error creating cloudboard', error);
+        console.error('Error fetching cloudboards', error);
       });
   }
 }

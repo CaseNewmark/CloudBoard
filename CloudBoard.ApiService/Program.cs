@@ -31,23 +31,46 @@ var app = builder.Build();
 app.MapPost("/api/cloudboard", async ([FromBody] CreateCloudBoardDocumentDto document, ICloudBoardService cloudBoardService) =>
 {
     var newDocument = await cloudBoardService.CreateDocumentAsync(document);
-    return TypedResults.Created($"/api/cloudboard/{newDocument.Id}", newDocument);
+    return Results.Created($"/api/cloudboard/{newDocument.Id}", newDocument);
 })
-.WithName("SaveCloudBoard");
+.WithName("SaveCloudBoard")
+.Produces<CloudBoardDocumentDto>();
 
 app.MapGet("/api/cloudboard", async (ICloudBoardService cloudBoardService) =>
 {
     var documentList = await cloudBoardService.GetAllCloudBoardDocumentsAsync();
-    return TypedResults.Ok(documentList);
+    return Results.Ok(documentList);
 })
 .WithName("GetAllCloudBoards");
 
-app.MapGet("/api/cloudboard/{id:guid}", async (Guid id) =>
+app.MapGet("/api/cloudboard/{id:guid}", async (Guid id, ICloudBoardService cloudBoardService) =>
 {
-    return Results.Ok(); // mapper.Map<FloorPlanDto>(floorPlan)) : Results.NotFound();
+    var document = await cloudBoardService.GetCloudBoardDocumentByIdAsync(id);
+    return document is not null
+        ? Results.Ok(document)
+        : Results.NotFound();
 })
-.WithName("GetCloudBoardById");
-//.Produces<FloorPlanDto>();
+.WithName("GetCloudBoardById")
+.Produces<CloudBoardDocumentDto>();
+
+app.MapPut("/api/cloudboard/{id:guid}", async (Guid id, [FromBody] CloudBoardDocumentDto updateDto, ICloudBoardService cloudBoardService) =>
+{
+    var updated = await cloudBoardService.UpdateCloudBoardDocumentAsync(id, updateDto);
+    return updated is not null
+        ? Results.Ok(updated)
+        : Results.NotFound();
+})
+.WithName("UpdateCloudBoard")
+.Produces<CloudBoardDocumentDto>();
+
+app.MapDelete("/api/cloudboard/{id:guid}", async (Guid id, ICloudBoardService cloudBoardService) =>
+{
+    var deleted = await cloudBoardService.DeleteCloudBoardDocumentAsync(id);
+    return deleted
+        ? Results.NoContent()
+        : Results.NotFound();
+})
+.WithName("DeleteCloudBoard");
 
 
 // Configure the HTTP request pipeline.

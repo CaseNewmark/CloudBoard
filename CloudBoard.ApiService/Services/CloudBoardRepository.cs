@@ -29,11 +29,16 @@ namespace CloudBoard.ApiService.Data
             return await _dbContext.CloudBoardDocuments.ToListAsync();
         }
 
+        public async Task UpdateDocumentAsync(CloudBoardDocument document)
+        {
+            _dbContext.CloudBoardDocuments.Update(document);
+            await _dbContext.SaveChangesAsync();
+        }
+
         public async Task<bool> DeleteDocumentAsync(Guid id)
         {
             var document = await _dbContext.CloudBoardDocuments.FindAsync(id);
             if (document == null) return false;
-
             _dbContext.CloudBoardDocuments.Remove(document);
             await _dbContext.SaveChangesAsync();
             return true;

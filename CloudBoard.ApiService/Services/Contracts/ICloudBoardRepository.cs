@@ -7,5 +7,6 @@ public interface ICloudBoardRepository
     Task<CloudBoardDocument> CreateDocumentAsync(CloudBoardDocument document);
     Task<CloudBoardDocument?> GetDocumentByIdAsync(Guid id);
     Task<IEnumerable<CloudBoardDocument>> GetAllDocumentsAsync();
+    Task UpdateDocumentAsync(CloudBoardDocument document);
     Task<bool> DeleteDocumentAsync(Guid id);
 }

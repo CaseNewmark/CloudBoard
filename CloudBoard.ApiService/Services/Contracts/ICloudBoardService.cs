@@ -7,4 +7,7 @@ public interface ICloudBoardService
 {
     Task<CloudBoardDocumentDto> CreateDocumentAsync(CreateCloudBoardDocumentDto createDocumentDto);
     Task<IEnumerable<CloudBoardDocumentDto>> GetAllCloudBoardDocumentsAsync();
+    Task<CloudBoardDocumentDto> GetCloudBoardDocumentByIdAsync(Guid id);
+    Task<CloudBoardDocumentDto?> UpdateCloudBoardDocumentAsync(Guid id, CloudBoardDocumentDto updateDto);
+    Task<bool> DeleteCloudBoardDocumentAsync(Guid id);
 }
