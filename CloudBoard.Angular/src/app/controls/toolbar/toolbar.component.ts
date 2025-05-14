@@ -1,7 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, TemplateRef } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { BoardProviderService } from '../../services/board-provider.service';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPopover, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'toolbar',
@@ -11,6 +11,8 @@ import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 })
 export class ToolbarComponent implements OnInit {
 
+  private modalService: NgbModal = inject(NgbModal);
+  
   buttons: { icon: string; tooltip: string; action: () => void, popover: boolean | undefined }[] = [];
   devBoardId: string = '126a505a-512b-48a0-99bc-84d02a86d7e7'; // Static GUID
   availableBoards: any[] = [];
@@ -30,7 +32,7 @@ export class ToolbarComponent implements OnInit {
     this.buttons.push({
         icon: 'folder',
         tooltip: 'Open',
-        action: () => this.onOpen(),
+        action: () => this.refreshAvailableBoards(),
         popover: true
       });
     this.buttons.push({
@@ -45,7 +47,21 @@ export class ToolbarComponent implements OnInit {
     this.boardProviderService.createNewCloudBoard();
   }
 
-  onOpen(): void {
+  onOpen(boardId: string): void {
+    this.boardProviderService.getCloudBoardById(boardId);
+  }
+
+  onSave(): void {
+    this.boardProviderService.saveCloudBoard();
+  }
+
+  onDelete(boardId: string, content: TemplateRef<any>): void {
+    this.modalService.open(content, { ariaLabelledBy: 'modal-basic-title' }).result.then((result) => {
+      console.log('Delete board:', boardId);
+    });
+  }
+
+  refreshAvailableBoards(): void {
     this.availableBoards = [];
     this.boardProviderService.listCloudBoards().subscribe(
       response => {
@@ -54,16 +70,6 @@ export class ToolbarComponent implements OnInit {
       },
       error => {
         console.error('Error creating cloudboard', error);
-      });
-  }
-
-  onSave(): void {
-    this.boardProviderService.saveCloudBoard().subscribe(
-      response => {
-        console.log('Cloudboard saved successfully', response);
-      },
-      error => {
-        console.error('Error saving Cloudboard', error);
       });
   }
 }
