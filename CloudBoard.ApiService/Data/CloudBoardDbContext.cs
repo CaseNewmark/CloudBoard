@@ -16,7 +16,7 @@ public class CloudBoardDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
+        
         modelBuilder.Entity<CloudBoardDocument>(entity =>
         {
             entity.HasKey(s => s.Id);
@@ -30,7 +30,20 @@ public class CloudBoardDbContext : DbContext
                 .WithOne(c => c.CloudBoardDocument)
                 .HasForeignKey(c => c.CloudBoardDocumentId)
                 .OnDelete(DeleteBehavior.Cascade);
-            entity.Property(s => s.Content).IsRequired();
+        });
+
+        modelBuilder.Entity<Node>(entity =>
+        {
+            entity.HasKey(n => n.Id);
+            entity.Property(n => n.Name).IsRequired().HasMaxLength(100);
+            entity.OwnsOne(n => n.Position);
+        });
+
+        modelBuilder.Entity<Connector>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.FromNodeId).IsRequired();
+            entity.Property(c => c.ToNodeId).IsRequired();
         });
     }
 }

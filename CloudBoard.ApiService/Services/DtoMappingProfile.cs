@@ -19,7 +19,7 @@ public class DtoMappingProfile : Profile
 
         // Map CloudboardDocument to CloudboardDocumentDto and vice versa
         CreateMap<CreateCloudBoardDocumentDto, CloudBoardDocument>();
-        CreateMap<CloudBoardDocument, CloudBoardDocumentDto>();
+        CreateMap<CloudBoardDocument, CloudBoardDocumentDto>().ReverseMap();
     }
 }
 

@@ -41,8 +41,7 @@ public class CloudBoardService : ICloudBoardService
         if (document == null) return null;
 
         // Map updated fields (adjust as needed)
-        document.Name = updateDto.Name;
-        document.Content = updateDto.Content;
+        _mapper.Map(updateDto, document);
 
         await _cloudBoardRepository.UpdateDocumentAsync(document);
         return _mapper.Map<CloudBoardDocumentDto>(document);
