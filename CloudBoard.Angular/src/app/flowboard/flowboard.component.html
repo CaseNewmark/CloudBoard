@@ -1,16 +1,46 @@
 <div class="toolbar-container">
     <toolbar></toolbar>
 </div>
-<f-flow fDraggable>
-    <f-canvas>
-        <f-connection fOutputId="output1" fInputId="input1"></f-connection>
-        <div fNode fDragHandle [fNodePosition]="{ x: 24, y: 24 }" fNodeOutput fOutputId="output1"
-            fOutputConnectableSide="right">
-            Drag me
-        </div>
-        <div fNode fDragHandle [fNodePosition]="{ x: 244, y: 24 }" fNodeInput fInputId="input1"
-            fInputConnectableSide="left">
-            Drag me
-        </div>
-    </f-canvas>
-</f-flow>
+@if (!currentCloudBoard) {
+    <div class="d-flex justify-content-center align-items-center vh-100">
+    <i>No Cloudboard loaded yet..</i>
+    </div>
+}
+@else {
+    <f-flow fDraggable>
+        <f-canvas>
+            <f-connection fOutputId="output1" fInputId="input1"></f-connection>
+            <div fNode fDragHandle [fNodePosition]="{ x: 224, y: 24 }" fNodeOutput fOutputId="output1"
+                fOutputConnectableSide="right">
+                Drag me
+            </div>
+            <div fNode fDragHandle [fNodePosition]="{ x: 444, y: 24 }" fNodeInput fInputId="input1"
+                fInputConnectableSide="left">
+                Drag me
+            </div>
+            <!-- Render all connections from the cloudboard data -->
+            <!-- @for (connector of currentCloudBoard.connectors; track connector) {
+                <f-connection 
+                    [fOutputId]="connector.fromNodeId" 
+                    [fInputId]="connector.toNodeId">
+                </f-connection>
+            } -->
+
+            <!-- Render all nodes from the cloudboard data -->
+            @for (node of currentCloudBoard.nodes; track node) {
+                <div 
+                    fNode 
+                    fDragHandle 
+                    [fNodePosition]="node.position"
+                    fNodeOutput 
+                    [fOutputId]="node.id"
+                    fOutputConnectableSide="right"
+                    fNodeInput
+                    [fInputId]="node.id"
+                    fInputConnectableSide="left">
+                    {{ node.name }}
+                </div>
+            }
+        </f-canvas>
+    </f-flow>
+}

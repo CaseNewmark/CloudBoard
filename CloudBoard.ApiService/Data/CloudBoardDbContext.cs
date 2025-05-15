@@ -10,6 +10,8 @@ public class CloudBoardDbContext : DbContext
     }
 
     public DbSet<CloudBoardDocument> CloudBoardDocuments { get; set; }
+    public DbSet<Node> Nodes { get; set; }
+    public DbSet<Connector> Connectors { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -19,6 +21,15 @@ public class CloudBoardDbContext : DbContext
         {
             entity.HasKey(s => s.Id);
             entity.Property(s => s.Name).IsRequired().HasMaxLength(100);
+            entity.HasMany(s => s.Nodes)
+                .WithOne(n => n.CloudBoardDocument)
+                .HasForeignKey(n => n.CloudBoardDocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasMany(s => s.Connectors)
+                .WithOne(c => c.CloudBoardDocument)
+                .HasForeignKey(c => c.CloudBoardDocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
             entity.Property(s => s.Content).IsRequired();
         });
     }

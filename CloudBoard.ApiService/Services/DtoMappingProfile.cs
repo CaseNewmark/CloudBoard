@@ -8,10 +8,17 @@ public class DtoMappingProfile : Profile
 {
     public DtoMappingProfile()
     {
-        // Map FloorPlan to FloorPlanDto and vice versa
-        CreateMap<CreateCloudBoardDocumentDto, CloudBoardDocument>();
+        // Map NodePosition to NodePositionDto and vice versa
+        CreateMap<NodePosition, NodePositionDto>().ReverseMap();
 
-        // Map Section to SectionDto and vice versa (assuming SectionDto and Section exist)
+        // Map Node to NodeDto and vice versa
+        CreateMap<Node, NodeDto>().ReverseMap();
+
+        // Map Connector to ConnectorDto and vice versa
+        CreateMap<Connector, ConnectorDto>().ReverseMap();
+
+        // Map CloudboardDocument to CloudboardDocumentDto and vice versa
+        CreateMap<CreateCloudBoardDocumentDto, CloudBoardDocument>();
         CreateMap<CloudBoardDocument, CloudBoardDocumentDto>();
     }
 }

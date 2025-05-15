@@ -17,7 +17,13 @@ export class BoardProviderService {
   private createCloudboardDocument: CloudBoard = {
     id: undefined,
     name: 'test',
-    content: 'aasdd',
+    nodes: [
+      { id: '1', name: 'Node 1', position: { x: 200, y: 30 } },
+      { id: '2', name: 'Node 2', position: { x: 400, y: 40 } }
+    ],
+    connectors: [
+      { id: '1', fromNodeId: '1', toNodeId: '2' }
+    ]
   };
 
   constructor(private http: HttpClient) { }
