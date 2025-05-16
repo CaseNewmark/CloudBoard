@@ -41,7 +41,7 @@ export class BoardProviderService {
       name: 'full',
       nodes: [
         { id: Guid.create().toString(), name: 'Node 1', position: { x: 200, y: 30 }, connectors: [
-          { id: Guid.create().toString(), name: '', position: ConnectorPosition.Left, type: ConnectorType.InOut},
+          { id: Guid.create().toString(), name: '', position: ConnectorPosition.Left, type: ConnectorType.In},
           { id: connectorId1, name: '', position: ConnectorPosition.Right, type: ConnectorType.Out}
         ]},
         { id: Guid.create().toString(), name: 'Node 2', position: { x: 400, y: 40 }, connectors: [
