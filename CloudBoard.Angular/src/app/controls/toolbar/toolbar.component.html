@@ -17,6 +17,7 @@
         <div class="modal-header">
 			<h4 class="modal-title" id="modal-title">About to delete Cloudboard...</h4>
 			<button
+                title="Close"
 				type="button"
 				class="btn-close"
 				aria-describedby="modal-title"
@@ -41,6 +42,7 @@
     <!-- display the actual command buttons -->
     @for (button of buttons; track button) {
         <button
+            title="node"
             class="btn btn-outline-secondary"
             type="button"
             [title]="button.tooltip"
