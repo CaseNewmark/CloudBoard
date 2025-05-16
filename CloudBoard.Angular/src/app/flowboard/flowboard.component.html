@@ -22,7 +22,8 @@
                 <div 
                     fNode 
                     fDragHandle 
-                    [(fNodePosition)]="node.position"
+                    [fNodePosition]="node.position"
+                    (fNodePositionChange)="onNodePositionChanged($event, node)"
                     fNodeOutput 
                     [fOutputId]="node.id"
                     fOutputConnectableSide="right"
