@@ -23,13 +23,7 @@
                     fNode 
                     fDragHandle 
                     [fNodePosition]="node.position"
-                    (fNodePositionChange)="onNodePositionChanged($event, node)"
-                    fNodeOutput 
-                    [fOutputId]="node.id"
-                    fOutputConnectableSide="right"
-                    fNodeInput
-                    [fInputId]="node.id"
-                    fInputConnectableSide="left">
+                    (fNodePositionChange)="onNodePositionChanged($event, node)">
                     <div class="card">
                         <div class="card-header">
                             <h5 class="card-title">{{ node.name }}</h5>
@@ -40,8 +34,19 @@
 
                         </div>
                     </div>
-                    <div fNodeOutput fOutputId="fOutput1" class="connector right"></div>
-                    <div fNodeInput fInputId="fInput1" class="connector left"></div>
+                    @for (connector of node.connectors; track connector.id) {
+                        @switch (connector.type.toString().toLowerCase()) {
+                            @case ('in') {
+                                <div fNodeInput [fInputId]="connector.id" class="connector left"></div>
+                            }
+                            @case ('out') {
+                                <div fNodeOutput [fOutputId]="connector.id" class="connector right"></div>
+                            }
+                            @case ('inout') {
+                                <div fNodeInput [fInputId]="connector.id" fNodeOutput [fOutputId]="connector.id" class="connector top"></div>
+                            }
+                        }
+                    }
                 </div>
             }
         </f-canvas>

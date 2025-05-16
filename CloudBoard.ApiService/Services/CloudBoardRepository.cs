@@ -23,6 +23,7 @@ namespace CloudBoard.ApiService.Data
         {
             return await _dbContext.CloudBoardDocuments
                 .Include(d => d.Nodes)
+                    .ThenInclude(n => n.Connectors)
                 .Include(d => d.Connections)
                 .FirstOrDefaultAsync(d => d.Id == id);
         }
@@ -30,8 +31,6 @@ namespace CloudBoard.ApiService.Data
         public async Task<IEnumerable<CloudBoardDocument>> GetAllDocumentsAsync()
         {
             return await _dbContext.CloudBoardDocuments
-                .Include(d => d.Nodes)
-                .Include(d => d.Connections)
                 .ToListAsync();
         }
 

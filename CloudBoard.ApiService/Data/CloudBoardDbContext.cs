@@ -35,6 +35,11 @@ public class CloudBoardDbContext : DbContext
         {
             entity.Property(n => n.Name).IsRequired().HasMaxLength(100);
             entity.OwnsOne(n => n.Position);
+
+            entity.HasMany(n => n.Connectors)
+                .WithOne(c => c.Node)
+                .HasForeignKey(c => c.NodeId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Connection>(entity =>

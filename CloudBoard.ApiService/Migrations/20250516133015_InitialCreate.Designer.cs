@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CloudBoard.ApiService.Migrations
 {
     [DbContext(typeof(CloudBoardDbContext))]
-    [Migration("20250515175459_InitialCreate")]
+    [Migration("20250516133015_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -41,7 +41,7 @@ namespace CloudBoard.ApiService.Migrations
                     b.ToTable("CloudBoardDocuments");
                 });
 
-            modelBuilder.Entity("CloudBoard.ApiService.Data.Connector", b =>
+            modelBuilder.Entity("CloudBoard.ApiService.Data.Connection", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -50,10 +50,10 @@ namespace CloudBoard.ApiService.Migrations
                     b.Property<Guid>("CloudBoardDocumentId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("FromNodeId")
+                    b.Property<Guid>("FromConnectorId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ToNodeId")
+                    b.Property<Guid>("ToConnectorId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -61,6 +61,32 @@ namespace CloudBoard.ApiService.Migrations
                     b.HasIndex("CloudBoardDocumentId");
 
                     b.ToTable("Connectors");
+                });
+
+            modelBuilder.Entity("CloudBoard.ApiService.Data.Connector", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("NodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NodeId");
+
+                    b.ToTable("Connector");
                 });
 
             modelBuilder.Entity("CloudBoard.ApiService.Data.Node", b =>
@@ -84,15 +110,26 @@ namespace CloudBoard.ApiService.Migrations
                     b.ToTable("Nodes");
                 });
 
-            modelBuilder.Entity("CloudBoard.ApiService.Data.Connector", b =>
+            modelBuilder.Entity("CloudBoard.ApiService.Data.Connection", b =>
                 {
                     b.HasOne("CloudBoard.ApiService.Data.CloudBoardDocument", "CloudBoardDocument")
-                        .WithMany("Connectors")
+                        .WithMany("Connections")
                         .HasForeignKey("CloudBoardDocumentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CloudBoardDocument");
+                });
+
+            modelBuilder.Entity("CloudBoard.ApiService.Data.Connector", b =>
+                {
+                    b.HasOne("CloudBoard.ApiService.Data.Node", "Node")
+                        .WithMany("Connectors")
+                        .HasForeignKey("NodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Node");
                 });
 
             modelBuilder.Entity("CloudBoard.ApiService.Data.Node", b =>
@@ -108,11 +145,11 @@ namespace CloudBoard.ApiService.Migrations
                             b1.Property<Guid>("NodeId")
                                 .HasColumnType("uuid");
 
-                            b1.Property<int>("X")
-                                .HasColumnType("integer");
+                            b1.Property<float>("X")
+                                .HasColumnType("real");
 
-                            b1.Property<int>("Y")
-                                .HasColumnType("integer");
+                            b1.Property<float>("Y")
+                                .HasColumnType("real");
 
                             b1.HasKey("NodeId");
 
@@ -130,9 +167,14 @@ namespace CloudBoard.ApiService.Migrations
 
             modelBuilder.Entity("CloudBoard.ApiService.Data.CloudBoardDocument", b =>
                 {
-                    b.Navigation("Connectors");
+                    b.Navigation("Connections");
 
                     b.Navigation("Nodes");
+                });
+
+            modelBuilder.Entity("CloudBoard.ApiService.Data.Node", b =>
+                {
+                    b.Navigation("Connectors");
                 });
 #pragma warning restore 612, 618
         }

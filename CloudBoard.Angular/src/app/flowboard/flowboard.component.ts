@@ -32,12 +32,4 @@ export class FlowboardComponent implements OnInit {
     node.position = newPosition;
     console.log('Node Position Changed Event:', newPosition);
   }
-
-  protected onDragStarted(event: FDragStartedEvent): void {
-    console.log('Drag Start Event:', event);  
-  }
-
-  protected onDragEnded(): void {
-    console.log('Drag End Event:');
-  }
 }

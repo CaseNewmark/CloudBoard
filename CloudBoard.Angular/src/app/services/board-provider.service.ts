@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, ReplaySubject } from 'rxjs';
-import { CloudBoard } from '../data/cloudboard';
+import { CloudBoard, ConnectorPosition, ConnectorType } from '../data/cloudboard';
 import { tap } from 'rxjs/operators';
 import { Guid } from 'guid-typescript';
 
@@ -33,19 +33,24 @@ export class BoardProviderService {
   }
 
   createNewCloudBoard(): Observable<CloudBoard> {
-    let nodeId1: string = Guid.create().toString();
-    let nodeId2: string = Guid.create().toString();
-    let connectionId1: string = Guid.create().toString();
+    let connectorId1: string = Guid.create().toString();
+    let connectorId2: string = Guid.create().toString();
 
     let createCloudboardDocument: CloudBoard = {
       id: undefined,
       name: 'full',
       nodes: [
-        { id: nodeId1, name: 'Node 1', position: { x: 200, y: 30 } },
-        { id: nodeId2, name: 'Node 2', position: { x: 400, y: 40 } }
+        { id: Guid.create().toString(), name: 'Node 1', position: { x: 200, y: 30 }, connectors: [
+          { id: Guid.create().toString(), name: '', position: ConnectorPosition.Left, type: ConnectorType.InOut},
+          { id: connectorId1, name: '', position: ConnectorPosition.Right, type: ConnectorType.Out}
+        ]},
+        { id: Guid.create().toString(), name: 'Node 2', position: { x: 400, y: 40 }, connectors: [
+          { id: connectorId2, name: '', position: ConnectorPosition.Left, type: ConnectorType.In},
+          { id: Guid.create().toString(), name: '', position: ConnectorPosition.Right, type: ConnectorType.Out}
+        ]}
       ],
       connections: [
-        { id: connectionId1, fromConnectorId: nodeId1, toConnectorId: nodeId2 }
+        { id: Guid.create().toString(), fromConnectorId: connectorId1, toConnectorId: connectorId2 }
       ]
     };
     return this.http.post<CloudBoard>(`${this.apiUrl}/cloudboard`, createCloudboardDocument).pipe(

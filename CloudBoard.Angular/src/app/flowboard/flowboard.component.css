@@ -20,3 +20,10 @@
     transform: translateY(-50%);
     background-color: #ffc;
 }
+
+:host .connector.top  {
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #fcc;
+}

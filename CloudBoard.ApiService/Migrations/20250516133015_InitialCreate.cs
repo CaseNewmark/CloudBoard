@@ -28,8 +28,8 @@ namespace CloudBoard.ApiService.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    FromNodeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ToNodeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FromConnectorId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ToConnectorId = table.Column<Guid>(type: "uuid", nullable: false),
                     CloudBoardDocumentId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
@@ -49,8 +49,8 @@ namespace CloudBoard.ApiService.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Position_X = table.Column<int>(type: "integer", nullable: false),
-                    Position_Y = table.Column<int>(type: "integer", nullable: false),
+                    Position_X = table.Column<float>(type: "real", nullable: false),
+                    Position_Y = table.Column<float>(type: "real", nullable: false),
                     CloudBoardDocumentId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
@@ -63,6 +63,32 @@ namespace CloudBoard.ApiService.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "Connector",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    NodeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Position = table.Column<int>(type: "integer", nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Connector", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Connector_Nodes_NodeId",
+                        column: x => x.NodeId,
+                        principalTable: "Nodes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Connector_NodeId",
+                table: "Connector",
+                column: "NodeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Connectors_CloudBoardDocumentId",
@@ -78,6 +104,9 @@ namespace CloudBoard.ApiService.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Connector");
+
             migrationBuilder.DropTable(
                 name: "Connectors");
 

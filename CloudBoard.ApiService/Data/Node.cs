@@ -10,6 +10,7 @@ public class Node
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public NodePosition Position { get; set; } = new NodePosition();
+    public List<Connector> Connectors { get; set; } = new List<Connector>();
     public Guid CloudBoardDocumentId { get; set; }
     public CloudBoardDocument CloudBoardDocument { get; set; } = null!;
 }

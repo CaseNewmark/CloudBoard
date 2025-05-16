@@ -2,6 +2,26 @@
 
 import { Guid } from "guid-typescript";
 
+export enum ConnectorPosition {
+  Top = 'top',
+  Bottom = 'bottom',
+  Left = 'left',
+  Right = 'right'
+}
+
+export enum ConnectorType {
+  In = 'in',
+  Out = 'out',
+  InOut = 'inout'
+}
+
+export interface Connector {
+  id: string;
+  name: string;
+  position: ConnectorPosition;
+  type: ConnectorType;
+}
+
 export interface NodePosition {
   x: number;
   y: number;
@@ -11,6 +31,7 @@ export interface Node {
   id: string;
   name: string;
   position: NodePosition;
+  connectors: Connector[];
 }
 
 export interface Connection {

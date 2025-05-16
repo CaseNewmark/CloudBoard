@@ -60,6 +60,32 @@ namespace CloudBoard.ApiService.Migrations
                     b.ToTable("Connectors");
                 });
 
+            modelBuilder.Entity("CloudBoard.ApiService.Data.Connector", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("NodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NodeId");
+
+                    b.ToTable("Connector");
+                });
+
             modelBuilder.Entity("CloudBoard.ApiService.Data.Node", b =>
                 {
                     b.Property<Guid>("Id")
@@ -90,6 +116,17 @@ namespace CloudBoard.ApiService.Migrations
                         .IsRequired();
 
                     b.Navigation("CloudBoardDocument");
+                });
+
+            modelBuilder.Entity("CloudBoard.ApiService.Data.Connector", b =>
+                {
+                    b.HasOne("CloudBoard.ApiService.Data.Node", "Node")
+                        .WithMany("Connectors")
+                        .HasForeignKey("NodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Node");
                 });
 
             modelBuilder.Entity("CloudBoard.ApiService.Data.Node", b =>
@@ -130,6 +167,11 @@ namespace CloudBoard.ApiService.Migrations
                     b.Navigation("Connections");
 
                     b.Navigation("Nodes");
+                });
+
+            modelBuilder.Entity("CloudBoard.ApiService.Data.Node", b =>
+                {
+                    b.Navigation("Connectors");
                 });
 #pragma warning restore 612, 618
         }
