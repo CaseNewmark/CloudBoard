@@ -1,10 +1,15 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace CloudBoard.ApiService.Data;
 
 public class Connector
 {
-    public string Id { get; set; } = string.Empty;
-    public string FromNodeId { get; set; } = string.Empty;
-    public string ToNodeId { get; set; } = string.Empty;
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public Guid Id { get; set; }
+    public Guid FromNodeId { get; set; }
+    public Guid ToNodeId { get; set; }
     public Guid CloudBoardDocumentId { get; set; }
     public CloudBoardDocument CloudBoardDocument { get; set; } = null!;
 }

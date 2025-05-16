@@ -2,7 +2,7 @@ namespace CloudBoard.ApiService.Dtos;
 
 public class ConnectorDto
 {
-    public string Id { get; set; } = string.Empty;
-    public string FromNodeId { get; set; } = string.Empty;
-    public string ToNodeId { get; set; } = string.Empty;
+    public required string Id { get; init; } 
+    public required string FromNodeId { get; set; }
+    public required string ToNodeId { get; set; }
 }

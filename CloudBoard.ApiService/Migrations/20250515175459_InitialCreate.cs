@@ -6,22 +6,30 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace CloudBoard.ApiService.Migrations
 {
     /// <inheritdoc />
-    public partial class FixContentAway : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Content",
-                table: "CloudBoardDocuments");
+            migrationBuilder.CreateTable(
+                name: "CloudBoardDocuments",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CloudBoardDocuments", x => x.Id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "Connectors",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    FromNodeId = table.Column<string>(type: "text", nullable: false),
-                    ToNodeId = table.Column<string>(type: "text", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    FromNodeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ToNodeId = table.Column<Guid>(type: "uuid", nullable: false),
                     CloudBoardDocumentId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
@@ -39,7 +47,7 @@ namespace CloudBoard.ApiService.Migrations
                 name: "Nodes",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "text", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Position_X = table.Column<int>(type: "integer", nullable: false),
                     Position_Y = table.Column<int>(type: "integer", nullable: false),
@@ -76,12 +84,8 @@ namespace CloudBoard.ApiService.Migrations
             migrationBuilder.DropTable(
                 name: "Nodes");
 
-            migrationBuilder.AddColumn<string>(
-                name: "Content",
-                table: "CloudBoardDocuments",
-                type: "text",
-                nullable: false,
-                defaultValue: "");
+            migrationBuilder.DropTable(
+                name: "CloudBoardDocuments");
         }
     }
 }

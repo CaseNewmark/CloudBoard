@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CloudBoard } from '../data/cloudboard';
 import { tap } from 'rxjs/operators';
+import { Guid } from 'guid-typescript';
 
 @Injectable({
   providedIn: 'root'
@@ -13,18 +14,6 @@ export class BoardProviderService {
   public cloudBoardLoaded = new OutputEmitterRef<CloudBoard>();;
 
   private currentCloudBoard: CloudBoard | undefined;
-
-  private createCloudboardDocument: CloudBoard = {
-    id: undefined,
-    name: 'test',
-    nodes: [
-      { id: '1', name: 'Node 1', position: { x: 200, y: 30 } },
-      { id: '2', name: 'Node 2', position: { x: 400, y: 40 } }
-    ],
-    connectors: [
-      { id: '1', fromNodeId: '1', toNodeId: '2' }
-    ]
-  };
 
   constructor(private http: HttpClient) { }
 
@@ -44,7 +33,22 @@ export class BoardProviderService {
   }
 
   createNewCloudBoard(): Observable<CloudBoard> {
-    return this.http.post<CloudBoard>(`${this.apiUrl}/cloudboard`, this.createCloudboardDocument).pipe(
+    let nodeId1: string = Guid.create().toString();
+    let nodeId2: string = Guid.create().toString();
+    let connectorId1: string = Guid.create().toString();
+
+    let createCloudboardDocument: CloudBoard = {
+      id: undefined,
+      name: 'test',
+      nodes: [
+        { id: nodeId1, name: 'Node 1', position: { x: 200, y: 30 } },
+        { id: nodeId2, name: 'Node 2', position: { x: 400, y: 40 } }
+      ],
+      connectors: [
+        { id: connectorId1, fromNodeId: nodeId1, toNodeId: nodeId2 }
+      ]
+    };
+    return this.http.post<CloudBoard>(`${this.apiUrl}/cloudboard`, createCloudboardDocument).pipe(
       tap(response => {
         this.currentCloudBoard = response;
         this.cloudBoardLoaded.emit(response);

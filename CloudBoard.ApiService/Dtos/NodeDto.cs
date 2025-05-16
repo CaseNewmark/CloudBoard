@@ -8,7 +8,7 @@ public class NodePositionDto
 
 public class NodeDto
 {
-    public string Id { get; set; } = string.Empty;
+    public required string Id { get; init; }
     public string Name { get; set; } = string.Empty;
     public NodePositionDto Position { get; set; } = new NodePositionDto();
 }

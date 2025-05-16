@@ -19,7 +19,6 @@ public class CloudBoardDbContext : DbContext
         
         modelBuilder.Entity<CloudBoardDocument>(entity =>
         {
-            entity.HasKey(s => s.Id);
             entity.Property(s => s.Name).IsRequired().HasMaxLength(100);
             entity.HasMany(s => s.Nodes)
                 .WithOne(n => n.CloudBoardDocument)
@@ -34,14 +33,12 @@ public class CloudBoardDbContext : DbContext
 
         modelBuilder.Entity<Node>(entity =>
         {
-            entity.HasKey(n => n.Id);
             entity.Property(n => n.Name).IsRequired().HasMaxLength(100);
             entity.OwnsOne(n => n.Position);
         });
 
         modelBuilder.Entity<Connector>(entity =>
         {
-            entity.HasKey(c => c.Id);
             entity.Property(c => c.FromNodeId).IsRequired();
             entity.Property(c => c.ToNodeId).IsRequired();
         });

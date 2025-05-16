@@ -1,5 +1,7 @@
 // src/app/data/cloudboard.ts
 
+import { Guid } from "guid-typescript";
+
 export interface NodePosition {
   x: number;
   y: number;
@@ -18,7 +20,7 @@ export interface Connector {
 }
 
 export interface CloudBoard {
-  id?: string;
+  id?: Guid;
   name: string;
   nodes: Node[];
   connectors: Connector[];

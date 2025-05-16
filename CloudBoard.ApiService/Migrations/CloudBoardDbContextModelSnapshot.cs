@@ -40,19 +40,18 @@ namespace CloudBoard.ApiService.Migrations
 
             modelBuilder.Entity("CloudBoard.ApiService.Data.Connector", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("CloudBoardDocumentId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("FromNodeId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("FromNodeId")
+                        .HasColumnType("uuid");
 
-                    b.Property<string>("ToNodeId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("ToNodeId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -63,8 +62,9 @@ namespace CloudBoard.ApiService.Migrations
 
             modelBuilder.Entity("CloudBoard.ApiService.Data.Node", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("CloudBoardDocumentId")
                         .HasColumnType("uuid");
@@ -102,8 +102,8 @@ namespace CloudBoard.ApiService.Migrations
 
                     b.OwnsOne("CloudBoard.ApiService.Data.NodePosition", "Position", b1 =>
                         {
-                            b1.Property<string>("NodeId")
-                                .HasColumnType("text");
+                            b1.Property<Guid>("NodeId")
+                                .HasColumnType("uuid");
 
                             b1.Property<int>("X")
                                 .HasColumnType("integer");

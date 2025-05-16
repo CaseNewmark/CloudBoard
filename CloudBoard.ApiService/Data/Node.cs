@@ -1,8 +1,13 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace CloudBoard.ApiService.Data;
 
 public class Node
 {
-    public string Id { get; set; } = string.Empty;
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public NodePosition Position { get; set; } = new NodePosition();
     public Guid CloudBoardDocumentId { get; set; }
