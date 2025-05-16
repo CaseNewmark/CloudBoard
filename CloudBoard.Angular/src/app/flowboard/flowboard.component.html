@@ -30,7 +30,18 @@
                     fNodeInput
                     [fInputId]="node.id"
                     fInputConnectableSide="left">
-                    {{ node.name }}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">{{ node.name }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text"><i>Nothing to see here</i></p>
+                            <button type="button" class="btn btn-primary">Edit</button>
+
+                        </div>
+                    </div>
+                    <div fNodeOutput fOutputId="fOutput1" class="connector right"></div>
+                    <div fNodeInput fInputId="fInput1" class="connector left"></div>
                 </div>
             }
         </f-canvas>

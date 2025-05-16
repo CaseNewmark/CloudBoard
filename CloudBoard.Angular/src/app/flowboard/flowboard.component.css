@@ -1,0 +1,22 @@
+:host .connector  {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 1px solid gray;
+    border-radius: 50%;
+    background-color: #00ff0033;
+}
+
+:host .connector.left  {
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    background-color: #cfc;
+}
+
+:host .connector.right  {
+    top: 50%;
+    right: -10px;
+    transform: translateY(-50%);
+    background-color: #ffc;
+}
