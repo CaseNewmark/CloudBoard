@@ -1,6 +1,6 @@
-import { Injectable, output, OutputEmitterRef } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, ReplaySubject } from 'rxjs';
 import { CloudBoard } from '../data/cloudboard';
 import { tap } from 'rxjs/operators';
 import { Guid } from 'guid-typescript';
@@ -11,7 +11,7 @@ import { Guid } from 'guid-typescript';
 export class BoardProviderService {
   private readonly apiUrl = 'http://localhost:4200/api';
 
-  public cloudBoardLoaded = new OutputEmitterRef<CloudBoard>();;
+  public cloudBoardLoaded = new ReplaySubject<CloudBoard>();
 
   private currentCloudBoard: CloudBoard | undefined;
 
@@ -25,7 +25,7 @@ export class BoardProviderService {
     return this.http.get<CloudBoard>(`${this.apiUrl}/cloudboard/${boardId}`).pipe(
       tap(response => {
         this.currentCloudBoard = response;
-        this.cloudBoardLoaded.emit(response);
+        this.cloudBoardLoaded.next(response);
       },
       (error) => {
         console.error('Error loading cloudboard', error);
@@ -39,7 +39,7 @@ export class BoardProviderService {
 
     let createCloudboardDocument: CloudBoard = {
       id: undefined,
-      name: 'test',
+      name: 'full',
       nodes: [
         { id: nodeId1, name: 'Node 1', position: { x: 200, y: 30 } },
         { id: nodeId2, name: 'Node 2', position: { x: 400, y: 40 } }
@@ -51,7 +51,7 @@ export class BoardProviderService {
     return this.http.post<CloudBoard>(`${this.apiUrl}/cloudboard`, createCloudboardDocument).pipe(
       tap(response => {
         this.currentCloudBoard = response;
-        this.cloudBoardLoaded.emit(response);
+        this.cloudBoardLoaded.next(response);
       },
       (error) => {
         console.error('Error creating cloudboard', error);
@@ -66,7 +66,7 @@ export class BoardProviderService {
         },
         (error) => { 
           console.error('Error saving cloudboard', error); 
-        }));
+        })).subscribe();
     }
   }
 
