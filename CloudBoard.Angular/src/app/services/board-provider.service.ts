@@ -35,7 +35,7 @@ export class BoardProviderService {
   createNewCloudBoard(): Observable<CloudBoard> {
     let nodeId1: string = Guid.create().toString();
     let nodeId2: string = Guid.create().toString();
-    let connectorId1: string = Guid.create().toString();
+    let connectionId1: string = Guid.create().toString();
 
     let createCloudboardDocument: CloudBoard = {
       id: undefined,
@@ -44,8 +44,8 @@ export class BoardProviderService {
         { id: nodeId1, name: 'Node 1', position: { x: 200, y: 30 } },
         { id: nodeId2, name: 'Node 2', position: { x: 400, y: 40 } }
       ],
-      connectors: [
-        { id: connectorId1, fromNodeId: nodeId1, toNodeId: nodeId2 }
+      connections: [
+        { id: connectionId1, fromConnectorId: nodeId1, toConnectorId: nodeId2 }
       ]
     };
     return this.http.post<CloudBoard>(`${this.apiUrl}/cloudboard`, createCloudboardDocument).pipe(

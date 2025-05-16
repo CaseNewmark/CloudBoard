@@ -11,7 +11,7 @@ public class CloudBoardDbContext : DbContext
 
     public DbSet<CloudBoardDocument> CloudBoardDocuments { get; set; }
     public DbSet<Node> Nodes { get; set; }
-    public DbSet<Connector> Connectors { get; set; }
+    public DbSet<Connection> Connectors { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -25,7 +25,7 @@ public class CloudBoardDbContext : DbContext
                 .HasForeignKey(n => n.CloudBoardDocumentId)
                 .OnDelete(DeleteBehavior.Cascade);
             
-            entity.HasMany(s => s.Connectors)
+            entity.HasMany(s => s.Connections)
                 .WithOne(c => c.CloudBoardDocument)
                 .HasForeignKey(c => c.CloudBoardDocumentId)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -37,10 +37,10 @@ public class CloudBoardDbContext : DbContext
             entity.OwnsOne(n => n.Position);
         });
 
-        modelBuilder.Entity<Connector>(entity =>
+        modelBuilder.Entity<Connection>(entity =>
         {
-            entity.Property(c => c.FromNodeId).IsRequired();
-            entity.Property(c => c.ToNodeId).IsRequired();
+            entity.Property(c => c.FromConnectorId).IsRequired();
+            entity.Property(c => c.ToConnectorId).IsRequired();
         });
     }
 }

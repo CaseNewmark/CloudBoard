@@ -13,15 +13,15 @@ export interface Node {
   position: NodePosition;
 }
 
-export interface Connector {
+export interface Connection {
   id: string;
-  fromNodeId: string;
-  toNodeId: string;
+  fromConnectorId: string;
+  toConnectorId: string;
 }
 
 export interface CloudBoard {
   id?: Guid;
   name: string;
   nodes: Node[];
-  connectors: Connector[];
+  connections: Connection[];
 }

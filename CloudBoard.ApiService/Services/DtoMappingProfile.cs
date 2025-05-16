@@ -18,14 +18,14 @@ public class DtoMappingProfile : Profile
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.Parse(src.Id)));
 
         // Map Connector to ConnectorDto and vice versa
-        CreateMap<Connector, ConnectorDto>()
+        CreateMap<Connection, ConnectionDto>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()))
-            .ForMember(dest => dest.FromNodeId, opt => opt.MapFrom(src => src.FromNodeId.ToString()))
-            .ForMember(dest => dest.ToNodeId, opt => opt.MapFrom(src => src.ToNodeId.ToString()));
-        CreateMap<ConnectorDto, Connector>()
+            .ForMember(dest => dest.FromConnectorId, opt => opt.MapFrom(src => src.FromConnectorId.ToString()))
+            .ForMember(dest => dest.ToConnectorId, opt => opt.MapFrom(src => src.ToConnectorId.ToString()));
+        CreateMap<ConnectionDto, Connection>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.Parse(src.Id)))
-            .ForMember(dest => dest.FromNodeId, opt => opt.MapFrom(src => Guid.Parse(src.FromNodeId)))
-            .ForMember(dest => dest.ToNodeId, opt => opt.MapFrom(src => Guid.Parse(src.ToNodeId)));
+            .ForMember(dest => dest.FromConnectorId, opt => opt.MapFrom(src => Guid.Parse(src.FromConnectorId)))
+            .ForMember(dest => dest.ToConnectorId, opt => opt.MapFrom(src => Guid.Parse(src.ToConnectorId)));
 
         // Map CloudboardDocument to CloudboardDocumentDto and vice versa
         CreateMap<CreateCloudBoardDocumentDto, CloudBoardDocument>();
