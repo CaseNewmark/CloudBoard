@@ -43,7 +43,9 @@ export class FlowboardComponent implements OnInit, OnDestroy {
       const id = params.get('id');
       if (id != null && (this.currentCloudBoard == null
         || this.currentCloudBoard.id != Guid.parse(id))) {
-        this.boardProviderService.loadCloudBoardById(id).subscribe();
+        this.boardProviderService.loadCloudBoardById(id).subscribe(() => { }, error => {
+          // display error message in model          
+        });
       }
     });
     this.subscriptions.push(routeSubscription);
