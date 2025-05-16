@@ -13,7 +13,7 @@ export class BoardProviderService {
 
   public cloudBoardLoaded = new ReplaySubject<CloudBoard>();
 
-  private currentCloudBoard: CloudBoard | undefined;
+  public currentCloudBoard: CloudBoard | undefined;
 
   constructor(private http: HttpClient) { }
 

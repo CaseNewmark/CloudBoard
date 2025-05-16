@@ -8,10 +8,11 @@
 }
 @else {
     <f-flow fDraggable>
-        <f-canvas>
+        <f-canvas fZoom>
             <!-- Render all connections from the cloudboard data -->
             @for (connector of currentCloudBoard.connections; track connector.id) {
                 <f-connection 
+                    fType="segment"
                     [fOutputId]="connector.fromConnectorId" 
                     [fInputId]="connector.toConnectorId">
                 </f-connection>

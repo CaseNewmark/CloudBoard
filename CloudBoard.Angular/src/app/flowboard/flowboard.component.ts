@@ -1,29 +1,35 @@
 import { ChangeDetectionStrategy, inject, viewChild } from '@angular/core';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FFlowModule, FCanvasComponent, FDragStartedEvent } from '@foblex/flow';
+import { FFlowModule, FCanvasComponent, FZoomDirective } from '@foblex/flow';
 import { ToolbarComponent } from '../controls/toolbar/toolbar.component';
 import { BoardProviderService } from '../services/board-provider.service';
 import { CloudBoard, Node, NodePosition } from '../data/cloudboard';
 import { Subscription } from 'rxjs';
 import { Guid } from 'guid-typescript';
+import { FlowControlService, ZoomAction } from '../services/flow-control.service';
 
 @Component({
   selector: 'app-flowboard',
-  imports: [FFlowModule, ToolbarComponent],
+  imports: [FFlowModule, FZoomDirective, ToolbarComponent],
   changeDetection: ChangeDetectionStrategy.Default,
   templateUrl: './flowboard.component.html',
   styleUrl: './flowboard.component.css',
 })
-export class FlowboardComponent implements OnInit, OnDestroy {
+export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   protected fCanvas = viewChild(FCanvasComponent);
-  currentCloudBoard: CloudBoard | undefined;
+  protected fZoom = viewChild(FZoomDirective);
+
+  private flowControlService: FlowControlService = inject(FlowControlService);
+  private boardProviderService: BoardProviderService = inject(BoardProviderService);  
+
+  public currentCloudBoard: CloudBoard | undefined;
   private subscriptions: Subscription[] = [];
 
   constructor(private route: ActivatedRoute, private router: Router) { }
 
-  boardProviderService: BoardProviderService = inject(BoardProviderService);  ngOnInit(): void {
+  ngOnInit(): void {
     // Subscribe to cloudBoard updates
     const boardSubscription = this.boardProviderService.cloudBoardLoaded.subscribe((cloudBoard) => {
       this.currentCloudBoard = cloudBoard;
@@ -49,6 +55,21 @@ export class FlowboardComponent implements OnInit, OnDestroy {
       }
     });
     this.subscriptions.push(routeSubscription);
+  }
+
+  ngAfterViewInit(): void {
+    this.flowControlService.Zoom.subscribe((zoomAction) => {
+      switch (zoomAction) {
+        case ZoomAction.ZoomIn:
+          this.fZoom()?.zoomIn();
+          break;
+        case ZoomAction.ZoomOut:
+          this.fZoom()?.zoomOut();
+          break;
+        case ZoomAction.Reset:
+          this.fCanvas()?.resetScaleAndCenter();
+          break;
+      }});
   }
 
   ngOnDestroy(): void {

@@ -1,7 +1,8 @@
 import { Component, inject, OnInit, TemplateRef } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { BoardProviderService } from '../../services/board-provider.service';
-import { NgbPopover, NgbModal, NgbModalConfig } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPopover, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { FlowControlService } from '../../services/flow-control.service';
 
 @Component({
   selector: 'toolbar',
@@ -11,8 +12,9 @@ import { NgbPopover, NgbModal, NgbModalConfig } from '@ng-bootstrap/ng-bootstrap
 })
 export class ToolbarComponent implements OnInit {
 
-  private modalService: NgbModal = inject(NgbModal);
-  
+  modalService: NgbModal = inject(NgbModal);
+  flowControlService: FlowControlService = inject(FlowControlService);
+
   buttons: { icon: string; tooltip: string; action: () => void, popover: boolean | undefined }[] = [];
   devBoardId: string = '126a505a-512b-48a0-99bc-84d02a86d7e7'; // Static GUID
   availableBoards: any[] = [];
@@ -20,7 +22,6 @@ export class ToolbarComponent implements OnInit {
 
   boardProviderService: BoardProviderService = inject(BoardProviderService);
   
-
   constructor() {}
 
   ngOnInit(): void {
@@ -40,6 +41,30 @@ export class ToolbarComponent implements OnInit {
         icon: 'floppy',
         tooltip: 'Save',
         action: () => this.onSave(),
+        popover: false
+      });
+    this.buttons.push({
+        icon: 'separator',
+        tooltip: '',
+        action: () => {},
+        popover: false
+      });
+    this.buttons.push({
+        icon: 'zoom-in',
+        tooltip: 'Zoom In',
+        action: () => { this.flowControlService.zoomIn(); },
+        popover: false
+      });
+    this.buttons.push({
+        icon: 'zoom-out',
+        tooltip: 'Zoom Out',
+        action: () => { this.flowControlService.zoomOut(); },
+        popover: false
+      });
+    this.buttons.push({
+        icon: 'arrows-collapse-vertical',
+        tooltip: 'Reset Zoom',
+        action: () => { this.flowControlService.resetZoom(); },
         popover: false
       });
   }

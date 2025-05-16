@@ -41,16 +41,21 @@
 
     <!-- display the actual command buttons -->
     @for (button of buttons; track button) {
-        <button
-            title="node"
-            class="btn btn-outline-secondary"
-            type="button"
-            [title]="button.tooltip"
-            (click)="button.action()"
-            placement="end"
-	        [ngbPopover]="button.popover ? popoverTemplate : null"
-        >
-            <i [ngClass]="'bi bi-'+button.icon+' h3'"></i>
-        </button>
+        @if (button.icon == 'separator') {
+            <div class="separator"></div>
+        }
+        @else {
+            <button
+                title="node"
+                class="btn btn-outline-secondary"
+                type="button"
+                [title]="button.tooltip"
+                (click)="button.action()"
+                placement="end"
+                [ngbPopover]="button.popover ? popoverTemplate : null"
+            >
+                <i [ngClass]="'bi bi-'+button.icon+' h3'"></i>
+            </button>
+        }
     }
 </div>

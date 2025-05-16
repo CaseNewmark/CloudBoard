@@ -5,6 +5,10 @@
     background-color: #fefefe;
 }
 
+:host .separator {
+    padding: 2px;
+}
+
 :host ::ng-deep .popover-body {
     padding: 0;
     width: 16em;
