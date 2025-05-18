@@ -1,5 +1,5 @@
 <div class="btn-group-vertical">
-    <ng-template #popoverTemplate>
+    <!-- <ng-template #popoverTemplate>
         <div class="popover-header">
             <h5 class="popover-title">Open Cloudboard...</h5>
         </div>
@@ -37,10 +37,10 @@
 			<button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss('cancel')">Cancel</button>
 			<button type="button" class="btn btn-danger" (click)="modal.close('ok')">Ok</button>
 		</div>
-    </ng-template>
+    </ng-template> -->
 
     <!-- display the actual command buttons -->
-    @for (button of buttons; track button) {
+    <!-- @for (button of buttons; track button) {
         @if (button.icon == 'separator') {
             <div class="separator"></div>
         }
@@ -52,10 +52,12 @@
                 [title]="button.tooltip"
                 (click)="button.action()"
                 placement="end"
-                [ngbPopover]="button.popover ? popoverTemplate : null"
             >
                 <i [ngClass]="'bi bi-'+button.icon+' h3'"></i>
             </button>
         }
-    }
+    } -->
+
+
+    <p-menu #menuBar [model]="menuItems" />
 </div>

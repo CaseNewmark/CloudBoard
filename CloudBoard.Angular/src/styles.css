@@ -1,1 +1,7 @@
-@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import 'primeicons/primeicons.css';
+@import 'tailwindcss';
+@plugin 'tailwindcss-primeui';
+
+body {
+    background-color: #F3F4F6;
+}

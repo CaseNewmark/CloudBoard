@@ -1,3 +1,7 @@
+:host {
+    height: 100%;
+}
+
 :host .connector  {
     position: absolute;
     width: 20px;
