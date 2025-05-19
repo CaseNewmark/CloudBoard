@@ -5,25 +5,35 @@ import { MenuModule } from 'primeng/menu';
 import { MenubarModule } from 'primeng/menubar';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ButtonModule } from 'primeng/button';
-import { MenuItem } from 'primeng/api';
 import { PopoverModule } from 'primeng/popover';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmPopupModule } from 'primeng/confirmpopup';
 import { CloudBoard } from '../../data/cloudboard';
 import { Guid } from 'guid-typescript';
 
 @Component({
   selector: 'toolbar',
-  imports: [MenuModule, MenubarModule, PopoverModule, ToolbarModule, ButtonModule],
+  imports: [
+    ButtonModule,
+    ConfirmPopupModule,
+    MenuModule, 
+    MenubarModule, 
+    PopoverModule, 
+    ToolbarModule],
+  providers: [
+    ConfirmationService
+  ],
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.css'
 })
 export class ToolbarComponent implements OnInit {
 
+  boardProviderService: BoardProviderService = inject(BoardProviderService);
   flowControlService: FlowControlService = inject(FlowControlService);
+  confirmationService: ConfirmationService = inject(ConfirmationService);
 
   availableBoards: CloudBoard[] = [];
-  deletionBoard: any;
-
-  boardProviderService: BoardProviderService = inject(BoardProviderService);
+  deletionBoard: CloudBoard | undefined;
 
   constructor() { }
 
@@ -40,15 +50,28 @@ export class ToolbarComponent implements OnInit {
   onSave(): void {
     this.boardProviderService.saveCloudBoard();
   }
-
-  onDelete(boardId: Guid): void {
+  onDelete(boardId: Guid, event: Event): void {
     this.deletionBoard = this.availableBoards.find(board => board.id === boardId);
-    // this.modalService.open(content, { ariaLabelledBy: 'modal-basic-title',  }).result.then((result) => {
-    //   if (result === 'ok') {
-    //     this.boardProviderService.deleteCloudBoard(boardId).subscribe();
-    //     this.availableBoards = this.availableBoards.filter(board => board.id !== boardId);
-    //   }
-    // });
+    
+    this.confirmationService.confirm({
+      target: event.target as EventTarget,
+      message: `Are you sure you want to delete ${this.deletionBoard?.name}?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        this.boardProviderService.deleteCloudBoard(this.deletionBoard?.id!).subscribe({
+          next: () => {
+            this.availableBoards = this.availableBoards.filter(board => board.id !== boardId);
+          },
+          error: (error) => {
+            console.error('Error deleting cloudboard', error);
+          }
+        });
+      },
+      reject: () => {
+        // Optional: handle rejection
+      }
+    });
   }
 
   refreshBoards(): void {

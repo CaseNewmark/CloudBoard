@@ -75,8 +75,8 @@ export class BoardProviderService {
     }
   }
 
-  deleteCloudBoard(boardId: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/cloudboard/${boardId}`).pipe(
+  deleteCloudBoard(boardId: Guid): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/cloudboard/${boardId.toString()}`).pipe(
       tap(response => { 
         console.log('Cloudboard deleted successfully'); 
       },
