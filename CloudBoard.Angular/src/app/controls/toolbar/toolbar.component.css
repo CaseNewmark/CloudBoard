@@ -2,6 +2,7 @@
     position: fixed;
     z-index: 10;
     margin: 2em 3em;
+    pointer-events: none;
 }
 
 :host ::ng-deep p-toolbar {
@@ -10,8 +11,13 @@
 
 :host ::ng-deep .p-toolbar {
     padding: 0;
+    pointer-events: all;
 }
 
 :host ::ng-deep .p-toolbar-center {
     flex-direction: column;
+}
+
+:host ::ng-deep .p-menubar {
+    pointer-events: all;
 }

@@ -33,6 +33,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     // Subscribe to cloudBoard updates
     const boardSubscription = this.boardProviderService.cloudBoardLoaded.subscribe((cloudBoard) => {
       this.currentCloudBoard = cloudBoard;
+      this.fCanvas()?.resetScaleAndCenter(false);
       
       // Update the route URL without reloading the page
       if (cloudBoard && cloudBoard.id) {
