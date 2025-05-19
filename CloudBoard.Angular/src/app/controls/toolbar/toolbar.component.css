@@ -2,24 +2,16 @@
     position: fixed;
     z-index: 10;
     margin: 2em 3em;
-    background-color: #fefefe;
 }
 
-:host .separator {
-    padding: 2px;
+:host ::ng-deep p-toolbar {
+    display: inline-flex;
 }
 
-:host ::ng-deep .popover-body {
+:host ::ng-deep .p-toolbar {
     padding: 0;
-    width: 16em;
 }
 
-:host ::ng-deep .list-group-item {
-    border-top: 0;
-    border-left: 0;
-    border-right: 0;
-}
-
-:host ::ng-deep .list-group-item:last-child {
-    border-bottom: 0;
+:host ::ng-deep .p-toolbar-center {
+    flex-direction: column;
 }

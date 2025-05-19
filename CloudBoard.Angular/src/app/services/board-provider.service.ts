@@ -21,8 +21,8 @@ export class BoardProviderService {
     return this.http.get<CloudBoard[]>(`${this.apiUrl}/cloudboard`);
   }
 
-  loadCloudBoardById(boardId: string): Observable<CloudBoard> {
-    return this.http.get<CloudBoard>(`${this.apiUrl}/cloudboard/${boardId}`).pipe(
+  loadCloudBoardById(boardId: Guid): Observable<CloudBoard> {
+    return this.http.get<CloudBoard>(`${this.apiUrl}/cloudboard/${boardId.toString()}`).pipe(
       tap(response => {
         this.currentCloudBoard = response;
         this.cloudBoardLoaded.next(response);
@@ -38,7 +38,7 @@ export class BoardProviderService {
 
     let createCloudboardDocument: CloudBoard = {
       id: undefined,
-      name: 'full',
+      name: 'this board has an extremly long name',
       nodes: [
         { id: Guid.create().toString(), name: 'Node 1', position: { x: 200, y: 30 }, connectors: [
           { id: Guid.create().toString(), name: '', position: ConnectorPosition.Left, type: ConnectorType.In},
