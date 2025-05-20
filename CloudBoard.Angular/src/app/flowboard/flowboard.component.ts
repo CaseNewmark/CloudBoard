@@ -1,23 +1,27 @@
 import { ChangeDetectionStrategy, inject, viewChild } from '@angular/core';
 import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FFlowModule, FCanvasComponent, FZoomDirective } from '@foblex/flow';
+import { FFlowModule, FCanvasComponent, FZoomDirective, MoveFrontElementsBeforeTargetElementExecution, FFlowComponent } from '@foblex/flow';
 import { ToolbarComponent } from '../controls/toolbar/toolbar.component';
+import { SimpleNoteComponent } from '../nodes/simple-note/simple-note.component';
 import { BoardProviderService } from '../services/board-provider.service';
 import { CloudBoard, Node, NodePosition } from '../data/cloudboard';
+import { ContextMenu, ContextMenuModule } from 'primeng/contextmenu';
 import { Subscription } from 'rxjs';
 import { Guid } from 'guid-typescript';
 import { FlowControlService, ZoomAction } from '../services/flow-control.service';
+import { MenuItem } from 'primeng/api';
 
 @Component({
   selector: 'app-flowboard',
-  imports: [FFlowModule, FZoomDirective, ToolbarComponent],
+  imports: [FFlowModule, FZoomDirective, ToolbarComponent, ContextMenuModule, SimpleNoteComponent],
   changeDetection: ChangeDetectionStrategy.Default,
   templateUrl: './flowboard.component.html',
   styleUrl: './flowboard.component.css',
 })
 export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
-
+  protected flowContextMenu = viewChild<ContextMenu>('flowcontextmenu');
+  protected nodeContextMenu = viewChild<ContextMenu>('nodecontextmenu');
   protected fCanvas = viewChild(FCanvasComponent);
   protected fZoom = viewChild(FZoomDirective);
 
@@ -26,6 +30,22 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public currentCloudBoard: CloudBoard | undefined;
   private subscriptions: Subscription[] = [];
+
+  public flowContextMenuItems: MenuItem[] = [
+    {
+      label: 'Add new node',
+      icon: 'pi pi-search-plus',
+      command: () => this.addNode()
+    }
+  ];
+
+  public nodeContextMenuItems: MenuItem[] = [
+    {
+      label: 'Delete node',
+      icon: 'pi pi-search-minus',
+      command: () => {}
+    }
+  ];
 
   constructor(private route: ActivatedRoute, private router: Router) { }
 
@@ -80,5 +100,18 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   protected onNodePositionChanged(newPosition: NodePosition, node: Node): void {
     node.position = newPosition;
     console.log('Node Position Changed Event:', newPosition);
+  }
+  protected addNode(): void {
+    // Implementation for adding a new node
+  }
+
+  showFlowContextMenu(event: Event): void {
+    let menu = this.flowContextMenu();
+    menu?.show(event);
+  }
+
+  showNodeContextMenu($event: MouseEvent, node: Node) {
+    let menu = this.nodeContextMenu();
+    menu?.show($event);
   }
 }

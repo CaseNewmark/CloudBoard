@@ -7,7 +7,9 @@
     </div>
 }
 @else {
-    <f-flow fDraggable>
+    <p-contextmenu #flowcontextmenu [model]="flowContextMenuItems" />
+    <p-contextmenu #nodecontextmenu [model]="nodeContextMenuItems" />
+    <f-flow fDraggable (contextmenu)="showFlowContextMenu($event)">
         <f-canvas fZoom>
             <!-- Render all connections from the cloudboard data -->
             @for (connector of currentCloudBoard.connections; track connector.id) {
@@ -24,17 +26,9 @@
                     fNode 
                     fDragHandle 
                     [fNodePosition]="node.position"
-                    (fNodePositionChange)="onNodePositionChanged($event, node)">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title">{{ node.name }}</h5>
-                        </div>
-                        <div class="card-body">
-                            <p class="card-text"><i>Nothing to see here</i></p>
-                            <button type="button" class="btn btn-primary">Edit</button>
-
-                        </div>
-                    </div>
+                    (fNodePositionChange)="onNodePositionChanged($event, node)"
+                    (contextmenu)="showNodeContextMenu($event, node)">
+                    <simple-note [node]="node"></simple-note>
                     @for (connector of node.connectors; track connector.id) {
                         @switch (connector.type.toString().toLowerCase()) {
                             @case ('in') {
@@ -49,7 +43,7 @@
                         }
                     }
                 </div>
-            }
+            }        
         </f-canvas>
     </f-flow>
 }

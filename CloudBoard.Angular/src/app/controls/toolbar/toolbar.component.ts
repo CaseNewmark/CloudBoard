@@ -51,11 +51,16 @@ export class ToolbarComponent implements OnInit {
     this.boardProviderService.saveCloudBoard();
   }
   onDelete(boardId: Guid, event: Event): void {
+    /* 
+        TODO: check if boardId is valid
+        TODO: check if boardId is not the current board and deal with it
+    */
+
     this.deletionBoard = this.availableBoards.find(board => board.id === boardId);
     
     this.confirmationService.confirm({
       target: event.target as EventTarget,
-      message: `Are you sure you want to delete ${this.deletionBoard?.name}?`,
+      message: `Are you sure you want to delete "${this.deletionBoard?.name}?"`,
       icon: 'pi pi-exclamation-triangle',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {

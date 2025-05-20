@@ -1,0 +1,26 @@
+<!-- <div 
+    fNode 
+    fDragHandle 
+    [fNodePosition]="node.position"
+    (fNodePositionChange)="onNodePositionChanged($event, node)"> -->
+    <p-card [header]="node.name">
+        <p class="m-0">
+            {{ node()?.name}}
+            Lorem ipsum dolor sit amet...
+        </p>
+    </p-card>
+<!-- 
+@for (connector of node.connectors; track connector.id) {
+    @switch (connector.type.toString().toLowerCase()) {
+        @case ('in') {
+            <div fNodeInput [fInputId]="connector.id" class="connector left"></div>
+        }
+        @case ('out') {
+            <div fNodeOutput [fOutputId]="connector.id" class="connector right"></div>
+        }
+        @case ('inout') {
+            <div fNodeInput [fInputId]="connector.id" fNodeOutput [fOutputId]="connector.id" class="connector top"></div>
+        }
+    }
+}
+</div>-->
