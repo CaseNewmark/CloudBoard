@@ -2,48 +2,48 @@
     <toolbar></toolbar>
 </div>
 @if (!currentCloudBoard) {
-    <div class="grow h-full flex justify-center items-center">
-        <i>No Cloudboard loaded yet..</i>
-    </div>
+<div class="grow h-full flex justify-center items-center">
+    <i>No Cloudboard loaded yet..</i>
+</div>
 }
 @else {
+<div class="grow h-full flex flex-row">
+    <!-- <properties-panel [(visible)]="propertiesPanelVisible" [(title)]="propertiesPanelTitle" [appendTo]="flowboard" /> -->
+
     <p-contextmenu #flowcontextmenu [model]="flowContextMenuItems" />
     <p-contextmenu #nodecontextmenu [model]="nodeContextMenuItems" />
-    <f-flow fDraggable (contextmenu)="showFlowContextMenu($event)">
+    <f-flow #flowboard fDraggable (contextmenu)="showFlowContextMenu($event)" class="grow">
         <f-canvas fZoom>
             <!-- Render all connections from the cloudboard data -->
             @for (connector of currentCloudBoard.connections; track connector.id) {
-                <f-connection 
-                    fType="segment"
-                    [fOutputId]="connector.fromConnectorId" 
-                    [fInputId]="connector.toConnectorId">
-                </f-connection>
+            <f-connection fType="segment" [fOutputId]="connector.fromConnectorId" [fInputId]="connector.toConnectorId">
+            </f-connection>
             }
 
             <!-- Render all nodes from the cloudboard data -->
             @for (node of currentCloudBoard.nodes; track node.id) {
-                <div 
-                    fNode 
-                    fDragHandle 
-                    [fNodePosition]="node.position"
-                    (fNodePositionChange)="onNodePositionChanged($event, node)"
-                    (contextmenu)="showNodeContextMenu($event, node)">
-                    <simple-note [node]="node"></simple-note>
-                    @for (connector of node.connectors; track connector.id) {
-                        @switch (connector.type.toString().toLowerCase()) {
-                            @case ('in') {
-                                <div fNodeInput [fInputId]="connector.id" class="connector left"></div>
-                            }
-                            @case ('out') {
-                                <div fNodeOutput [fOutputId]="connector.id" class="connector right"></div>
-                            }
-                            @case ('inout') {
-                                <div fNodeInput [fInputId]="connector.id" fNodeOutput [fOutputId]="connector.id" class="connector top"></div>
-                            }
+            <div fNode fDragHandle [fNodePosition]="node.position"
+                (fNodePositionChange)="onNodePositionChanged($event, node)"
+                (contextmenu)="showNodeContextMenu($event, node)">
+                <simple-note [node]="node"></simple-note>
+                @for (connector of node.connectors; track connector.id) {
+                    @switch (connector.type.toString().toLowerCase()) {
+                        @case ('in') {
+                        <div fNodeInput [fInputId]="connector.id" class="connector left"></div>
+                        }
+                        @case ('out') {
+                        <div fNodeOutput [fOutputId]="connector.id" class="connector right"></div>
+                        }
+                        @case ('inout') {
+                        <div fNodeInput [fInputId]="connector.id" fNodeOutput [fOutputId]="connector.id" class="connector top"></div>
                         }
                     }
-                </div>
-            }        
+                }
+            </div>
+            }
         </f-canvas>
     </f-flow>
+    <div class="shadow-md bg-white" style="width: 20em">
+    </div>
+</div>
 }
