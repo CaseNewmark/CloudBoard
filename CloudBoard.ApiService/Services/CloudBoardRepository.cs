@@ -18,15 +18,20 @@ namespace CloudBoard.ApiService.Data
             await _dbContext.SaveChangesAsync();
             return document;
         }
-
+        
         public async Task<CloudBoardDocument?> GetDocumentByIdAsync(Guid id)
         {
-            return await _dbContext.CloudBoardDocuments.FindAsync(id);
+            return await _dbContext.CloudBoardDocuments
+                .Include(d => d.Nodes)
+                    .ThenInclude(n => n.Connectors)
+                .Include(d => d.Connections)
+                .FirstOrDefaultAsync(d => d.Id == id);
         }
 
         public async Task<IEnumerable<CloudBoardDocument>> GetAllDocumentsAsync()
         {
-            return await _dbContext.CloudBoardDocuments.ToListAsync();
+            return await _dbContext.CloudBoardDocuments
+                .ToListAsync();
         }
 
         public async Task UpdateDocumentAsync(CloudBoardDocument document)

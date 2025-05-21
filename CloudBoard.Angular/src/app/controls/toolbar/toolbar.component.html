@@ -1,54 +1,40 @@
-<div class="btn-group-vertical">
-    <ng-template #popoverTemplate>
-        <div class="popover-header">
-            <h4 class="popover-title">Cloudboard</h4>
-        </div>
-        <div class="list-group">
-            @for (board of this.availableBoards; track board) {
-                <button type="button" class="d-flex list-group-item list-group-item-action justify-content-between" (click)="onOpen(board.id)">
-                    <span>{{board.name}}</span>
-                    <i class="bi bi-trash" (click)="onDelete(board.id, confirmModal);$event.stopPropagation()"></i>
-                </button>
-            }
-        </div>
-    </ng-template>
+<!-- Popup component shows for confirmation of board deletion -->
+<p-confirmpopup #confirm />
 
-    <ng-template #confirmModal let-modal>
-        <div class="modal-header">
-			<h4 class="modal-title" id="modal-title">About to delete Cloudboard...</h4>
-			<button
-				type="button"
-				class="btn-close"
-				aria-describedby="modal-title"
-				(click)="modal.dismiss('dismiss')"
-			></button>
-		</div>
-		<div class="modal-body">
-			<p>
-				<strong>Are you sure you want to delete <span class="text-primary">{{ deletionBoard.name }}</span> profile?</strong>
-			</p>
-			<p>
-				All information associated to this user Cloudboard will be permanently deleted.
-				<span class="text-danger">This operation can not be undone.</span>
-			</p>
-		</div>
-		<div class="modal-footer">
-			<button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss('cancel')">Cancel</button>
-			<button type="button" class="btn btn-danger" (click)="modal.close('ok')">Ok</button>
-		</div>
-    </ng-template>
+<!-- Popover to show all stored/available boards, loading and deletion -->
+<p-popover #popover (onShow)="refreshBoards()">
+    <div class="flex flex-col w-48">
+        @for (board of this.availableBoards; track board.id) {
+        <p-button text severity="secondary" (click)="onOpen(board.id!); popover.hide()"
+            styleClass="w-full justify-stretch! gap-2 items-center">
+            <i class="pi pi-file"></i>
+            <span class="grow text-left truncate">{{board.name}}</span>
+            <i class="pi pi-trash" (click)="onDelete(board.id!, $event); $event.stopPropagation()"></i>
+        </p-button>
+        }
+    </div>
+</p-popover>
 
-    <!-- display the actual command buttons -->
-    @for (button of buttons; track button) {
-        <button
-            class="btn btn-outline-secondary"
-            type="button"
-            [title]="button.tooltip"
-            (click)="button.action()"
-            placement="end"
-	        [ngbPopover]="button.popover ? popoverTemplate : null"
-        >
-            <i [ngClass]="'bi bi-'+button.icon+' h3'"></i>
-        </button>
-    }
-</div>
+<!-- Horizontal main menu bar. -->
+<p-menubar #menuBar>
+    <ng-template #start>
+        <p-button icon="pi pi-fw pi-plus" label="Create" text severity="secondary" (click)="onCreate()">
+        </p-button>
+        <p-button icon="pi pi-fw pi-download" label="Open" text severity="secondary" (click)="popover.toggle($event)">
+        </p-button>
+        <p-button icon="pi pi-fw pi-save" label="Save" text severity="secondary" (click)="onSave()">
+        </p-button>
+    </ng-template>
+</p-menubar>
+
+<!-- Vertical toolbar. -->
+<p-toolbar class="mt-3">
+    <ng-template #center>
+        <p-button icon="pi pi-fw pi-search-plus" text severity="secondary" (click)="flowControlService.zoomIn()">
+        </p-button>
+        <p-button icon="pi pi-fw pi-search-minus" text severity="secondary" (click)="flowControlService.zoomOut()">
+        </p-button>
+        <p-button icon="pi pi-fw pi-times-circle" text severity="secondary" (click)="flowControlService.resetZoom()">
+        </p-button>
+    </ng-template>
+</p-toolbar>

@@ -1,16 +1,50 @@
 <div class="toolbar-container">
     <toolbar></toolbar>
 </div>
-<f-flow fDraggable>
-    <f-canvas>
-        <f-connection fOutputId="output1" fInputId="input1"></f-connection>
-        <div fNode fDragHandle [fNodePosition]="{ x: 24, y: 24 }" fNodeOutput fOutputId="output1"
-            fOutputConnectableSide="right">
-            Drag me
-        </div>
-        <div fNode fDragHandle [fNodePosition]="{ x: 244, y: 24 }" fNodeInput fInputId="input1"
-            fInputConnectableSide="left">
-            Drag me
-        </div>
-    </f-canvas>
-</f-flow>
+@if (!currentCloudBoard) {
+<div class="grow h-full flex justify-center items-center">
+    <i>No Cloudboard loaded yet..</i>
+</div>
+}
+@else {
+<div class="grow h-full flex flex-row overflow-hidden">
+    <p-contextmenu #flowcontextmenu [model]="flowContextMenuItems" />
+    <p-contextmenu #nodecontextmenu [model]="nodeContextMenuItems" />
+    <f-flow class="grow" fDraggable (contextmenu)="showFlowContextMenu($event)"  (fSelectionChange)="onSelectionChange($event)">
+        <f-canvas fZoom>
+            <!-- Render all connections from the cloudboard data -->
+            @for (connector of currentCloudBoard.connections; track connector.id) {
+            <f-connection fType="segment" [fOutputId]="connector.fromConnectorId" [fInputId]="connector.toConnectorId">
+            </f-connection>
+            }
+
+            <!-- Render all nodes from the cloudboard data -->
+            @for (node of currentCloudBoard.nodes; track node.id) {
+            <div fNode [fNodeId]="node.id"
+                fDragHandle [fNodePosition]="node.position"
+                (fNodePositionChange)="onNodePositionChanged($event, node)"
+                (contextmenu)="showNodeContextMenu($event, node)">
+                <simple-note [node]="node"></simple-note>
+                @for (connector of node.connectors; track connector.id) {
+                    @switch (connector.type.toString().toLowerCase()) {
+                        @case ('in') {
+                        <div fNodeInput [fInputId]="connector.id" class="connector left"></div>
+                        }
+                        @case ('out') {
+                        <div fNodeOutput [fOutputId]="connector.id" class="connector right"></div>
+                        }
+                        @case ('inout') {
+                        <div fNodeInput [fInputId]="connector.id" fNodeOutput [fOutputId]="connector.id" class="connector top"></div>
+                        }
+                    }
+                }
+            </div>
+            }
+        </f-canvas>
+    </f-flow>
+    <properties-panel 
+        [(visible)]="propertiesPanelVisible" 
+        [(nodeProperties)]="propertiesPanelNodeProperties">
+    </properties-panel>
+</div>
+}

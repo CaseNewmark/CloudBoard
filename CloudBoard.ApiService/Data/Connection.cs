@@ -3,12 +3,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CloudBoard.ApiService.Data;
 
-public class CloudBoardDocument
+public class Connection
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public List<Node> Nodes { get; set; } = new List<Node>();
-    public List<Connection> Connections { get; set; } = new List<Connection>();
+    public Guid FromConnectorId { get; set; }
+    public Guid ToConnectorId { get; set; }
+    public Guid CloudBoardDocumentId { get; set; }
+    public CloudBoardDocument CloudBoardDocument { get; set; } = null!;
 }

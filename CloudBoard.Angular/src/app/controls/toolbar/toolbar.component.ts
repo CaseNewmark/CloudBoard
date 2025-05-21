@@ -1,73 +1,85 @@
-import { Component, inject, OnInit, TemplateRef } from '@angular/core';
-import { NgClass } from '@angular/common';
+import { Component, inject, OnInit } from '@angular/core';
 import { BoardProviderService } from '../../services/board-provider.service';
-import { NgbPopover, NgbModal, NgbModalConfig } from '@ng-bootstrap/ng-bootstrap';
+import { FlowControlService } from '../../services/flow-control.service';
+import { MenuModule } from 'primeng/menu';
+import { MenubarModule } from 'primeng/menubar';
+import { ToolbarModule } from 'primeng/toolbar';
+import { ButtonModule } from 'primeng/button';
+import { PopoverModule } from 'primeng/popover';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmPopupModule } from 'primeng/confirmpopup';
+import { CloudBoard } from '../../data/cloudboard';
+import { Guid } from 'guid-typescript';
 
 @Component({
   selector: 'toolbar',
-  imports: [NgClass, NgbPopover],
+  imports: [
+    ButtonModule,
+    ConfirmPopupModule,
+    MenuModule, 
+    MenubarModule, 
+    PopoverModule, 
+    ToolbarModule],
+  providers: [
+    ConfirmationService
+  ],
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.css'
 })
 export class ToolbarComponent implements OnInit {
 
-  private modalService: NgbModal = inject(NgbModal);
-  
-  buttons: { icon: string; tooltip: string; action: () => void, popover: boolean | undefined }[] = [];
-  devBoardId: string = '126a505a-512b-48a0-99bc-84d02a86d7e7'; // Static GUID
-  availableBoards: any[] = [];
-  deletionBoard: any;
-
   boardProviderService: BoardProviderService = inject(BoardProviderService);
-  
+  flowControlService: FlowControlService = inject(FlowControlService);
+  confirmationService: ConfirmationService = inject(ConfirmationService);
 
-  constructor() {}
+  availableBoards: CloudBoard[] = [];
+  deletionBoard: CloudBoard | undefined;
 
-  ngOnInit(): void {
-    this.buttons.push({
-        icon: 'file-earmark-plus',
-        tooltip: 'Create',
-        action: () => this.onCreate(),
-        popover: false
-      });
-    this.buttons.push({
-        icon: 'folder',
-        tooltip: 'Open',
-        action: () => this.refreshAvailableBoards(),
-        popover: true
-      });
-    this.buttons.push({
-        icon: 'floppy',
-        tooltip: 'Save',
-        action: () => this.onSave(),
-        popover: false
-      });
-  }
+  constructor() { }
+
+  ngOnInit(): void {}
 
   onCreate(): void {
     this.boardProviderService.createNewCloudBoard().subscribe();
   }
 
-  onOpen(boardId: string): void {
+  onOpen(boardId: Guid): void {
     this.boardProviderService.loadCloudBoardById(boardId).subscribe();
   }
 
   onSave(): void {
     this.boardProviderService.saveCloudBoard();
   }
+  onDelete(boardId: Guid, event: Event): void {
+    /* 
+        TODO: check if boardId is valid
+        TODO: check if boardId is not the current board and deal with it
+    */
 
-  onDelete(boardId: string, content: TemplateRef<any>): void {
     this.deletionBoard = this.availableBoards.find(board => board.id === boardId);
-    this.modalService.open(content, { ariaLabelledBy: 'modal-basic-title',  }).result.then((result) => {
-      if (result === 'ok') {
-        this.boardProviderService.deleteCloudBoard(boardId).subscribe();
-        this.availableBoards = this.availableBoards.filter(board => board.id !== boardId);
+    
+    this.confirmationService.confirm({
+      target: event.target as EventTarget,
+      message: `Are you sure you want to delete "${this.deletionBoard?.name}?"`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        this.boardProviderService.deleteCloudBoard(this.deletionBoard?.id!).subscribe({
+          next: () => {
+            this.availableBoards = this.availableBoards.filter(board => board.id !== boardId);
+          },
+          error: (error) => {
+            console.error('Error deleting cloudboard', error);
+          }
+        });
+      },
+      reject: () => {
+        // Optional: handle rejection
       }
     });
   }
 
-  refreshAvailableBoards(): void {
-    this.availableBoards = [];
+  refreshBoards(): void {
     this.boardProviderService.listCloudBoards().subscribe(
       response => {
         this.availableBoards = response;

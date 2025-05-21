@@ -1,0 +1,20 @@
+<div class="sidepanel shadow-md bg-white h-full w-70 z-30 transition-all duration-200 ease-in-out" [class.open]="visible()" [class.close]="!visible()">
+    <div class="p-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">{{ nodeProperties()?.name }}</h3>
+            <button class="toggle-btn" (click)="visible.set(!visible())">
+                <i class="pi" [ngClass]="visible() ? 'pi-chevron-right' : 'pi-chevron-left'"></i>
+            </button>
+        </div>
+        <div class="properties-content">
+            <!-- Panel content goes here -->
+            <p>Panel is {{ visible() ? 'visible' : 'hidden' }}</p>
+            
+            <!-- Input field to edit title -->
+            <!-- <div class="field mt-4">
+                <label for="panelTitle" class="block mb-1">Panel Title</label>
+                <input id="panelTitle" type="text" [(ngModel)]="title" class="w-full p-2 border rounded" />
+            </div> -->
+        </div>
+    </div>
+</div>

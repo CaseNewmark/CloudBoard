@@ -1,0 +1,54 @@
+:host {
+    height: 100%;
+}
+
+:host .connector  {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 1px solid gray;
+    border-radius: 50%;
+    background-color: #00ff0033;
+}
+
+:host .connector.left  {
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    background-color: #cfc;
+}
+
+:host .connector.right  {
+    top: 50%;
+    right: -10px;
+    transform: translateY(-50%);
+    background-color: #ffc;
+}
+
+:host .connector.top  {
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #fcc;
+}
+
+:host .f-selected.f-node {
+    margin: -2px;
+    border-width: 2px;
+    border-style: dashed;
+    border-color: rgba(0, 0, 0, 0.4);
+}
+
+:host ::ng-deep .f-connection .f-connection-selection {
+    stroke-width: 20px;
+    stroke: rgba(255, 255, 255, 0.01);
+}
+
+:host ::ng-deep .f-connection .f-connection-path {
+    stroke: rgba(0, 0, 0, 0.4);
+}
+
+:host ::ng-deep .f-connection.f-selected .f-connection-path {
+    stroke-dasharray: 2em 2em;
+    stroke: rgba(0, 0, 0, 0.4);
+}

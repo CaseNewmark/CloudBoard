@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CloudboardListComponent } from './cloudboard-list.component';
+import { PropertiesPanelComponent } from './properties-panel.component';
 
-describe('CloudboardListComponent', () => {
-  let component: CloudboardListComponent;
-  let fixture: ComponentFixture<CloudboardListComponent>;
+describe('PropertiesPanelComponent', () => {
+  let component: PropertiesPanelComponent;
+  let fixture: ComponentFixture<PropertiesPanelComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CloudboardListComponent]
+      imports: [PropertiesPanelComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(CloudboardListComponent);
+    fixture = TestBed.createComponent(PropertiesPanelComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
