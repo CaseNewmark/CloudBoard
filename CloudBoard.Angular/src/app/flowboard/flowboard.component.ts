@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, inject, signal, viewChild } from '@angular/core';
 import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FFlowModule, FCanvasComponent, FZoomDirective, MoveFrontElementsBeforeTargetElementExecution, FFlowComponent, FSelectionChangeEvent } from '@foblex/flow';
+import { FFlowModule, FCanvasComponent, FZoomDirective, MoveFrontElementsBeforeTargetElementExecution, FFlowComponent, FSelectionChangeEvent, FDraggableDirective } from '@foblex/flow';
 import { ToolbarComponent } from '../controls/toolbar/toolbar.component';
 import { PropertiesPanelComponent } from '../controls/properties-panel/properties-panel.component';
 import { SimpleNoteComponent } from '../nodes/simple-note/simple-note.component';
@@ -27,7 +27,9 @@ import { MenuItem } from 'primeng/api';
   styleUrl: './flowboard.component.css',
 })
 export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
+  protected fFlow = viewChild(FFlowComponent);
   protected fCanvas = viewChild(FCanvasComponent);
+  protected fDraggable = viewChild(FDraggableDirective);
   protected fZoom = viewChild(FZoomDirective);
 
   protected flowContextMenu = viewChild<ContextMenu>('flowcontextmenu');
@@ -88,7 +90,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       
       // Update the route URL without reloading the page
       if (cloudBoard && cloudBoard.id) {
-        this.router.navigate(['/flowboard', cloudBoard.id], { 
+        this.router.navigate(['/flowboard', cloudBoard.id.toString()], { 
           replaceUrl: true, // replace the current URL instead of adding to history
           skipLocationChange: false // update the browser URL
         });
@@ -100,7 +102,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const routeSubscription = this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id != null && (this.currentCloudBoard == null
-        || this.currentCloudBoard.id != Guid.parse(id))) {
+        || !this.currentCloudBoard.id?.equals(Guid.parse(id)))) {
         this.boardProviderService.loadCloudBoardById(Guid.parse(id)).subscribe();
       }
     });
@@ -127,24 +129,23 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   protected onSelectionChange(event: FSelectionChangeEvent): void {
-    this.propertiesPanelVisible.set(event.fNodeIds.length == 1);
-    if (event.fNodeIds.length == 1) {
-      var nodeProperties = this.currentCloudBoard?.nodes.find(node => node.id == event.fNodeIds[0]);
-      if (nodeProperties) {
-        this.propertiesPanelNodeProperties.set(nodeProperties);
-      }
-    }
-    else {
-      this.propertiesPanelNodeProperties.set(undefined);
-    }
+    // fDraggable drag events are triggered after the selection change event
+    // so we need to wait for the next tick to check if the drag event is triggered
+    setTimeout(() => {
+      let draggable = this.fDraggable(); 
+      if (draggable?.isDragStarted) return;
 
-    // const selectedNodes = this.fCanvas()?;
-    // if (selectedNodes && selectedNodes.length > 0) {
-    //   const selectedNode = selectedNodes[0];
-    //   this.propertiesPanelVisible.set(true);
-    // } else {
-    //   this.propertiesPanelVisible.set(false);
-    // }
+      this.propertiesPanelVisible.set(event.fNodeIds.length == 1);
+      if (event.fNodeIds.length == 1) {
+        var nodeProperties = this.currentCloudBoard?.nodes.find(node => node.id == event.fNodeIds[0]);
+        if (nodeProperties) {
+          this.propertiesPanelNodeProperties.set(nodeProperties);
+        }
+      }
+      else {
+        this.propertiesPanelNodeProperties.set(undefined);
+      }
+    }, 0);
   }
 
   protected onNodePositionChanged(newPosition: NodePosition, node: Node): void {
@@ -153,7 +154,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   protected addNode(): void {
-    // Implementation for adding a new node
+    // TODO: Implementation for adding a new node
   }
 
   showFlowContextMenu(event: Event): void {

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, TemplateRef, ViewChild, viewChild } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { BoardProviderService } from '../../services/board-provider.service';
 import { FlowControlService } from '../../services/flow-control.service';
 import { MenuModule } from 'primeng/menu';
