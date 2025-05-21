@@ -32,8 +32,8 @@
     background-color: #fcc;
 }
 
-:host .f-selected > .card {
-    margin: -1px;
+:host .f-selected.f-node {
+    margin: -2px;
     border-width: 2px;
     border-style: dashed;
     border-color: rgba(0, 0, 0, 0.4);

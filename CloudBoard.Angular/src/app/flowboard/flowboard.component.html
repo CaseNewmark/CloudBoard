@@ -7,12 +7,10 @@
 </div>
 }
 @else {
-<div class="grow h-full flex flex-row">
-    <!-- <properties-panel [(visible)]="propertiesPanelVisible" [(title)]="propertiesPanelTitle" [appendTo]="flowboard" /> -->
-
+<div class="grow h-full flex flex-row overflow-hidden">
     <p-contextmenu #flowcontextmenu [model]="flowContextMenuItems" />
     <p-contextmenu #nodecontextmenu [model]="nodeContextMenuItems" />
-    <f-flow #flowboard fDraggable (contextmenu)="showFlowContextMenu($event)" class="grow">
+    <f-flow class="grow" fDraggable (contextmenu)="showFlowContextMenu($event)"  (fSelectionChange)="onSelectionChange($event)">
         <f-canvas fZoom>
             <!-- Render all connections from the cloudboard data -->
             @for (connector of currentCloudBoard.connections; track connector.id) {
@@ -22,7 +20,8 @@
 
             <!-- Render all nodes from the cloudboard data -->
             @for (node of currentCloudBoard.nodes; track node.id) {
-            <div fNode fDragHandle [fNodePosition]="node.position"
+            <div fNode [fNodeId]="node.id"
+                fDragHandle [fNodePosition]="node.position"
                 (fNodePositionChange)="onNodePositionChanged($event, node)"
                 (contextmenu)="showNodeContextMenu($event, node)">
                 <simple-note [node]="node"></simple-note>
@@ -43,7 +42,9 @@
             }
         </f-canvas>
     </f-flow>
-    <div class="shadow-md bg-white" style="width: 20em">
-    </div>
+    <properties-panel 
+        [(visible)]="propertiesPanelVisible" 
+        [(nodeProperties)]="propertiesPanelNodeProperties">
+    </properties-panel>
 </div>
 }

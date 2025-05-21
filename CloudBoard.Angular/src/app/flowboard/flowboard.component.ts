@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, inject, signal, viewChild } from '@angular/core';
 import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FFlowModule, FCanvasComponent, FZoomDirective, MoveFrontElementsBeforeTargetElementExecution, FFlowComponent } from '@foblex/flow';
+import { FFlowModule, FCanvasComponent, FZoomDirective, MoveFrontElementsBeforeTargetElementExecution, FFlowComponent, FSelectionChangeEvent } from '@foblex/flow';
 import { ToolbarComponent } from '../controls/toolbar/toolbar.component';
+import { PropertiesPanelComponent } from '../controls/properties-panel/properties-panel.component';
 import { SimpleNoteComponent } from '../nodes/simple-note/simple-note.component';
 import { BoardProviderService } from '../services/board-provider.service';
 import { CloudBoard, Node, NodePosition } from '../data/cloudboard';
@@ -14,28 +15,58 @@ import { MenuItem } from 'primeng/api';
 
 @Component({
   selector: 'app-flowboard',
-  imports: [FFlowModule, FZoomDirective, ToolbarComponent, ContextMenuModule, SimpleNoteComponent],
+  imports: [
+    FFlowModule,
+    FZoomDirective,
+    ToolbarComponent,
+    PropertiesPanelComponent,
+    ContextMenuModule,
+    SimpleNoteComponent],
   changeDetection: ChangeDetectionStrategy.Default,
   templateUrl: './flowboard.component.html',
   styleUrl: './flowboard.component.css',
 })
 export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
-  protected flowContextMenu = viewChild<ContextMenu>('flowcontextmenu');
-  protected nodeContextMenu = viewChild<ContextMenu>('nodecontextmenu');
   protected fCanvas = viewChild(FCanvasComponent);
   protected fZoom = viewChild(FZoomDirective);
 
+  protected flowContextMenu = viewChild<ContextMenu>('flowcontextmenu');
+  protected nodeContextMenu = viewChild<ContextMenu>('nodecontextmenu');
+
   private flowControlService: FlowControlService = inject(FlowControlService);
   private boardProviderService: BoardProviderService = inject(BoardProviderService);  
+  private subscriptions: Subscription[] = [];
 
   public currentCloudBoard: CloudBoard | undefined;
-  private subscriptions: Subscription[] = [];
+  
+  // Properties for the PropertiesPanel
+  public propertiesPanelVisible = signal(false);
+  public propertiesPanelNodeProperties = signal<Node | undefined>(undefined);
 
   public flowContextMenuItems: MenuItem[] = [
     {
       label: 'Add new node',
-      icon: 'pi pi-search-plus',
+      icon: 'pi pi-plus-circle',
       command: () => this.addNode()
+    },
+    {
+      separator: true
+    },
+    {
+      label: 'Properties Panel',
+      icon: 'pi pi-cog',
+      items: [
+        {
+          label: 'Append to Body',
+          icon: 'pi pi-desktop',
+          command: () => this.propertiesPanelVisible.set(!this.propertiesPanelVisible())
+        },
+        {
+          label: 'Toggle Visibility',
+          icon: 'pi pi-eye',
+          command: () => this.propertiesPanelVisible.set(!this.propertiesPanelVisible())
+        }
+      ]
     }
   ];
 
@@ -64,15 +95,13 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
     this.subscriptions.push(boardSubscription);
-
+    
     // Get the id from the route parameter
     const routeSubscription = this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id != null && (this.currentCloudBoard == null
         || this.currentCloudBoard.id != Guid.parse(id))) {
-        this.boardProviderService.loadCloudBoardById(Guid.parse(id)).subscribe(() => { }, error => {
-          // display error message in model          
-        });
+        this.boardProviderService.loadCloudBoardById(Guid.parse(id)).subscribe();
       }
     });
     this.subscriptions.push(routeSubscription);
@@ -97,10 +126,32 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.subscriptions.forEach(subscription => subscription.unsubscribe());
   }
 
+  protected onSelectionChange(event: FSelectionChangeEvent): void {
+    this.propertiesPanelVisible.set(event.fNodeIds.length == 1);
+    if (event.fNodeIds.length == 1) {
+      var nodeProperties = this.currentCloudBoard?.nodes.find(node => node.id == event.fNodeIds[0]);
+      if (nodeProperties) {
+        this.propertiesPanelNodeProperties.set(nodeProperties);
+      }
+    }
+    else {
+      this.propertiesPanelNodeProperties.set(undefined);
+    }
+
+    // const selectedNodes = this.fCanvas()?;
+    // if (selectedNodes && selectedNodes.length > 0) {
+    //   const selectedNode = selectedNodes[0];
+    //   this.propertiesPanelVisible.set(true);
+    // } else {
+    //   this.propertiesPanelVisible.set(false);
+    // }
+  }
+
   protected onNodePositionChanged(newPosition: NodePosition, node: Node): void {
     node.position = newPosition;
     console.log('Node Position Changed Event:', newPosition);
   }
+
   protected addNode(): void {
     // Implementation for adding a new node
   }
