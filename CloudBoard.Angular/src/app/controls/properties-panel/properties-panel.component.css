@@ -1,11 +1,16 @@
+
+
 .sidepanel {
+    --panel-open-width: 17.5rem;
     transform: translateX(100%);
 }
 
 .open {
+    width: var(--panel-open-width);
     transform: translateX(0);
 }
 
 .close {
+    width: 0;
     transform: translateX(100%);
 }

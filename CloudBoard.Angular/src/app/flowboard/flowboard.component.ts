@@ -102,7 +102,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const routeSubscription = this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id != null && (this.currentCloudBoard == null
-        || !this.currentCloudBoard.id?.equals(Guid.parse(id)))) {
+        || this.currentCloudBoard.id?.toString() !== id)) {
         this.boardProviderService.loadCloudBoardById(Guid.parse(id)).subscribe();
       }
     });
