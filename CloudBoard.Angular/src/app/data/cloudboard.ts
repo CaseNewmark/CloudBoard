@@ -1,7 +1,6 @@
 // src/app/data/cloudboard.ts
 
 import { Guid } from "guid-typescript";
-import { NodeProperties } from "./node-properties";
 
 export enum ConnectorPosition {
   Top = 'top',
@@ -28,11 +27,62 @@ export interface NodePosition {
   y: number;
 }
 
+// Define node types enum
+export enum NodeType {
+  Note = 'note',
+  Card = 'card',
+  LinkCollection = 'link-collection',
+  ImageNode = 'image',
+  CodeBlock = 'code-block'
+}
+
+// Base properties interface
+export interface NodeProperties {
+  [key: string]: any;
+}
+
+// Specific properties for each node type
+export interface NoteProperties extends NodeProperties {
+  content: string;
+  backgroundColor?: string;
+  textColor?: string;
+}
+
+export interface CardProperties extends NodeProperties {
+  title: string;
+  subtitle?: string;
+  imageUrl?: string;
+  content: string;
+}
+
+export interface LinkProperties {
+  title: string;
+  url: string;
+  iconClass?: string;
+}
+
+export interface LinkCollectionProperties extends NodeProperties {
+  links: LinkProperties[];
+}
+
+export interface ImageNodeProperties extends NodeProperties {
+  url: string;
+  alt?: string;
+  caption?: string;
+}
+
+export interface CodeBlockProperties extends NodeProperties {
+  code: string;
+  language: string;
+  showLineNumbers: boolean;
+}
+
 export interface Node {
   id: string;
   name: string;
   position: NodePosition;
   connectors: Connector[];
+  type: NodeType;
   properties: NodeProperties;
 }
 

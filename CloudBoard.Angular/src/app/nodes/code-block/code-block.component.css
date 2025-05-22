@@ -1,0 +1,86 @@
+.code-block-node {
+  min-width: 300px;
+  max-width: 500px;
+}
+
+.code-block {
+  background-color: #1e1e1e;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.code-header {
+  background-color: #2d2d2d;
+  padding: 6px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #3e3e3e;
+}
+
+.language-badge {
+  font-size: 12px;
+  padding: 2px 6px;
+  background-color: #4d4d4d;
+  color: #e0e0e0;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+pre {
+  margin: 0;
+  padding: 12px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #e0e0e0;
+  background-color: #1e1e1e;
+  overflow-x: auto;
+}
+
+pre.with-line-numbers {
+  counter-reset: line;
+  padding-left: 3.5em;
+  position: relative;
+}
+
+pre.with-line-numbers::before {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 3em;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid #3e3e3e;
+  height: 100%;
+}
+
+pre.with-line-numbers code {
+  display: block;
+  position: relative;
+  padding-left: 0.5em;
+}
+
+pre.with-line-numbers code::before {
+  counter-increment: line;
+  content: counter(line);
+  display: inline-block;
+  width: 3em;
+  padding-right: 1em;
+  margin-left: -3.5em;
+  text-align: right;
+  color: #6d6d6d;
+  border-right: none;
+}
+
+/* Syntax highlighting colors */
+.keyword { color: #569cd6; }
+.string { color: #ce9178; }
+.comment { color: #6a9955; }
+.number { color: #b5cea8; }
+.function { color: #dcdcaa; }
+.class { color: #4ec9b0; }
+.variable { color: #9cdcfe; }

@@ -1,0 +1,8 @@
+<p-card [header]="node()?.name" styleClass="code-block-node">
+    <div class="code-block">
+        <div class="code-header">
+            <span class="language-badge">{{ language }}</span>
+        </div>
+        <pre [class.with-line-numbers]="showLineNumbers"><code [innerHTML]="highlightCode()"></code></pre>
+    </div>
+</p-card>

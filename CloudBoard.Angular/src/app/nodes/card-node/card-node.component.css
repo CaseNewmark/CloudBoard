@@ -1,0 +1,67 @@
+.card-node {
+  min-width: 250px;
+  max-width: 350px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-node:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 0.25rem;
+}
+
+.card-subtitle {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 0.75rem;
+}
+
+.card-content {
+  color: #495057;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Override PrimeNG Card Styles */
+:host ::ng-deep .p-card {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:host ::ng-deep .p-card .p-card-body {
+  padding: 1.25rem;
+}
+
+:host ::ng-deep .p-card .p-card-title {
+  margin-bottom: 0;
+}
+
+:host ::ng-deep .p-card .p-card-subtitle {
+  margin-bottom: 0.5rem;
+  font-weight: 400;
+}
+
+:host ::ng-deep .p-card .p-card-content {
+  padding: 0.5rem 0 0 0;
+}
+
+/* Image styling */
+:host ::ng-deep .p-card .p-card-header img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+:host ::ng-deep .p-card:hover .p-card-header img {
+  transform: scale(1.03);
+}

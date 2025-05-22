@@ -1,6 +1,5 @@
-<p-card [header]="node()?.name">
-    <p class="m-0">
-        {{ node()?.name}}
-        Lorem ipsum dolor sit amet...
+<p-card [header]="node()?.name" [style]="{'background-color': backgroundColor, 'color': textColor, 'min-width': '200px', 'max-width': '300px', 'box-shadow': '0 3px 6px rgba(0,0,0,0.16)'}">
+    <p class="m-0 note-content" [style]="{'color': textColor, 'white-space': 'pre-wrap'}">
+        {{ content }}
     </p>
 </p-card>
