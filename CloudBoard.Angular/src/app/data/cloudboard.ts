@@ -1,6 +1,7 @@
 // src/app/data/cloudboard.ts
 
 import { Guid } from "guid-typescript";
+import { NodeProperties } from "./node-properties";
 
 export enum ConnectorPosition {
   Top = 'top',
@@ -32,6 +33,7 @@ export interface Node {
   name: string;
   position: NodePosition;
   connectors: Connector[];
+  properties: NodeProperties;
 }
 
 export interface Connection {

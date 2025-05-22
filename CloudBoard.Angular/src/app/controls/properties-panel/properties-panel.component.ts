@@ -5,6 +5,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InplaceModule } from 'primeng/inplace';
 import { NgClass } from '@angular/common';
 import { Node } from '../../data/cloudboard';
+import { BlurOnEnterDirective } from '../../helpers/blur-on-enter.directive';
 
 @Component({
   selector: 'properties-panel',
@@ -13,12 +14,13 @@ import { Node } from '../../data/cloudboard';
     FormsModule,
     InputTextModule,
     InplaceModule,
-    NgClass
+    NgClass,
+    BlurOnEnterDirective
   ],
   templateUrl: './properties-panel.component.html',
   styleUrl: './properties-panel.component.css'
 })
 export class PropertiesPanelComponent {
   visible = model<boolean>(false);
-  nodeProperties = model<Node | undefined>(undefined);
+  nodeProperties = model<Node|undefined>(undefined);
 }

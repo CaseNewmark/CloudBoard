@@ -40,11 +40,11 @@ export class BoardProviderService {
       id: undefined,
       name: 'this board has an extremly long name',
       nodes: [
-        { id: Guid.create().toString(), name: 'Node 1', position: { x: 200, y: 30 }, connectors: [
+        { id: Guid.create().toString(), name: 'Node 1', properties: [], position: { x: 200, y: 30 }, connectors: [
           { id: Guid.create().toString(), name: '', position: ConnectorPosition.Left, type: ConnectorType.In},
           { id: connectorId1, name: '', position: ConnectorPosition.Right, type: ConnectorType.Out}
         ]},
-        { id: Guid.create().toString(), name: 'Node 2', position: { x: 400, y: 40 }, connectors: [
+        { id: Guid.create().toString(), name: 'Node 2', properties: [], position: { x: 400, y: 40 }, connectors: [
           { id: connectorId2, name: '', position: ConnectorPosition.Left, type: ConnectorType.In},
           { id: Guid.create().toString(), name: '', position: ConnectorPosition.Right, type: ConnectorType.Out}
         ]}

@@ -1,17 +1,17 @@
 <div class="sidepanel shadow-md bg-white h-full w-70 z-30 transition-all duration-200 ease-in-out" [class.open]="visible()" [class.close]="!visible()">
     <div class="p-4">
         <div class="flex justify-between items-center mb-4">
-            <p-inplace>
+            <p-inplace class="w-full">
                 <ng-template #display>
-                    <h3 class="text-xl font-bold">{{ nodeProperties()?.name }}</h3>
+                    <h3 class="w-full text-xl truncate font-bold">{{ nodeProperties()?.name }}</h3>
                 </ng-template>
-                <ng-template #content>
-                    <p-inputText [(ngModel)]="nodeProperties()!.name" placeholder="Enter name" />
+                <ng-template #content let-closeCallback="closeCallback">
+                    <input type="text" pInputText autofocus blurOnEnter [(ngModel)]="nodeProperties()!.name" (blur)="closeCallback($event)" placeholder="Enter name" />
                 </ng-template>
             </p-inplace>
-            <button class="toggle-btn" (click)="visible.set(!visible())">
+            <p-button text severity="contrast" class="toggle-btn" (click)="visible.set(!visible())">
                 <i class="pi" [ngClass]="visible() ? 'pi-chevron-right' : 'pi-chevron-left'"></i>
-            </button>
+            </p-button>
         </div>
         <div class="properties-content">
             <!-- Panel content goes here -->

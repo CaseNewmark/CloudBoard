@@ -43,7 +43,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   
   // Properties for the PropertiesPanel
   public propertiesPanelVisible = signal(false);
-  public propertiesPanelNodeProperties = signal<Node | undefined>(undefined);
+  public propertiesPanelNodeProperties: Node | undefined;
 
   public flowContextMenuItems: MenuItem[] = [
     {
@@ -139,11 +139,11 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       if (event.fNodeIds.length == 1) {
         var nodeProperties = this.currentCloudBoard?.nodes.find(node => node.id == event.fNodeIds[0]);
         if (nodeProperties) {
-          this.propertiesPanelNodeProperties.set(nodeProperties);
+          this.propertiesPanelNodeProperties = nodeProperties;
         }
       }
       else {
-        this.propertiesPanelNodeProperties.set(undefined);
+        this.propertiesPanelNodeProperties = undefined;
       }
     }, 0);
   }
