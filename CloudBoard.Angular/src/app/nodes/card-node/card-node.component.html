@@ -1,7 +1,12 @@
 <p-card styleClass="card-node">
     @if (hasImage) {
     <ng-template pTemplate="header">
-        <p-image [src]="imageUrl" [alt]="node()?.name" imageClass="w-full h-auto" [preview]="true"></p-image>
+        <p-image 
+            class="pointer-events-none"
+            [src]="imageUrl" 
+            [alt]="node()?.name" 
+            imageClass="w-full h-auto" 
+            [preview]="false" ></p-image>
     </ng-template>
     }
     <ng-template pTemplate="title">

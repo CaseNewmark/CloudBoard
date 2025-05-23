@@ -39,6 +39,8 @@ export enum NodeType {
 // Base properties interface
 export interface NodeProperties {
   [key: string]: any;
+  width?: string;
+  height?: string;
 }
 
 // Specific properties for each node type

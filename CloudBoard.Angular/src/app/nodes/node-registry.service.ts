@@ -47,7 +47,7 @@ export class NodeRegistryService {
         };
       case NodeType.ImageNode:
         return { 
-          url: 'https://via.placeholder.com/150', 
+          url: 'https://picsum.photos/300/200', 
           alt: 'Sample image',
           caption: 'Image caption' 
         };
