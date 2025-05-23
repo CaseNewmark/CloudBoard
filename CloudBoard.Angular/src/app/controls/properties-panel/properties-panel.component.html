@@ -14,7 +14,8 @@
             </p-button>
         </div>
         
-        <div class="properties-content" *ngIf="nodeProperties()">
+        @if (nodeProperties()) {
+        <div class="properties-content">
             <!-- Node Type Selector -->
             <div class="field mb-4">
                 <label class="block mb-1 font-medium">Node Type</label>
@@ -27,22 +28,22 @@
                     (onChange)="changeNodeType($event.value)">
                     <ng-template pTemplate="selectedItem">
                         <div class="flex align-items-center gap-2">
-                            <span>{{ nodeTypeLabels[nodeProperties()!.type] }}</span>
+                            <span>{{ getNodeTypeLabel( nodeProperties()!.type) }}</span>
                         </div>
                     </ng-template>
                     <ng-template let-type pTemplate="item">
                         <div class="flex align-items-center gap-2">
-                            <!-- <span>{{ nodeTypeLabels[type] }}</span> -->
+                            <span>{{ getNodeTypeLabel(type) }}</span>
                         </div>
                     </ng-template>
                 </p-dropdown>
             </div>
             
             <!-- Dynamic properties based on node type -->
-            <div [ngSwitch]="nodeProperties()!.type">
-                
+             @switch(nodeProperties()!.type) {
+                @case ('note') {
                 <!-- Simple Note Properties -->
-                <div *ngSwitchCase="'note'" class="node-properties">
+                <div class="node-properties">
                     <div class="field mb-3">
                         <label class="block mb-1 font-medium">Content</label>
                         <textarea 
@@ -70,9 +71,10 @@
                         </p-colorPicker>
                     </div>
                 </div>
-                
+                }
+                @case ('card') {
                 <!-- Card Node Properties -->
-                <div *ngSwitchCase="'card'" class="node-properties">
+                <div class="node-properties">
                     <div class="field mb-3">
                         <label class="block mb-1 font-medium">Title</label>
                         <input 
@@ -111,9 +113,10 @@
                         </textarea>
                     </div>
                 </div>
-                
+                }
+                @case ('link-collection') {
                 <!-- Link Collection Properties -->
-                <div *ngSwitchCase="'link-collection'" class="node-properties">
+                <div class="node-properties">
                     <div class="field mb-2 flex justify-between items-center">
                         <label class="font-medium">Links</label>
                         <p-button 
@@ -123,14 +126,15 @@
                         </p-button>
                     </div>
                     
-                    <div *ngFor="let link of nodeProperties()!.properties['links']; let i = index" class="mb-4 p-3 border rounded shadow-sm">
+                    @for (link of nodeProperties()!.properties['links']; track link.url) {
+                    <div class="mb-4 p-3 border rounded shadow-sm">
                         <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm font-bold">Link #{{i+1}}</span>
+                            <span class="text-sm font-bold">Link No. #{{1}}</span>
                             <p-button 
                                 icon="pi pi-trash" 
                                 size="small" 
                                 severity="danger"
-                                (onClick)="removeLink(i)">
+                                (onClick)="removeLink(1)">
                             </p-button>
                         </div>
                         
@@ -161,10 +165,12 @@
                                 class="w-full" />
                         </div>
                     </div>
+                    }
                 </div>
-                
+                }
+                @case ('image') {
                 <!-- Image Node Properties -->
-                <div *ngSwitchCase="'image'" class="node-properties">
+                <div class="node-properties">
                     <div class="field mb-3">
                         <label class="block mb-1 font-medium">Image URL</label>
                         <input 
@@ -192,9 +198,10 @@
                             class="w-full" />
                     </div>
                 </div>
-                
+                }
+                @case('code-block') {
                 <!-- Code Block Properties -->
-                <div *ngSwitchCase="'code-block'" class="node-properties">
+                <div class="node-properties">
                     <div class="field mb-3">
                         <label class="block mb-1 font-medium">Language</label>
                         <p-dropdown 
@@ -222,7 +229,9 @@
                         </textarea>
                     </div>
                 </div>
-            </div>
+                }
+            }
         </div>
+        }
     </div>
 </div>

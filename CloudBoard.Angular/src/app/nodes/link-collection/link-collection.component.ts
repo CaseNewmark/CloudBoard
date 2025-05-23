@@ -14,7 +14,6 @@ import { LinkCollectionProperties, LinkProperties } from '../../data/cloudboard'
     FFlowModule,
     CardModule,
     FormsModule,
-    NgFor,
     ButtonModule
   ],
   templateUrl: './link-collection.component.html',

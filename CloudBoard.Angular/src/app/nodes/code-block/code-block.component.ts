@@ -12,9 +12,7 @@ import { NgClass, NgIf } from '@angular/common';
   imports: [
     FFlowModule,
     CardModule,
-    FormsModule,
-    NgClass,
-    NgIf
+    FormsModule
   ],
   templateUrl: './code-block.component.html',
   styleUrl: './code-block.component.css',

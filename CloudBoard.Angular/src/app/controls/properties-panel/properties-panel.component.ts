@@ -1,9 +1,9 @@
-import { Component, input, model, output, EventEmitter, inject } from '@angular/core';
+import { Component, model, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InplaceModule } from 'primeng/inplace';
-import { NgClass, NgFor, NgIf, NgSwitch, NgSwitchCase, NgSwitchDefault } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { Node, NodeType } from '../../data/cloudboard';
 import { BlurOnEnterDirective } from '../../helpers/blur-on-enter.directive';
 import { TextareaModule } from 'primeng/textarea';
@@ -22,11 +22,6 @@ import { InputSwitchModule } from 'primeng/inputswitch';
     TextareaModule,
     InplaceModule,
     NgClass,
-    NgFor,
-    NgIf,
-    NgSwitch,
-    NgSwitchCase,
-    NgSwitchDefault,
     ColorPickerModule,
     DropdownModule,
     CheckboxModule,
@@ -41,7 +36,7 @@ export class PropertiesPanelComponent {
   nodeProperties = model<Node|undefined>(undefined);
   
   nodeTypes = Object.values(NodeType);
-  nodeTypeLabels = {
+  nodeTypeLabels: Record<NodeType, string> = {
     [NodeType.Note]: 'Simple Note',
     [NodeType.Card]: 'Card',
     [NodeType.LinkCollection]: 'Link Collection',
@@ -82,20 +77,24 @@ export class PropertiesPanelComponent {
       node.connectors = connectors;
     }
   }
+
+  getNodeTypeLabel(type: any): string {
+    return this.nodeTypeLabels[type as NodeType] || 'Unknown Type';
+  }
   
   addLink(): void {
     if (this.nodeProperties() && this.nodeProperties()!.type === NodeType.LinkCollection) {
-      //const links = this.nodeProperties()!.properties.links || [];
-      // links.push({ title: 'New Link', url: 'https://example.com', iconClass: 'pi pi-external-link' });
-      // this.nodeProperties()!.properties.links = links;
+      const links = this.nodeProperties()!.properties['links'] || [];
+      links.push({ title: 'New Link', url: 'https://example.com', iconClass: 'pi pi-external-link' });
+      this.nodeProperties()!.properties['links'] = links;
     }
   }
   
   removeLink(index: number): void {
     if (this.nodeProperties() && this.nodeProperties()!.type === NodeType.LinkCollection) {
-      // const links = this.nodeProperties()!.properties.links || [];
-      // links.splice(index, 1);
-      // this.nodeProperties()!.properties.links = links;
+      const links = this.nodeProperties()!.properties['links'] || [];
+      links.splice(index, 1);
+      this.nodeProperties()!.properties['links'] = links;
     }
   }
 }

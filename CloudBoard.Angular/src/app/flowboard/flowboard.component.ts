@@ -245,7 +245,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       // Add the node to the cloudboard
       this.currentCloudBoard.nodes.push(newNode);
       
-      // Set focus to the new node
+      // TODO: Set focus to the new node
       setTimeout(() => {
         //this.fFlow()?.selectNodes([newNode.id]);
       }, 0);
@@ -288,23 +288,4 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   protected getComponentForNode(node: NodeInfo): any {
     return this.nodeRegistryService.getComponentForType(node.type);
   }
-
-// }
-//     node.position = newPosition;
-//     console.log('Node Position Changed Event:', newPosition);
-//   }
-
-//   protected addNode(): void {
-//     // TODO: Implementation for adding a new node
-//   }
-
-//   showFlowContextMenu(event: Event): void {
-//     let menu = this.flowContextMenu();
-//     menu?.show(event);
-//   }
-
-//   showNodeContextMenu($event: MouseEvent, node: Node) {
-//     let menu = this.nodeContextMenu();
-//     menu?.show($event);
-//   }
 }
