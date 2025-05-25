@@ -35,7 +35,14 @@ public class CloudBoardDbContext : DbContext
         modelBuilder.Entity<Node>(entity =>
         {
             entity.Property(n => n.Name).IsRequired().HasMaxLength(100);
-            entity.OwnsOne(n => n.Position);
+            
+            // Configure NodePosition as an owned entity with explicit column names
+            entity.OwnsOne(n => n.Position, position =>
+            {
+                position.Property(p => p.X).HasColumnName("PositionX");
+                position.Property(p => p.Y).HasColumnName("PositionY");
+            });
+            
             entity.Property(n => n.Properties)
                 .HasColumnType("jsonb");
 

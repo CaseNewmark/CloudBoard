@@ -71,13 +71,17 @@ namespace CloudBoard.ApiService.Data
                     {
                         // New node, add it and ensure foreign key is set
                         updatedNode.CloudBoardDocumentId = existingDocument.Id;
+
                         existingDocument.Nodes.Add(updatedNode);
                     }
                     else
                     {
                         // Update existing node
                         _dbContext.Entry(existingNode).CurrentValues.SetValues(updatedNode);
-                        existingNode.CloudBoardDocumentId = existingDocument.Id; // Ensure foreign key is set
+
+                        existingNode.CloudBoardDocumentId = existingDocument.Id; 
+                        existingNode.Position.Y = updatedNode.Position.Y;
+                        existingNode.Position.X = updatedNode.Position.X;
 
                         // Handle connectors for this node
                         // Remove connectors that don't exist anymore
