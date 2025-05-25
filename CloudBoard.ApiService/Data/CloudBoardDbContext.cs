@@ -8,10 +8,11 @@ public class CloudBoardDbContext : DbContext
         : base(options)
     {
     }
-
+    
     public DbSet<CloudBoardDocument> CloudBoardDocuments { get; set; }
     public DbSet<Node> Nodes { get; set; }
-    public DbSet<Connection> Connectors { get; set; }
+    public DbSet<Connection> Connections { get; set; }
+    public DbSet<Connector> Connectors { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,11 +31,13 @@ public class CloudBoardDbContext : DbContext
                 .HasForeignKey(c => c.CloudBoardDocumentId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
-
+        
         modelBuilder.Entity<Node>(entity =>
         {
             entity.Property(n => n.Name).IsRequired().HasMaxLength(100);
             entity.OwnsOne(n => n.Position);
+            entity.Property(n => n.Properties)
+                .HasColumnType("jsonb");
 
             entity.HasMany(n => n.Connectors)
                 .WithOne(c => c.Node)
@@ -46,6 +49,13 @@ public class CloudBoardDbContext : DbContext
         {
             entity.Property(c => c.FromConnectorId).IsRequired();
             entity.Property(c => c.ToConnectorId).IsRequired();
+            entity.ToTable("Connections");
+        });
+
+        modelBuilder.Entity<Connector>(entity =>
+        {
+            entity.Property(c => c.Name).IsRequired();
+            entity.ToTable("Connectors");
         });
     }
 }

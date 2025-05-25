@@ -213,26 +213,23 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       let canvas = this.fCanvas();
       if (!canvas) return;
       
-      // Create a unique ID for the new node
-      const nodeId = Guid.create().toString();
-      
       // Get default properties for the node type
       const defaultProperties = this.nodeRegistryService.getDefaultPropertiesForType(nodeType);
       
       // Create a new node
       const newNode: NodeInfo = {
-        id: nodeId,
+        id: Guid.createEmpty().toString(),
         name: this.getDefaultNameForNodeType(nodeType),
         position: { x: 100, y: 100 },
         connectors: [
           {
-            id: Guid.create().toString(),
+            id: Guid.createEmpty().toString(),
             name: 'In',
             position: ConnectorPosition.Left,
             type: ConnectorType.In
           },
           {
-            id: Guid.create().toString(),
+            id: Guid.createEmpty().toString(),
             name: 'Out',
             position: ConnectorPosition.Right,
             type: ConnectorType.Out

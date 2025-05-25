@@ -34,17 +34,26 @@ public class CloudBoardService : ICloudBoardService
         var document = await _cloudBoardRepository.GetDocumentByIdAsync(id);
         return _mapper.Map<CloudBoardDocumentDto>(document);
     }
-
+    
     public async Task<CloudBoardDocumentDto?> UpdateCloudBoardDocumentAsync(Guid id, CloudBoardDocumentDto updateDto)
     {
-        var document = await _cloudBoardRepository.GetDocumentByIdAsync(id);
-        if (document == null) return null;
+        // First verify the document exists
+        var documentExists = await _cloudBoardRepository.GetDocumentByIdAsync(id);
+        if (documentExists == null) return null;
 
-        // Map updated fields (adjust as needed)
-        _mapper.Map(updateDto, document);
+        // Instead of mapping directly to the loaded entity, create a new entity
+        // from the DTO and preserve the ID
+        var documentToUpdate = _mapper.Map<CloudBoardDocument>(updateDto);
 
-        await _cloudBoardRepository.UpdateDocumentAsync(document);
-        return _mapper.Map<CloudBoardDocumentDto>(document);
+        // Ensure the ID is set correctly
+        documentToUpdate.Id = id;
+
+        // Now let the repository handle the update with proper change tracking
+        await _cloudBoardRepository.UpdateDocumentAsync(documentToUpdate);
+
+        // Get the fresh entity after update
+        var updatedDocument = await _cloudBoardRepository.GetDocumentByIdAsync(id);
+        return _mapper.Map<CloudBoardDocumentDto>(updatedDocument);
     }
 
     public async Task<bool> DeleteCloudBoardDocumentAsync(Guid id)
