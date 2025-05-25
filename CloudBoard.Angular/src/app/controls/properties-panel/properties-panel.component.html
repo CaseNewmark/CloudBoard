@@ -126,10 +126,10 @@
                         </p-button>
                     </div>
                     
-                    @for (link, index of nodeProperties()!.properties['links']; track index) {
+                    @for (link of nodeProperties()!.properties['links']; track $index) {
                     <div class="mb-4 p-3 border rounded shadow-sm">
                         <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm font-bold">Link No. #{{ index }}</span>
+                            <span class="text-sm font-bold">Link No. #{{ $index }}</span>
                             <p-button 
                                 icon="pi pi-trash" 
                                 size="small" 
