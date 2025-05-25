@@ -27,19 +27,19 @@
 
                 <!-- Dynamically render the correct component based on node type -->
                 @switch (node.type) {
-                    @case ('note') {
+                    @case ('Note') {
                         <simple-note [node]="node"></simple-note>
                     }
-                    @case ('card') {
+                    @case ('Card') {
                         <card-node [node]="node"></card-node>
                     }
-                    @case ('link-collection') {
+                    @case ('LinkCollection') {
                         <link-collection [node]="node"></link-collection>
                     }
-                    @case ('image') {
+                    @case ('Image') {
                         <image-node [node]="node"></image-node>
                     }
-                    @case ('code-block') {
+                    @case ('CodeBlock') {
                         <code-block [node]="node"></code-block>
                     }
                     @default {

@@ -41,7 +41,7 @@
             
             <!-- Dynamic properties based on node type -->
              @switch(nodeProperties()!.type) {
-                @case ('note') {
+                @case ('Note') {
                 <!-- Simple Note Properties -->
                 <div class="node-properties">
                     <div class="field mb-3">
@@ -72,7 +72,7 @@
                     </div>
                 </div>
                 }
-                @case ('card') {
+                @case ('Card') {
                 <!-- Card Node Properties -->
                 <div class="node-properties">
                     <div class="field mb-3">
@@ -114,7 +114,7 @@
                     </div>
                 </div>
                 }
-                @case ('link-collection') {
+                @case ('LinkCollection') {
                 <!-- Link Collection Properties -->
                 <div class="node-properties">
                     <div class="field mb-2 flex justify-between items-center">
@@ -168,7 +168,7 @@
                     }
                 </div>
                 }
-                @case ('image') {
+                @case ('Image') {
                 <!-- Image Node Properties -->
                 <div class="node-properties">
                     <div class="field mb-3">
@@ -199,7 +199,7 @@
                     </div>
                 </div>
                 }
-                @case('code-block') {
+                @case('CodeBlock') {
                 <!-- Code Block Properties -->
                 <div class="node-properties">
                     <div class="field mb-3">

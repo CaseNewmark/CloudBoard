@@ -3,16 +3,16 @@
 import { Guid } from "guid-typescript";
 
 export enum ConnectorPosition {
-  Top = 'top',
-  Bottom = 'bottom',
-  Left = 'left',
-  Right = 'right'
+  Top = 'Top',
+  Bottom = 'Bottom',
+  Left = 'Left',
+  Right = 'Right'
 }
 
 export enum ConnectorType {
-  In = 'in',
-  Out = 'out',
-  InOut = 'inout'
+  In = 'In',
+  Out = 'Out',
+  InOut = 'InOut'
 }
 
 export interface Connector {
@@ -29,11 +29,11 @@ export interface NodePosition {
 
 // Define node types enum
 export enum NodeType {
-  Note = 'note',
-  Card = 'card',
-  LinkCollection = 'link-collection',
-  ImageNode = 'image',
-  CodeBlock = 'code-block'
+  Note = 'Note',
+  Card = 'Card',
+  LinkCollection = 'LinkCollection',
+  ImageNode = 'Image',
+  CodeBlock = 'CodeBlock'
 }
 
 // Base properties interface
