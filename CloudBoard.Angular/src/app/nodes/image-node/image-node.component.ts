@@ -21,7 +21,7 @@ import { ImageNodeProperties } from '../../data/cloudboard';
 export class ImageNodeComponent extends BaseNodeComponent {
   // Get image URL with default value if not set
   get url(): string {
-    return this.getProperty<string>('url', 'https://picsum.photos/200/300');
+    return this.getProperty<string>('url', 'https://picsum.photos/300/200');
   }
   
   // Set image URL property
