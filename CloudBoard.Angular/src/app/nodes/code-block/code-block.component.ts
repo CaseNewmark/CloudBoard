@@ -72,7 +72,7 @@ export class CodeBlockComponent extends BaseNodeComponent {
       // Comments
       highlightedCode = highlightedCode.replace(
         /\/\/(.*)/g, 
-        '<span class="comment">//\$1</span>'
+        '<span class="comment">//$1</span>'
       );
       
       // Numbers
