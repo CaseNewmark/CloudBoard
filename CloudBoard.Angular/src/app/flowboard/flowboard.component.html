@@ -24,7 +24,29 @@
                 fDragHandle [fNodePosition]="node.position"
                 (fNodePositionChange)="onNodePositionChanged($event, node)"
                 (contextmenu)="showNodeContextMenu($event, node)">
-                <simple-note [node]="node"></simple-note>
+
+                <!-- Dynamically render the correct component based on node type -->
+                @switch (node.type) {
+                    @case ('Note') {
+                        <simple-note [node]="node"></simple-note>
+                    }
+                    @case ('Card') {
+                        <card-node [node]="node"></card-node>
+                    }
+                    @case ('LinkCollection') {
+                        <link-collection [node]="node"></link-collection>
+                    }
+                    @case ('Image') {
+                        <image-node [node]="node"></image-node>
+                    }
+                    @case ('CodeBlock') {
+                        <code-block [node]="node"></code-block>
+                    }
+                    @default {
+                        <simple-note [node]="node"></simple-note>
+                    }
+                }
+
                 @for (connector of node.connectors; track connector.id) {
                     @switch (connector.type.toString().toLowerCase()) {
                         @case ('in') {

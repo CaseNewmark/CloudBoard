@@ -4,6 +4,7 @@ using System.Text.Json;
 using CloudBoard.ApiService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CloudBoard.ApiService.Migrations
 {
     [DbContext(typeof(CloudBoardDbContext))]
-    partial class CloudBoardDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250525084129_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -151,12 +154,10 @@ namespace CloudBoard.ApiService.Migrations
                                 .HasColumnType("uuid");
 
                             b1.Property<float>("X")
-                                .HasColumnType("real")
-                                .HasColumnName("PositionX");
+                                .HasColumnType("real");
 
                             b1.Property<float>("Y")
-                                .HasColumnType("real")
-                                .HasColumnName("PositionY");
+                                .HasColumnType("real");
 
                             b1.HasKey("NodeId");
 

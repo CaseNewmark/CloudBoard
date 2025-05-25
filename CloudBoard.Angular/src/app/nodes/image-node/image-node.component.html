@@ -1,0 +1,6 @@
+<p-card [header]="node()?.name" styleClass="image-node">
+    <p-image [src]="url" [alt]="alt || node()?.name" imageClass="w-full" [preview]="true"></p-image>
+    <div class="image-caption">
+        {{ caption }}
+    </div>
+</p-card>

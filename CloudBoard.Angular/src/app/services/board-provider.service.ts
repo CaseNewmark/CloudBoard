@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, ReplaySubject } from 'rxjs';
-import { CloudBoard, ConnectorPosition, ConnectorType } from '../data/cloudboard';
+import { CloudBoard, ConnectorPosition, ConnectorType, NodeType } from '../data/cloudboard';
 import { tap } from 'rxjs/operators';
 import { Guid } from 'guid-typescript';
 
@@ -38,19 +38,33 @@ export class BoardProviderService {
 
     let createCloudboardDocument: CloudBoard = {
       id: undefined,
-      name: 'this board has an extremly long name',
+      name: 'Empty Cloudboard',
       nodes: [
-        { id: Guid.create().toString(), name: 'Node 1', properties: [], position: { x: 200, y: 30 }, connectors: [
-          { id: Guid.create().toString(), name: '', position: ConnectorPosition.Left, type: ConnectorType.In},
-          { id: connectorId1, name: '', position: ConnectorPosition.Right, type: ConnectorType.Out}
-        ]},
-        { id: Guid.create().toString(), name: 'Node 2', properties: [], position: { x: 400, y: 40 }, connectors: [
-          { id: connectorId2, name: '', position: ConnectorPosition.Left, type: ConnectorType.In},
-          { id: Guid.create().toString(), name: '', position: ConnectorPosition.Right, type: ConnectorType.Out}
-        ]}
+        // { 
+        //   id: Guid.create().toString(), 
+        //   name: 'Node 1', 
+        //   position: { x: 200, y: 30 }, 
+        //   connectors: [
+        //     { id: Guid.create().toString(), name: '', position: ConnectorPosition.Left, type: ConnectorType.In},
+        //     { id: connectorId1, name: '', position: ConnectorPosition.Right, type: ConnectorType.Out}
+        //   ],
+        //   type: NodeType.Card,
+        //   properties: {}
+        // },
+        // { 
+        //   id: Guid.create().toString(), 
+        //   name: 'Node 2', 
+        //   position: { x: 400, y: 40 }, 
+        //   connectors: [
+        //     { id: connectorId2, name: '', position: ConnectorPosition.Left, type: ConnectorType.In},
+        //     { id: Guid.create().toString(), name: '', position: ConnectorPosition.Right, type: ConnectorType.Out}
+        //   ],
+        //   type: NodeType.ImageNode,
+        //   properties: {}
+        // }
       ],
       connections: [
-        { id: Guid.create().toString(), fromConnectorId: connectorId1, toConnectorId: connectorId2 }
+        // { id: Guid.create().toString(), fromConnectorId: connectorId1, toConnectorId: connectorId2 }
       ]
     };
     return this.http.post<CloudBoard>(`${this.apiUrl}/cloudboard`, createCloudboardDocument).pipe(

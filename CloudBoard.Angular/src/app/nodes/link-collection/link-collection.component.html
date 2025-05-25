@@ -1,0 +1,19 @@
+<p-card [header]="node()?.name" styleClass="link-collection-card">
+    <div class="link-collection">
+        @for (link of links; track $index) {
+            <div class="link-item">
+                <a href="javascript:void(0)" (click)="openLink(link.url, $event)" class="link-button">
+                    <i class="{{link.iconClass || 'pi pi-link'}} link-icon"></i>
+                    <span class="text-xs text-gray-500">{{$index}}</span>
+                    <span class="link-title">{{link.title}}</span>
+                </a>
+            </div>
+        }
+        @if (links.length === 0) {
+            <div class="text-center p-3 text-gray-500">
+                <i class="pi pi-info-circle mb-2" style="font-size: 1.5rem;"></i>
+                <p>No links added yet</p>
+            </div>
+        }
+    </div>
+</p-card>
