@@ -23,7 +23,7 @@
             }
 
             <!-- Render all nodes from the cloudboard data -->
-            @for (node of currentCloudBoard.nodes; track node.tempid) {
+            @for (node of currentCloudBoard.nodes; track $index) {
             <div fNode [fNodeId]="node.id"
                 fDragHandle [fNodePosition]="node.position"
                 (fNodePositionChange)="onNodePositionChanged($event, node)"
@@ -51,7 +51,7 @@
                     }
                 }
 
-                @for (connector of node.connectors; track connector.tempid) {
+                @for (connector of node.connectors; track $index) {
                     @switch (connector.type.toString().toLowerCase()) {
                         @case ('in') {
                         <div fNodeInput [fInputId]="connector.id" class="connector left"></div>
