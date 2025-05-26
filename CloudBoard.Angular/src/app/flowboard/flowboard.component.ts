@@ -31,7 +31,7 @@ import { CodeBlockComponent } from '../nodes/code-block/code-block.component';
     LinkCollectionComponent,
     ImageNodeComponent,
     CodeBlockComponent],
-  changeDetection: ChangeDetectionStrategy.Default,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './flowboard.component.html',
   styleUrl: './flowboard.component.css',
 })
@@ -63,27 +63,27 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         {
           label: 'Note',
           icon: 'pi pi-file-edit',
-          command: (e) => this.addNode(NodeType.Note, e as PointerEvent)
+          command: (e) => this.addNode(NodeType.Note, e.originalEvent as PointerEvent)
         },
         {
           label: 'Card',
           icon: 'pi pi-id-card',
-          command: (e) => this.addNode(NodeType.Card, e as PointerEvent)
+          command: (e) => this.addNode(NodeType.Card, e.originalEvent as PointerEvent)
         },
         {
           label: 'Link Collection',
           icon: 'pi pi-link',
-          command: (e) => this.addNode(NodeType.LinkCollection, e as PointerEvent)
+          command: (e) => this.addNode(NodeType.LinkCollection, e.originalEvent as PointerEvent)
         },
         {
           label: 'Image',
           icon: 'pi pi-image',
-          command: (e) => this.addNode(NodeType.ImageNode, e as PointerEvent)
+          command: (e) => this.addNode(NodeType.ImageNode, e.originalEvent as PointerEvent)
         },
         {
           label: 'Code Block',
           icon: 'pi pi-code',
-          command: (e) => this.addNode(NodeType.CodeBlock, e as PointerEvent)
+          command: (e) => this.addNode(NodeType.CodeBlock, e.originalEvent as PointerEvent)
         }
       ]
     },
@@ -134,6 +134,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
           skipLocationChange: false // update the browser URL
         });
       }
+      this.changeDetectorRef.detectChanges();
     });
     this.subscriptions.push(boardSubscription);
     
@@ -219,12 +220,18 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       // Get default properties for the node type
       const defaultProperties = this.nodeRegistryService.getDefaultPropertiesForType(nodeType);
 
+      let position = this.fFlow()?.getPositionInFlow({x: event.x, y: event.y});
+      if (!position) {
+        console.error('Could not determine position in flow for the event:', event);
+        return;
+      }
+
       // Create a new node
       const newNode: NodeInfo = {
         id: Guid.createEmpty().toString(),
         tempid: Guid.createEmpty().toString(),
         name: this.getDefaultNameForNodeType(nodeType),
-        position: { x: event.clientX, y: event.clientY },
+        position: { x: position.x, y: position.y },
         connectors: [
           {
             id: Guid.createEmpty().toString(),
@@ -297,6 +304,8 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       id: Guid.createEmpty().toString(),
       fromConnectorId: event.fOutputId!,
       toConnectorId: event.fInputId! });
+
+    this.changeDetectorRef.detectChanges();
     console.log('Connection added:', event);
   }
 }
