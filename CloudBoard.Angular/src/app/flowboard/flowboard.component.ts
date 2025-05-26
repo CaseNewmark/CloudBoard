@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, inject, signal, viewChild } from '@angular/core';
 import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FFlowModule, FCanvasComponent, FZoomDirective, MoveFrontElementsBeforeTargetElementExecution, FFlowComponent, FSelectionChangeEvent, FDraggableDirective } from '@foblex/flow';
+import { FFlowModule, FCanvasComponent, FZoomDirective, FCreateConnectionEvent, FFlowComponent, FSelectionChangeEvent, FDraggableDirective } from '@foblex/flow';
 import { ToolbarComponent } from '../controls/toolbar/toolbar.component';
 import { PropertiesPanelComponent } from '../controls/properties-panel/properties-panel.component';
 import { SimpleNoteComponent } from '../nodes/simple-note/simple-note.component';
@@ -63,27 +63,27 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         {
           label: 'Note',
           icon: 'pi pi-file-edit',
-          command: () => this.addNode(NodeType.Note)
+          command: (e) => this.addNode(NodeType.Note, e as PointerEvent)
         },
         {
           label: 'Card',
           icon: 'pi pi-id-card',
-          command: () => this.addNode(NodeType.Card)
+          command: (e) => this.addNode(NodeType.Card, e as PointerEvent)
         },
         {
           label: 'Link Collection',
           icon: 'pi pi-link',
-          command: () => this.addNode(NodeType.LinkCollection)
+          command: (e) => this.addNode(NodeType.LinkCollection, e as PointerEvent)
         },
         {
           label: 'Image',
           icon: 'pi pi-image',
-          command: () => this.addNode(NodeType.ImageNode)
+          command: (e) => this.addNode(NodeType.ImageNode, e as PointerEvent)
         },
         {
           label: 'Code Block',
           icon: 'pi pi-code',
-          command: () => this.addNode(NodeType.CodeBlock)
+          command: (e) => this.addNode(NodeType.CodeBlock, e as PointerEvent)
         }
       ]
     },
@@ -116,7 +116,10 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   ];
 
-  constructor(private route: ActivatedRoute, private router: Router) { }
+  constructor(
+    private changeDetectorRef: ChangeDetectorRef, 
+    private route: ActivatedRoute, 
+    private router: Router) { }
 
   ngOnInit(): void {
     // Subscribe to cloudBoard updates
@@ -207,7 +210,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  protected addNode(nodeType: NodeType = NodeType.Note): void {
+  protected addNode(nodeType: NodeType = NodeType.Note, event: PointerEvent): void {
     if (this.currentCloudBoard) {
       // Get the mouse position from the canvas
       let canvas = this.fCanvas();
@@ -215,21 +218,24 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       
       // Get default properties for the node type
       const defaultProperties = this.nodeRegistryService.getDefaultPropertiesForType(nodeType);
-      
+
       // Create a new node
       const newNode: NodeInfo = {
         id: Guid.createEmpty().toString(),
+        tempid: Guid.createEmpty().toString(),
         name: this.getDefaultNameForNodeType(nodeType),
-        position: { x: 100, y: 100 },
+        position: { x: event.clientX, y: event.clientY },
         connectors: [
           {
             id: Guid.createEmpty().toString(),
+            tempid: Guid.createEmpty().toString(),
             name: 'In',
             position: ConnectorPosition.Left,
             type: ConnectorType.In
           },
           {
             id: Guid.createEmpty().toString(),
+            tempid: Guid.createEmpty().toString(),
             name: 'Out',
             position: ConnectorPosition.Right,
             type: ConnectorType.Out
@@ -284,5 +290,13 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   
   protected getComponentForNode(node: NodeInfo): any {
     return this.nodeRegistryService.getComponentForType(node.type);
+  }
+
+  onConnectionAdded(event: FCreateConnectionEvent): void {
+    this.currentCloudBoard?.connections.push({ 
+      id: Guid.createEmpty().toString(),
+      fromConnectorId: event.fOutputId!,
+      toConnectorId: event.fInputId! });
+    console.log('Connection added:', event);
   }
 }

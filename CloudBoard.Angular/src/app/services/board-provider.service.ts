@@ -25,6 +25,16 @@ export class BoardProviderService {
     return this.http.get<CloudBoard>(`${this.apiUrl}/cloudboard/${boardId.toString()}`).pipe(
       tap(response => {
         this.currentCloudBoard = response;
+        this.currentCloudBoard.tempid = this.currentCloudBoard.id?.toString();
+        this.currentCloudBoard.nodes.forEach(node => {
+          node.tempid = node.id;
+          node.connectors.forEach(connector => {
+            connector.tempid = connector.id;
+          });
+        });
+        this.currentCloudBoard.connections.forEach(connection => {
+          connection.tempid = connection.id;
+        });
         this.cloudBoardLoaded.next(response);
       },
       (error) => {

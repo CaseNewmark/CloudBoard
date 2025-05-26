@@ -10,16 +10,20 @@
 <div class="grow h-full flex flex-row overflow-hidden">
     <p-contextmenu #flowcontextmenu [model]="flowContextMenuItems" />
     <p-contextmenu #nodecontextmenu [model]="nodeContextMenuItems" />
-    <f-flow class="grow" fDraggable (contextmenu)="showFlowContextMenu($event)"  (fSelectionChange)="onSelectionChange($event)">
+    <f-flow class="grow" 
+        fDraggable (contextmenu)="showFlowContextMenu($event)"
+        (fSelectionChange)="onSelectionChange($event)"
+        (fCreateConnection)="onConnectionAdded($event)">
         <f-canvas fZoom>
             <!-- Render all connections from the cloudboard data -->
-            @for (connector of currentCloudBoard.connections; track connector.id) {
-            <f-connection fType="segment" [fOutputId]="connector.fromConnectorId" [fInputId]="connector.toConnectorId">
+            <f-connection-for-create fBehavior="floating"></f-connection-for-create>
+            @for (connection of currentCloudBoard.connections; track $index) {
+            <f-connection fType="segment" [fOutputId]="connection.fromConnectorId" [fInputId]="connection.toConnectorId">
             </f-connection>
             }
 
             <!-- Render all nodes from the cloudboard data -->
-            @for (node of currentCloudBoard.nodes; track node.id) {
+            @for (node of currentCloudBoard.nodes; track node.tempid) {
             <div fNode [fNodeId]="node.id"
                 fDragHandle [fNodePosition]="node.position"
                 (fNodePositionChange)="onNodePositionChanged($event, node)"
@@ -47,7 +51,7 @@
                     }
                 }
 
-                @for (connector of node.connectors; track connector.id) {
+                @for (connector of node.connectors; track connector.tempid) {
                     @switch (connector.type.toString().toLowerCase()) {
                         @case ('in') {
                         <div fNodeInput [fInputId]="connector.id" class="connector left"></div>
