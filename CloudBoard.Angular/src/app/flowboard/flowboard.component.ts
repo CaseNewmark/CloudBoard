@@ -6,6 +6,7 @@ import { ToolbarComponent } from '../controls/toolbar/toolbar.component';
 import { PropertiesPanelComponent } from '../controls/properties-panel/properties-panel.component';
 import { SimpleNoteComponent } from '../nodes/simple-note/simple-note.component';
 import { BoardProviderService } from '../services/board-provider.service';
+import { DoubleClickDirective } from '../helpers/double-click.directive';
 import { CloudBoard, Connection, ConnectorPosition, ConnectorType, Node as NodeInfo, NodePosition, NodeType } from '../data/cloudboard';
 import { ContextMenu, ContextMenuModule } from 'primeng/contextmenu';
 import { Subscription } from 'rxjs';
@@ -32,7 +33,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
     LinkCollectionComponent,
     ImageNodeComponent,
     CodeBlockComponent,
-    ConfirmDialogModule],
+    ConfirmDialogModule,
+    DoubleClickDirective],
   providers: [
     ConfirmationService
   ],
@@ -94,6 +96,14 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
           command: (e) => this.addNode(NodeType.CodeBlock, e.originalEvent as PointerEvent)
         }
       ]
+    }
+  ];
+
+  public nodeContextMenuItems: MenuItem[] = [
+    {
+      label: 'Remove node',
+      icon: 'pi pi-trash',
+      command: () => this.deleteSelectedNode()
     },
     {
       separator: true
@@ -101,26 +111,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     {
       label: 'Properties Panel',
       icon: 'pi pi-cog',
-      items: [
-        {
-          label: 'Append to Body',
-          icon: 'pi pi-desktop',
-          command: () => this.propertiesPanelVisible.set(!this.propertiesPanelVisible())
-        },
-        {
-          label: 'Toggle Visibility',
-          icon: 'pi pi-eye',
-          command: () => this.propertiesPanelVisible.set(!this.propertiesPanelVisible())
-        }
-      ]
-    }
-  ];
-
-  public nodeContextMenuItems: MenuItem[] = [
-    {
-      label: 'Delete node',
-      icon: 'pi pi-trash',
-      command: () => this.deleteSelectedNode()
+      command: (e) => this.openPropertiesPanelForNode(e.originalEvent as MouseEvent)
     }
   ];
 
@@ -270,7 +261,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   protected showNodeContextMenu(event: MouseEvent, node: NodeInfo): void {
     if (this.nodeContextMenu()) {
       // Store the selected node to delete it later if needed
-      this.propertiesPanelNodeProperties = node;
+      //this.propertiesPanelNodeProperties = node;
       
       this.nodeContextMenu()?.show(event);
       event.preventDefault();
@@ -327,6 +318,16 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       }, 0);
     }
   }
+  protected openPropertiesPanelForNode(e: MouseEvent): void {
+    let selection = this.fFlow()?.getSelection();
+
+    if (selection && selection.fNodeIds && selection.fNodeIds.length > 0) {
+      let node = selection?.fNodeIds[0]
+      this.propertiesPanelNodeProperties = this.currentCloudBoard?.nodes.find(n => n.id === node);
+      this.propertiesPanelVisible.set(true);
+    }
+  }
+
 
   protected deleteSelectedNode(): void {
     if (this.currentCloudBoard && this.propertiesPanelNodeProperties) {

@@ -28,6 +28,7 @@
             <div fNode [fNodeId]="node.id"
                 fDragHandle [fNodePosition]="node.position"
                 (fNodePositionChange)="onNodePositionChanged($event, node)"
+                (dblclick)="onNodeDoubleClicked($event, node)"
                 (contextmenu)="showNodeContextMenu($event, node)">
 
                 <!-- Dynamically render the correct component based on node type -->
