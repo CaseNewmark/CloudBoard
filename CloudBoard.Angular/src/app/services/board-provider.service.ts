@@ -32,9 +32,6 @@ export class BoardProviderService {
             connector.tempid = connector.id;
           });
         });
-        this.currentCloudBoard.connections.forEach(connection => {
-          connection.tempid = connection.id;
-        });
         this.cloudBoardLoaded.next(response);
       },
       (error) => {
