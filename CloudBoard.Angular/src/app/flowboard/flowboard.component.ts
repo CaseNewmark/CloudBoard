@@ -1,22 +1,23 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, HostListener, inject, signal, viewChild } from '@angular/core';
 import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FFlowModule, FCanvasComponent, FZoomDirective, FCreateConnectionEvent, FFlowComponent, FSelectionChangeEvent, FDraggableDirective } from '@foblex/flow';
+import { FFlowModule, FCanvasComponent, FZoomDirective, FCreateConnectionEvent, FFlowComponent, FSelectionChangeEvent, FDraggableDirective, FTriggerEvent, FEventTrigger } from '@foblex/flow';
 import { ToolbarComponent } from '../controls/toolbar/toolbar.component';
 import { PropertiesPanelComponent } from '../controls/properties-panel/properties-panel.component';
 import { SimpleNoteComponent } from '../nodes/simple-note/simple-note.component';
 import { BoardProviderService } from '../services/board-provider.service';
-import { CloudBoard, ConnectorPosition, ConnectorType, Node as NodeInfo, NodePosition, NodeType } from '../data/cloudboard';
+import { CloudBoard, Connection, ConnectorPosition, ConnectorType, Node as NodeInfo, NodePosition, NodeType } from '../data/cloudboard';
 import { ContextMenu, ContextMenuModule } from 'primeng/contextmenu';
 import { Subscription } from 'rxjs';
 import { Guid } from 'guid-typescript';
 import { FlowControlService, ZoomAction } from '../services/flow-control.service';
-import { MenuItem } from 'primeng/api';
+import { ConfirmationService, MenuItem } from 'primeng/api';
 import { NodeRegistryService } from '../nodes/node-registry.service';
 import { CardNodeComponent } from '../nodes/card-node/card-node.component';
 import { LinkCollectionComponent } from '../nodes/link-collection/link-collection.component';
 import { ImageNodeComponent } from '../nodes/image-node/image-node.component';
 import { CodeBlockComponent } from '../nodes/code-block/code-block.component';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
   selector: 'app-flowboard',
@@ -30,7 +31,11 @@ import { CodeBlockComponent } from '../nodes/code-block/code-block.component';
     CardNodeComponent,
     LinkCollectionComponent,
     ImageNodeComponent,
-    CodeBlockComponent],
+    CodeBlockComponent,
+    ConfirmDialogModule],
+  providers: [
+    ConfirmationService
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './flowboard.component.html',
   styleUrl: './flowboard.component.css',
@@ -43,10 +48,10 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   protected flowContextMenu = viewChild<ContextMenu>('flowcontextmenu');
   protected nodeContextMenu = viewChild<ContextMenu>('nodecontextmenu');
-
   private flowControlService: FlowControlService = inject(FlowControlService);
   private boardProviderService: BoardProviderService = inject(BoardProviderService);  
   private nodeRegistryService = inject(NodeRegistryService);
+  private confirmationService = inject(ConfirmationService);
   private subscriptions: Subscription[] = [];
 
   public currentCloudBoard: CloudBoard | undefined;
@@ -54,6 +59,9 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   // Properties for the PropertiesPanel
   public propertiesPanelVisible = signal(false);
   public propertiesPanelNodeProperties: NodeInfo | undefined;
+  
+  // Currently selected nodes and connections
+  private selectedNodeIds: string[] = [];
 
   public flowContextMenuItems: MenuItem[] = [
     {
@@ -175,17 +183,75 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       let draggable = this.fDraggable(); 
       if (draggable?.isDragStarted) return;
 
-      this.propertiesPanelVisible.set(event.fNodeIds.length == 1);
-      if (event.fNodeIds.length == 1) {
-        var nodeProperties = this.currentCloudBoard?.nodes.find(node => node.id == event.fNodeIds[0]);
-        if (nodeProperties) {
-          this.propertiesPanelNodeProperties = nodeProperties;
-        }
-      }
-      else {
-        this.propertiesPanelNodeProperties = undefined;
-      }
+      // Store the selected node IDs for deletion handling
+      this.selectedNodeIds = event.fNodeIds;
     }, 0);
+  }
+
+  protected onNodeDoubleClicked(event: Event, node: NodeInfo): void {
+      if (!node) return
+
+      this.propertiesPanelNodeProperties = node;
+      this.propertiesPanelVisible.set(true);
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent): void {
+    // Only handle Delete key and only when we have a cloudboard and selection
+    if (event.key === 'Delete' && this.currentCloudBoard && this.selectedNodeIds.length > 0) {
+      // Prevent default browser behavior for Delete key
+      event.preventDefault();
+      
+      // Get all selected nodes
+      const selectedNodes = this.currentCloudBoard.nodes.filter(
+        node => this.selectedNodeIds.includes(node.id)
+      );
+      
+      // Find all connections that involve the selected nodes
+      const connectionsToDelete = this.currentCloudBoard.connections.filter(conn => 
+        selectedNodes.some(node => 
+          node.connectors.some(c => c.id === conn.fromConnectorId || c.id === conn.toConnectorId)
+        )
+      );
+      
+      // Show confirmation dialog
+      this.confirmDeleteNodes(selectedNodes, connectionsToDelete);
+    }
+  }
+
+  private confirmDeleteNodes(nodesToDelete: NodeInfo[], connectionsToDelete: any[]): void {
+    this.confirmationService.confirm({
+      message: `Are you sure you want to delete ${nodesToDelete.length} node${nodesToDelete.length > 1 ? 's' : ''} and ${connectionsToDelete.length} connection${connectionsToDelete.length > 1 ? 's' : ''}?`,
+      header: 'Delete Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text',
+      accept: () => {
+        this.deleteSelectedItems(nodesToDelete, connectionsToDelete);
+      }
+    });
+  }
+
+  private deleteSelectedItems(nodesToDelete: NodeInfo[], connectionsToDelete: Connection[]): void {
+    if (this.currentCloudBoard) {
+      // Remove the connections
+      this.currentCloudBoard.connections = this.currentCloudBoard.connections.filter(
+        conn => !connectionsToDelete.some(c => c.id === conn.id)
+      );
+      
+      // Remove the nodes
+      this.currentCloudBoard.nodes = this.currentCloudBoard.nodes.filter(
+        node => !nodesToDelete.some(n => n.id === node.id)
+      );
+      
+      // Clear selection
+      this.propertiesPanelNodeProperties = undefined;
+      this.propertiesPanelVisible.set(false);
+      this.selectedNodeIds = [];
+      
+      // Force change detection to update the view
+      this.changeDetectorRef.detectChanges();
+    }
   }
 
   protected onNodePositionChanged(newPosition: NodePosition, node: NodeInfo): void {
@@ -261,26 +327,19 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       }, 0);
     }
   }
-  
+
   protected deleteSelectedNode(): void {
     if (this.currentCloudBoard && this.propertiesPanelNodeProperties) {
       // Get the node to delete
       const nodeToDelete: NodeInfo = this.propertiesPanelNodeProperties;
       
-      // Remove all connections to this node
-      this.currentCloudBoard.connections = this.currentCloudBoard.connections.filter(conn => 
-        !nodeToDelete.connectors.some(c => c.id === conn.fromConnectorId || c.id === conn.toConnectorId)
+      // Find connections to this node
+      const connectionsToDelete = this.currentCloudBoard.connections.filter(conn => 
+        nodeToDelete.connectors.some(c => c.id === conn.fromConnectorId || c.id === conn.toConnectorId)
       );
       
-      // Remove the node
-      const index = this.currentCloudBoard.nodes.findIndex(n => n.id === nodeToDelete.id);
-      if (index >= 0) {
-        this.currentCloudBoard.nodes.splice(index, 1);
-      }
-      
-      // Clear selection
-      this.propertiesPanelNodeProperties = undefined;
-      this.propertiesPanelVisible.set(false);
+      // Use the common delete method with confirmation
+      this.confirmDeleteNodes([nodeToDelete], connectionsToDelete);
     }
   }
   
