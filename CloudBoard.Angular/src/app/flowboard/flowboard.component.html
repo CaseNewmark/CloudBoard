@@ -34,9 +34,7 @@
                 fDragHandle [fNodePosition]="node.position"
                 (fNodePositionChange)="onNodePositionChanged($event, node)"
                 (dblclick)="onNodeDoubleClicked($event, node)"
-                (contextmenu)="showNodeContextMenu($event, node)">
-
-                <!-- Dynamically render the correct component based on node type -->
+                (contextmenu)="showNodeContextMenu($event, node)">                <!-- Dynamically render the correct component based on node type -->
                 @switch (node.type) {
                     @case ('Note') {
                         <simple-note [node]="node"></simple-note>
@@ -47,7 +45,7 @@
                     @case ('LinkCollection') {
                         <link-collection [node]="node"></link-collection>
                     }
-                    @case ('Image') {
+                    @case ('ImageNode') {
                         <image-node [node]="node"></image-node>
                     }
                     @case ('CodeBlock') {

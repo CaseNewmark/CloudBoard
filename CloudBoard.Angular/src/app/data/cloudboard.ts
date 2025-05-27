@@ -33,7 +33,7 @@ export enum NodeType {
   Note = 'Note',
   Card = 'Card',
   LinkCollection = 'LinkCollection',
-  ImageNode = 'Image',
+  ImageNode = 'ImageNode',
   CodeBlock = 'CodeBlock'
 }
 

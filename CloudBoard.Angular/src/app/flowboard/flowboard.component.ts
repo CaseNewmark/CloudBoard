@@ -591,16 +591,9 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       });
     }
-  }
-  private getApiTypeForNodeType(nodeType: NodeType): string {
-    switch (nodeType) {
-      case NodeType.Note: return 'note';
-      case NodeType.Card: return 'card';
-      case NodeType.LinkCollection: return 'link-collection';
-      case NodeType.ImageNode: return 'image';
-      case NodeType.CodeBlock: return 'code-block';
-      default: return 'note';
-    }
+  }  private getApiTypeForNodeType(nodeType: NodeType): string {
+    // Return the enum value directly since it matches the C# enum
+    return nodeType.toString();
   }
 
   private createDefaultConnectorsForNode(nodeId: string): void {
