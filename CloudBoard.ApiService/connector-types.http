@@ -1,0 +1,68 @@
+@baseUrl = http://localhost:5000
+@nodeId = 00000000-0000-0000-0000-000000000000 // Replace with a valid node ID
+
+### Create Input Connector on Left
+POST {{baseUrl}}/api/connector
+Content-Type: application/json
+
+{
+  "name": "Input Left",
+  "position": "left",
+  "type": "in",
+  "nodeId": "{{nodeId}}"
+}
+
+### Create Output Connector on Right
+POST {{baseUrl}}/api/connector
+Content-Type: application/json
+
+{
+  "name": "Output Right",
+  "position": "right",
+  "type": "out",
+  "nodeId": "{{nodeId}}"
+}
+
+### Create Input Connector on Top
+POST {{baseUrl}}/api/connector
+Content-Type: application/json
+
+{
+  "name": "Input Top",
+  "position": "top",
+  "type": "in",
+  "nodeId": "{{nodeId}}"
+}
+
+### Create Output Connector on Bottom
+POST {{baseUrl}}/api/connector
+Content-Type: application/json
+
+{
+  "name": "Output Bottom",
+  "position": "bottom",
+  "type": "out",
+  "nodeId": "{{nodeId}}"
+}
+
+### Create Bidirectional Connector on Left
+POST {{baseUrl}}/api/connector
+Content-Type: application/json
+
+{
+  "name": "Bidirectional Left",
+  "position": "left",
+  "type": "inout",
+  "nodeId": "{{nodeId}}"
+}
+
+### Create Bidirectional Connector on Right
+POST {{baseUrl}}/api/connector
+Content-Type: application/json
+
+{
+  "name": "Bidirectional Right",
+  "position": "right",
+  "type": "inout",
+  "nodeId": "{{nodeId}}"
+}

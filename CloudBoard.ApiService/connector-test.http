@@ -1,0 +1,32 @@
+@baseUrl = http://localhost:5000
+
+### Create a connector
+POST {{baseUrl}}/api/connector
+Content-Type: application/json
+
+{
+  "name": "Test Connector",
+  "position": "left",
+  "type": "in",
+  "nodeId": "00000000-0000-0000-0000-000000000000" // Replace with a valid node ID
+}
+
+### Get connector by ID
+GET {{baseUrl}}/api/connector/00000000-0000-0000-0000-000000000000 // Replace with a valid connector ID
+
+### Get connectors by node ID
+GET {{baseUrl}}/api/node/00000000-0000-0000-0000-000000000000/connectors // Replace with a valid node ID
+
+### Update a connector
+PUT {{baseUrl}}/api/connector/00000000-0000-0000-0000-000000000000 // Replace with a valid connector ID
+Content-Type: application/json
+
+{
+  "id": "00000000-0000-0000-0000-000000000000", // Replace with a valid connector ID
+  "name": "Updated Connector",
+  "position": "right",
+  "type": "out"
+}
+
+### Delete a connector
+DELETE {{baseUrl}}/api/connector/00000000-0000-0000-0000-000000000000 // Replace with a valid connector ID

@@ -1,5 +1,6 @@
 using AutoMapper;
 using CloudBoard.ApiService.Data;
+using CloudBoard.ApiService.Data.Repositories;
 using CloudBoard.ApiService.Dtos;
 using CloudBoard.ApiService.Endpoints;
 using CloudBoard.ApiService.Services;
@@ -19,6 +20,12 @@ builder.Services.AddAutoMapper(config => config.AddProfile<DtoMappingProfile>())
 
 builder.Services.AddScoped<ICloudBoardService, CloudBoardService>();
 builder.Services.AddScoped<ICloudBoardRepository, CloudBoardRepository>();
+builder.Services.AddScoped<INodeService, NodeService>();
+builder.Services.AddScoped<INodeRepository, NodeRepository>();
+builder.Services.AddScoped<IConnectorService, ConnectorService>();
+builder.Services.AddScoped<IConnectorRepository, ConnectorRepository>();
+builder.Services.AddScoped<IConnectionService, ConnectionService>();
+builder.Services.AddScoped<IConnectionRepository, ConnectionRepository>();
 
 // Database Setup
 builder.AddNpgsqlDbContext<CloudBoardDbContext>(connectionName: "cloudboard");
@@ -28,6 +35,9 @@ var app = builder.Build();
 
 // Map endpoints
 app.MapCloudBoardEndpoints();
+app.MapNodeEndpoints();
+app.MapConnectorEndpoints();
+app.MapConnectionEndpoints();
 
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();

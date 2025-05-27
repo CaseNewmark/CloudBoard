@@ -1,0 +1,33 @@
+@baseUrl = http://localhost:5000
+
+### Create a connection
+POST {{baseUrl}}/api/connection
+Content-Type: application/json
+
+{
+  "fromConnectorId": "00000000-0000-0000-0000-000000000000", // Replace with a valid connector ID
+  "toConnectorId": "00000000-0000-0000-0000-000000000000", // Replace with a valid connector ID
+  "cloudBoardDocumentId": "00000000-0000-0000-0000-000000000000" // Replace with a valid cloudboard ID
+}
+
+### Get connection by ID
+GET {{baseUrl}}/api/connection/00000000-0000-0000-0000-000000000000 // Replace with a valid connection ID
+
+### Get connections by cloudboard document ID
+GET {{baseUrl}}/api/cloudboard/00000000-0000-0000-0000-000000000000/connections // Replace with a valid cloudboard ID
+
+### Get connections by connector ID
+GET {{baseUrl}}/api/connector/00000000-0000-0000-0000-000000000000/connections // Replace with a valid connector ID
+
+### Update a connection
+PUT {{baseUrl}}/api/connection/00000000-0000-0000-0000-000000000000 // Replace with a valid connection ID
+Content-Type: application/json
+
+{
+  "id": "00000000-0000-0000-0000-000000000000", // Replace with a valid connection ID
+  "fromConnectorId": "00000000-0000-0000-0000-000000000000", // Replace with a valid connector ID
+  "toConnectorId": "00000000-0000-0000-0000-000000000000" // Replace with a valid connector ID
+}
+
+### Delete a connection
+DELETE {{baseUrl}}/api/connection/00000000-0000-0000-0000-000000000000 // Replace with a valid connection ID
