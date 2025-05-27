@@ -12,6 +12,7 @@ import { NodeRegistryService } from '../../nodes/node-registry.service';
 import { DropdownModule } from 'primeng/dropdown';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import { BoardProviderService } from '../../services/board-provider.service';
 
 @Component({
   selector: 'properties-panel',
@@ -56,6 +57,7 @@ export class PropertiesPanelComponent {
   ];
 
   private nodeRegistryService = inject(NodeRegistryService);
+  private boardProviderService = inject(BoardProviderService);
 
   changeNodeType(newType: NodeType): void {
     if (this.nodeProperties()) {
@@ -75,6 +77,16 @@ export class PropertiesPanelComponent {
       node.name = name;
       node.position = position;
       node.connectors = connectors;
+      
+      // Update the node via API
+      this.boardProviderService.updateNode(id, node).subscribe(
+        response => {
+          console.log('Node type updated successfully');
+        },
+        error => {
+          console.error('Error updating node type:', error);
+        }
+      );
     }
   }
 
@@ -84,17 +96,57 @@ export class PropertiesPanelComponent {
   
   addLink(): void {
     if (this.nodeProperties() && this.nodeProperties()!.type === NodeType.LinkCollection) {
-      const links = this.nodeProperties()!.properties['links'] || [];
+      const node = this.nodeProperties()!;
+      const links = node.properties['links'] || [];
       links.push({ title: 'New Link', url: 'https://example.com', iconClass: 'pi pi-external-link' });
-      this.nodeProperties()!.properties['links'] = links;
+      node.properties['links'] = links;
+      
+      // Update the node via API
+      this.boardProviderService.updateNode(node.id, node).subscribe(
+        response => {
+          console.log('Link added successfully');
+        },
+        error => {
+          console.error('Error adding link:', error);
+        }
+      );
     }
   }
   
   removeLink(index: number): void {
     if (this.nodeProperties() && this.nodeProperties()!.type === NodeType.LinkCollection) {
-      const links = this.nodeProperties()!.properties['links'] || [];
+      const node = this.nodeProperties()!;
+      const links = node.properties['links'] || [];
       links.splice(index, 1);
-      this.nodeProperties()!.properties['links'] = links;
+      node.properties['links'] = links;
+      
+      // Update the node via API
+      this.boardProviderService.updateNode(node.id, node).subscribe(
+        response => {
+          console.log('Link removed successfully');
+        },
+        error => {
+          console.error('Error removing link:', error);
+        }
+      );
+    }
+  }
+
+  // Method to handle node name updates
+  updateNodeName(name: string): void {
+    if (this.nodeProperties() && name) {
+      const node = this.nodeProperties()!;
+      node.name = name;
+      
+      // Update the node via API
+      this.boardProviderService.updateNode(node.id, node).subscribe(
+        response => {
+          console.log('Node name updated successfully');
+        },
+        error => {
+          console.error('Error updating node name:', error);
+        }
+      );
     }
   }
 }

@@ -55,17 +55,21 @@ export class BoardProviderService {
         console.error('Error creating cloudboard', error);
       }));
   }
-
-  saveCloudBoard(): void {
-    if (this.currentCloudBoard) {
-      this.http.put<CloudBoard>(`${this.apiUrl}/cloudboard/${this.currentCloudBoard.id}`, this.currentCloudBoard).pipe(
-        tap(response => { 
-          console.log('Cloudboard saved successfully', response); 
-        },
-        (error) => { 
-          console.error('Error saving cloudboard', error); 
-        })).subscribe();
+  saveCloudBoard(): Observable<CloudBoard> {
+    if (!this.currentCloudBoard) {
+      return new Observable(observer => {
+        observer.error(new Error('No CloudBoard currently loaded'));
+        observer.complete();
+      });
     }
+    
+    return this.http.put<CloudBoard>(`${this.apiUrl}/cloudboard/${this.currentCloudBoard.id}`, this.currentCloudBoard).pipe(
+      tap(response => { 
+        console.log('Cloudboard saved successfully', response); 
+      },
+      (error) => { 
+        console.error('Error saving cloudboard', error); 
+      }));
   }
 
   deleteCloudBoard(boardId: Guid): Observable<any> {

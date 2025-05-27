@@ -19,6 +19,9 @@ import { LinkCollectionComponent } from '../nodes/link-collection/link-collectio
 import { ImageNodeComponent } from '../nodes/image-node/image-node.component';
 import { CodeBlockComponent } from '../nodes/code-block/code-block.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 
 @Component({
   selector: 'app-flowboard',
@@ -34,9 +37,12 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
     ImageNodeComponent,
     CodeBlockComponent,
     ConfirmDialogModule,
-    DoubleClickDirective],
+    DoubleClickDirective,
+    ProgressSpinnerModule,
+    ToastModule],
   providers: [
-    ConfirmationService
+    ConfirmationService,
+    MessageService
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './flowboard.component.html',
@@ -54,9 +60,11 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private boardProviderService: BoardProviderService = inject(BoardProviderService);  
   private nodeRegistryService = inject(NodeRegistryService);
   private confirmationService = inject(ConfirmationService);
+  private messageService = inject(MessageService);
   private subscriptions: Subscription[] = [];
 
   public currentCloudBoard: CloudBoard | undefined;
+  public isLoading = false;
   
   // Properties for the PropertiesPanel
   public propertiesPanelVisible = signal(false);
@@ -119,7 +127,6 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     private changeDetectorRef: ChangeDetectorRef, 
     private route: ActivatedRoute, 
     private router: Router) { }
-
   ngOnInit(): void {
     // Subscribe to cloudBoard updates
     const boardSubscription = this.boardProviderService.cloudBoardLoaded.subscribe((cloudBoard) => {
@@ -134,15 +141,30 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         });
       }
       this.changeDetectorRef.detectChanges();
+      
+      // Set up auto-save for the new board
+      this.setupAutoSave();
     });
     this.subscriptions.push(boardSubscription);
-    
-    // Get the id from the route parameter
+      // Get the id from the route parameter
     const routeSubscription = this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id != null && (this.currentCloudBoard == null
         || this.currentCloudBoard.id?.toString() !== id)) {
-        this.boardProviderService.loadCloudBoardById(Guid.parse(id)).subscribe();
+        this.isLoading = true;
+        this.boardProviderService.loadCloudBoardById(Guid.parse(id)).subscribe({
+          next: () => {
+            this.isLoading = false;
+          },
+          error: (error) => {
+            this.isLoading = false;
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to load CloudBoard: ' + (error.message || 'Unknown error')
+            });
+          }
+        });
       }
     });
     this.subscriptions.push(routeSubscription);
@@ -164,6 +186,12 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Clear auto-save timer
+    if (this.autoSaveTimer) {
+      clearInterval(this.autoSaveTimer);
+    }
+    
+    // Unsubscribe from all subscriptions
     this.subscriptions.forEach(subscription => subscription.unsubscribe());
   }
 
@@ -221,35 +249,114 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         this.deleteSelectedItems(nodesToDelete, connectionsToDelete);
       }
     });
-  }
-
-  private deleteSelectedItems(nodesToDelete: NodeInfo[], connectionsToDelete: Connection[]): void {
+  }  private deleteSelectedItems(nodesToDelete: NodeInfo[], connectionsToDelete: Connection[]): void {
     if (this.currentCloudBoard) {
-      // Remove the connections
-      this.currentCloudBoard.connections = this.currentCloudBoard.connections.filter(
-        conn => !connectionsToDelete.some(c => c.id === conn.id)
-      );
+      this.isLoading = true;
+      // Create an array of promises for all delete operations
+      const deleteOperations: Promise<any>[] = [];
       
-      // Remove the nodes
-      this.currentCloudBoard.nodes = this.currentCloudBoard.nodes.filter(
-        node => !nodesToDelete.some(n => n.id === node.id)
-      );
+      // Delete connections first
+      for (const connection of connectionsToDelete) {
+        const deletePromise = new Promise<void>((resolve, reject) => {
+          this.boardProviderService.deleteConnection(connection.id).subscribe({
+            next: () => {
+              console.log(`Connection ${connection.id} deleted successfully`);
+              resolve();
+            },
+            error: error => {
+              console.error(`Error deleting connection ${connection.id}:`, error);
+              reject(error);
+            }
+          });
+        });
+        deleteOperations.push(deletePromise);
+      }
       
-      // Clear selection
-      this.propertiesPanelNodeProperties = undefined;
-      this.propertiesPanelVisible.set(false);
-      this.selectedNodeIds = [];
+      // Then delete nodes
+      for (const node of nodesToDelete) {
+        const deletePromise = new Promise<void>((resolve, reject) => {
+          this.boardProviderService.deleteNode(node.id).subscribe({
+            next: () => {
+              console.log(`Node ${node.id} deleted successfully`);
+              resolve();
+            },
+            error: error => {
+              console.error(`Error deleting node ${node.id}:`, error);
+              reject(error);
+            }
+          });
+        });
+        deleteOperations.push(deletePromise);
+      }
       
-      // Force change detection to update the view
-      this.changeDetectorRef.detectChanges();
+      // When all delete operations are complete
+      Promise.all(deleteOperations)
+        .then(() => {
+          this.isLoading = false;
+          // Clear selection
+          this.propertiesPanelNodeProperties = undefined;
+          this.propertiesPanelVisible.set(false);
+          this.selectedNodeIds = [];
+          
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: `Successfully deleted ${nodesToDelete.length} node(s) and ${connectionsToDelete.length} connection(s)`
+          });
+          
+          // No need to update cloudBoard here as the service handles removing deleted items
+          this.changeDetectorRef.detectChanges();
+        })
+        .catch(error => {
+          this.isLoading = false;
+          console.error('Error during deletion:', error);
+          
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to delete items: ' + (error.message || 'Unknown error')
+          });
+          
+          // Refresh the board to ensure UI consistency
+          if (this.currentCloudBoard && this.currentCloudBoard.id) {
+            this.boardProviderService.loadCloudBoardById(this.currentCloudBoard.id).subscribe();
+          }
+        });
     }
   }
 
   protected onNodePositionChanged(newPosition: NodePosition, node: NodeInfo): void {
     if (node) {
+      // Update local position for immediate feedback
       node.position = newPosition;
+      
+      // Debounce the API update to avoid too many calls during dragging
+      if (this.positionUpdateTimer) {
+        clearTimeout(this.positionUpdateTimer);
+      }
+        this.positionUpdateTimer = setTimeout(() => {
+        // Create a copy of the node with the updated position
+        const updatedNode = {...node};
+        
+        // Call API to update the node
+        this.boardProviderService.updateNode(node.id, updatedNode).subscribe({
+          next: response => {
+            console.log('Node position updated successfully');
+          },
+          error: error => {
+            console.error('Error updating node position:', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to update node position: ' + (error.message || 'Unknown error')
+            });
+          }
+        });
+      }, 300); // 300ms debounce
     }
   }
+  
+  private positionUpdateTimer: any;
 
   protected showFlowContextMenu(event: MouseEvent): void {
     if (this.flowContextMenu()) {
@@ -267,7 +374,6 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       event.preventDefault();
     }
   }
-
   protected addNode(nodeType: NodeType = NodeType.Note, event: PointerEvent): void {
     if (this.currentCloudBoard) {
       // Get the mouse position from the canvas
@@ -283,39 +389,44 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
 
-      // Create a new node
-      const newNode: NodeInfo = {
-        id: Guid.createEmpty().toString(),
-        tempid: Guid.createEmpty().toString(),
+      // Prepare the node DTO for API (without connectors - they'll be created separately)
+      const nodeDto = {
         name: this.getDefaultNameForNodeType(nodeType),
         position: { x: position.x, y: position.y },
-        connectors: [
-          {
-            id: Guid.createEmpty().toString(),
-            tempid: Guid.createEmpty().toString(),
-            name: 'In',
-            position: ConnectorPosition.Left,
-            type: ConnectorType.In
-          },
-          {
-            id: Guid.createEmpty().toString(),
-            tempid: Guid.createEmpty().toString(),
-            name: 'Out',
-            position: ConnectorPosition.Right,
-            type: ConnectorType.Out
-          }
-        ],
-        type: nodeType,
-        properties: defaultProperties
+        connectors: [], // Empty array - connectors will be created after node creation
+        type: this.getApiTypeForNodeType(nodeType),
+        properties: defaultProperties,
+        cloudBoardDocumentId: this.currentCloudBoard.id?.toString()
       };
       
-      // Add the node to the cloudboard
-      this.currentCloudBoard.nodes.push(newNode);
-      
-      // TODO: Set focus to the new node
-      setTimeout(() => {
-        //this.fFlow()?.selectNodes([newNode.id]);
-      }, 0);
+      // Create the node through the API
+      this.isLoading = true;
+      this.boardProviderService.createNode(nodeDto).subscribe({
+        next: newNode => {
+          console.log('Node created successfully:', newNode);
+          
+          // Now create the default connectors for the node
+          this.createDefaultConnectorsForNode(newNode.id);
+          
+          this.isLoading = false;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'Node created successfully'
+          });
+          // Node has been added to the board in the service
+          this.changeDetectorRef.detectChanges();
+        },
+        error: error => {
+          this.isLoading = false;
+          console.error('Error creating node:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to create node: ' + (error.message || 'Unknown error')
+          });
+        }
+      });
     }
   }
   protected openPropertiesPanelForNode(e: MouseEvent): void {
@@ -360,12 +471,164 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onConnectionAdded(event: FCreateConnectionEvent): void {
-    this.currentCloudBoard?.connections.push({ 
-      id: Guid.createEmpty().toString(),
-      fromConnectorId: event.fOutputId!,
-      toConnectorId: event.fInputId! });
+    if (this.currentCloudBoard && event.fOutputId && event.fInputId) {
+      // Prepare connection DTO
+      const connectionDto = {
+        fromConnectorId: event.fOutputId,
+        toConnectorId: event.fInputId,
+        cloudBoardDocumentId: this.currentCloudBoard.id?.toString()
+      };
+        // Call API to create the connection
+      this.isLoading = true;
+      this.boardProviderService.createConnection(connectionDto).subscribe({
+        next: newConnection => {
+          this.isLoading = false;
+          console.log('Connection created successfully:', newConnection);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'Connection created successfully'
+          });
+          // Connection has been added to the board in the service
+          this.changeDetectorRef.detectChanges();
+        },
+        error: error => {
+          this.isLoading = false;
+          console.error('Error creating connection:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to create connection: ' + (error.message || 'Unknown error')
+          });
+          // If there's an error, remove the connection from the UI
+          if (this.currentCloudBoard) {
+            this.currentCloudBoard.connections = this.currentCloudBoard.connections.filter(
+              c => c.fromConnectorId !== event.fOutputId || c.toConnectorId !== event.fInputId
+            );
+            this.changeDetectorRef.detectChanges();
+          }
+        }
+      });
+    }
+  }
 
-    this.changeDetectorRef.detectChanges();
-    console.log('Connection added:', event);
+  // Method to add a new connector to a node
+  addConnector(nodeId: string, position: string, type: string): void {
+    const connectorDto = {
+      name: type === 'in' ? 'Input' : type === 'out' ? 'Output' : 'I/O',
+      position: position.toLowerCase(),
+      type: type.toLowerCase(),
+      nodeId: nodeId
+    };
+    
+    this.boardProviderService.createConnector(connectorDto).subscribe(
+      response => {
+        console.log('Connector added successfully');
+      },
+      error => {
+        console.error('Error adding connector:', error);
+      }
+    );
+  }
+  
+  // Method to remove a connector from a node
+  removeConnector(connectorId: string): void {
+    this.boardProviderService.deleteConnector(connectorId).subscribe(
+      response => {
+        console.log('Connector removed successfully');
+      },
+      error => {
+        console.error('Error removing connector:', error);
+      }
+    );
+  }
+
+  private autoSaveTimer: any;
+  private lastSaveTime: number = 0;
+  private readonly AUTO_SAVE_INTERVAL = 10000; // 10 seconds
+
+  // Setup auto-save functionality
+  private setupAutoSave(): void {
+    // Clear any existing timer
+    if (this.autoSaveTimer) {
+      clearInterval(this.autoSaveTimer);
+    }
+    
+    // Set up a new timer for auto-saving
+    this.autoSaveTimer = setInterval(() => {
+      const currentTime = Date.now();
+      
+      // Only save if changes have been made since last save and it's been at least AUTO_SAVE_INTERVAL ms
+      if (this.currentCloudBoard && 
+          currentTime - this.lastSaveTime >= this.AUTO_SAVE_INTERVAL) {
+        this.saveCloudBoard();
+      }
+    }, this.AUTO_SAVE_INTERVAL);
+  }
+    // Save the current CloudBoard
+  private saveCloudBoard(): void {
+    if (this.currentCloudBoard) {
+      this.isLoading = true;
+      this.boardProviderService.saveCloudBoard().subscribe({
+        next: () => {
+          this.isLoading = false;
+          this.lastSaveTime = Date.now();
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Auto-Save',
+            detail: 'CloudBoard saved successfully',
+            life: 3000
+          });
+        },
+        error: (error) => {
+          this.isLoading = false;
+          console.error('Error saving CloudBoard:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to save CloudBoard: ' + (error.message || 'Unknown error')
+          });
+        }
+      });
+    }
+  }
+  private getApiTypeForNodeType(nodeType: NodeType): string {
+    switch (nodeType) {
+      case NodeType.Note: return 'note';
+      case NodeType.Card: return 'card';
+      case NodeType.LinkCollection: return 'link-collection';
+      case NodeType.ImageNode: return 'image';
+      case NodeType.CodeBlock: return 'code-block';
+      default: return 'note';
+    }
+  }
+
+  private createDefaultConnectorsForNode(nodeId: string): void {
+    // Create input connector
+    const inConnectorDto = {
+      name: 'In',
+      position: 'left',
+      type: 'in',
+      nodeId: nodeId
+    };
+    
+    // Create output connector
+    const outConnectorDto = {
+      name: 'Out',
+      position: 'right',
+      type: 'out',
+      nodeId: nodeId
+    };
+    
+    // Create both connectors
+    this.boardProviderService.createConnector(inConnectorDto).subscribe({
+      next: () => console.log('Input connector created'),
+      error: (error) => console.error('Error creating input connector:', error)
+    });
+    
+    this.boardProviderService.createConnector(outConnectorDto).subscribe({
+      next: () => console.log('Output connector created'),
+      error: (error) => console.error('Error creating output connector:', error)
+    });
   }
 }
