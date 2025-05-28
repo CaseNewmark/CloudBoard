@@ -29,7 +29,7 @@
             }
 
             <!-- Render all nodes from the cloudboard data -->
-            @for (node of currentCloudBoard.nodes; track $index) {
+            @for (node of currentCloudBoard.nodes; track node.id) {
             <div fNode [fNodeId]="node.id"
                 fDragHandle [fNodePosition]="node.position"
                 (fNodePositionChange)="onNodePositionChanged($event, node)"
