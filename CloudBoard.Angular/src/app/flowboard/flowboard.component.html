@@ -1,20 +1,30 @@
 <div class="toolbar-container">
     <toolbar></toolbar>
 </div>
+<p-toast position="top-right"></p-toast>
+<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
 @if (!currentCloudBoard) {
 <div class="grow h-full flex justify-center items-center">
-    <i>No Cloudboard loaded yet..</i>
+    @if (isLoading) {
+        <p-progressSpinner></p-progressSpinner>
+    } @else {
+        <i>No Cloudboard loaded yet..</i>
+    }
 </div>
 }
 @else {
 <div class="grow h-full flex flex-row overflow-hidden">
     <p-contextmenu #flowcontextmenu [model]="flowContextMenuItems" />
     <p-contextmenu #nodecontextmenu [model]="nodeContextMenuItems" />
-    <f-flow class="grow" fDraggable (contextmenu)="showFlowContextMenu($event)"  (fSelectionChange)="onSelectionChange($event)">
+    <f-flow class="grow" 
+        fDraggable (contextmenu)="showFlowContextMenu($event)"
+        (fSelectionChange)="onSelectionChange($event)"
+        (fCreateConnection)="onConnectionAdded($event)">
         <f-canvas fZoom>
             <!-- Render all connections from the cloudboard data -->
-            @for (connector of currentCloudBoard.connections; track connector.id) {
-            <f-connection fType="segment" [fOutputId]="connector.fromConnectorId" [fInputId]="connector.toConnectorId">
+            <f-connection-for-create fBehavior="floating"></f-connection-for-create>
+            @for (connection of currentCloudBoard.connections; track $index) {
+            <f-connection fType="segment" [fOutputId]="connection.fromConnectorId" [fInputId]="connection.toConnectorId">
             </f-connection>
             }
 
@@ -23,9 +33,8 @@
             <div fNode [fNodeId]="node.id"
                 fDragHandle [fNodePosition]="node.position"
                 (fNodePositionChange)="onNodePositionChanged($event, node)"
-                (contextmenu)="showNodeContextMenu($event, node)">
-
-                <!-- Dynamically render the correct component based on node type -->
+                (dblclick)="onNodeDoubleClicked($event, node)"
+                (contextmenu)="showNodeContextMenu($event, node)">                <!-- Dynamically render the correct component based on node type -->
                 @switch (node.type) {
                     @case ('Note') {
                         <simple-note [node]="node"></simple-note>
@@ -36,7 +45,7 @@
                     @case ('LinkCollection') {
                         <link-collection [node]="node"></link-collection>
                     }
-                    @case ('Image') {
+                    @case ('ImageNode') {
                         <image-node [node]="node"></image-node>
                     }
                     @case ('CodeBlock') {
@@ -47,7 +56,7 @@
                     }
                 }
 
-                @for (connector of node.connectors; track connector.id) {
+                @for (connector of node.connectors; track $index) {
                     @switch (connector.type.toString().toLowerCase()) {
                         @case ('in') {
                         <div fNodeInput [fInputId]="connector.id" class="connector left"></div>

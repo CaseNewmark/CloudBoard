@@ -6,7 +6,9 @@
                     <h3 class="w-full text-xl truncate font-bold">{{ nodeProperties()?.name }}</h3>
                 </ng-template>
                 <ng-template #content let-closeCallback="closeCallback">
-                    <input type="text" pInputText autofocus blurOnEnter [(ngModel)]="nodeProperties()!.name" (blur)="closeCallback($event)" placeholder="Enter name" />
+                    <input type="text" pInputText autofocus blurOnEnter [(ngModel)]="nodeProperties()!.name" 
+                           (blur)="updateNodeName(nodeProperties()!.name); closeCallback($event)" 
+                           placeholder="Enter name" />
                 </ng-template>
             </p-inplace>
             <p-button text severity="contrast" class="toggle-btn" (click)="visible.set(!visible())">
@@ -134,7 +136,7 @@
                                 icon="pi pi-trash" 
                                 size="small" 
                                 severity="danger"
-                                (onClick)="removeLink(index)">
+                                (onClick)="removeLink($index)">
                             </p-button>
                         </div>
                         
@@ -168,7 +170,7 @@
                     }
                 </div>
                 }
-                @case ('Image') {
+                @case ('ImageNode') {
                 <!-- Image Node Properties -->
                 <div class="node-properties">
                     <div class="field mb-3">

@@ -1,0 +1,111 @@
+@baseUrl = http://localhost:5000
+
+### Step 1: Create a new CloudBoard document
+# @name createCloudBoard
+POST {{baseUrl}}/api/cloudboard
+Content-Type: application/json
+
+{
+  "name": "Example Workflow",
+  "nodes": [],
+  "connections": []
+}
+
+### Capture the CloudBoard ID from the response
+@cloudBoardId = {{createCloudBoard.response.body.id}}
+
+### Step 2: Create a source node
+# @name createSourceNode
+POST {{baseUrl}}/api/node
+Content-Type: application/json
+
+{
+  "name": "Source Node",
+  "position": {
+    "x": 100,
+    "y": 100
+  },
+  "type": "note",
+  "properties": {
+    "content": "This is a source node"
+  },
+  "connectors": [],
+  "cloudBoardDocumentId": "{{cloudBoardId}}"
+}
+
+### Capture the source node ID from the response
+@sourceNodeId = {{createSourceNode.response.body.id}}
+
+### Step 3: Create a target node
+# @name createTargetNode
+POST {{baseUrl}}/api/node
+Content-Type: application/json
+
+{
+  "name": "Target Node",
+  "position": {
+    "x": 400,
+    "y": 100
+  },
+  "type": "note",
+  "properties": {
+    "content": "This is a target node"
+  },
+  "connectors": [],
+  "cloudBoardDocumentId": "{{cloudBoardId}}"
+}
+
+### Capture the target node ID from the response
+@targetNodeId = {{createTargetNode.response.body.id}}
+
+### Step 4: Create an output connector on the source node
+# @name createSourceConnector
+POST {{baseUrl}}/api/connector
+Content-Type: application/json
+
+{
+  "name": "Output",
+  "position": "right",
+  "type": "out",
+  "nodeId": "{{sourceNodeId}}"
+}
+
+### Capture the source connector ID from the response
+@sourceConnectorId = {{createSourceConnector.response.body.id}}
+
+### Step 5: Create an input connector on the target node
+# @name createTargetConnector
+POST {{baseUrl}}/api/connector
+Content-Type: application/json
+
+{
+  "name": "Input",
+  "position": "left",
+  "type": "in",
+  "nodeId": "{{targetNodeId}}"
+}
+
+### Capture the target connector ID from the response
+@targetConnectorId = {{createTargetConnector.response.body.id}}
+
+### Step 6: Create a connection between the two connectors
+POST {{baseUrl}}/api/connection
+Content-Type: application/json
+
+{
+  "fromConnectorId": "{{sourceConnectorId}}",
+  "toConnectorId": "{{targetConnectorId}}",
+  "cloudBoardDocumentId": "{{cloudBoardId}}"
+}
+
+### Step 7: Get the complete CloudBoard document
+GET {{baseUrl}}/api/cloudboard/{{cloudBoardId}}
+
+### Step 8: Get all connections for the CloudBoard
+GET {{baseUrl}}/api/cloudboard/{{cloudBoardId}}/connections
+
+### Step 9: Get all connectors for the source node
+GET {{baseUrl}}/api/node/{{sourceNodeId}}/connectors
+
+### Step 10: Get all connectors for the target node
+GET {{baseUrl}}/api/node/{{targetNodeId}}/connectors

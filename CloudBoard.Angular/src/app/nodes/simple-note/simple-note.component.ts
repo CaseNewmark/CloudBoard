@@ -32,7 +32,7 @@ export class SimpleNoteComponent extends BaseNodeComponent {
   
   // Get background color with default value if not set
   get backgroundColor(): string {
-    return this.getProperty<string>('backgroundColor', '#ffffff');
+    return this.getProperty<string>('backgroundColor', 'rgb(255, 249, 212)');
   }
   
   // Set background color property

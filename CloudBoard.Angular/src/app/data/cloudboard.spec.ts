@@ -1,7 +1,7 @@
-import { Cloudboard } from './cloudboard';
+import { CloudBoard } from './cloudboard';
 
-describe('Cloudboard', () => {
+describe('CloudBoard', () => {
   it('should create an instance', () => {
-    expect(new Cloudboard()).toBeTruthy();
+    expect({} as CloudBoard).toBeTruthy();
   });
 });

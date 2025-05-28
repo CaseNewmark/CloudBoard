@@ -1,0 +1,67 @@
+### Create a new node
+POST http://localhost:5080/api/node
+Content-Type: application/json
+
+{
+  "name": "Test Node",
+  "position": {
+    "x": 100,
+    "y": 200
+  },
+  "type": "note",
+  "connectors": [
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "name": "Input",
+      "position": "left",
+      "type": "in"
+    },
+    {
+      "id": "4fa85f64-5717-4562-b3fc-2c963f66afa7",
+      "name": "Output",
+      "position": "right",
+      "type": "out"
+    }
+  ],
+  "properties": {
+    "content": "This is a test note"
+  },
+  "cloudBoardDocumentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+}
+
+### Get a node by ID
+GET http://localhost:5080/api/node/3fa85f64-5717-4562-b3fc-2c963f66afa6
+
+### Update a node
+PUT http://localhost:5080/api/node/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Content-Type: application/json
+
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "name": "Updated Node",
+  "position": {
+    "x": 150,
+    "y": 250
+  },
+  "type": "note",
+  "connectors": [
+    {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "name": "Input Updated",
+      "position": "left",
+      "type": "in"
+    },
+    {
+      "id": "4fa85f64-5717-4562-b3fc-2c963f66afa7",
+      "name": "Output Updated",
+      "position": "right",
+      "type": "out"
+    }
+  ],
+  "properties": {
+    "content": "This is an updated note"
+  }
+}
+
+### Delete a node
+DELETE http://localhost:5080/api/node/3fa85f64-5717-4562-b3fc-2c963f66afa6

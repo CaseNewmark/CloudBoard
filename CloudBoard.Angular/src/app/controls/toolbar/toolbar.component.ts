@@ -34,10 +34,12 @@ export class ToolbarComponent implements OnInit {
 
   availableBoards: CloudBoard[] = [];
   deletionBoard: CloudBoard | undefined;
-
   constructor() { }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    // Load available CloudBoards when component initializes
+    this.refreshBoards();
+  }
 
   onCreate(): void {
     this.boardProviderService.createNewCloudBoard().subscribe();
