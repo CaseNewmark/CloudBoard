@@ -90,7 +90,6 @@ export class BoardProviderService {
         // If we have a current CloudBoard, add the new node to it
         if (this.currentCloudBoard) {
           this.currentCloudBoard.nodes.push(response);
-          this.cloudBoardLoaded.next(this.currentCloudBoard);
         }
       },
       (error) => {
@@ -108,7 +107,6 @@ export class BoardProviderService {
           const index = this.currentCloudBoard.nodes.findIndex(n => n.id === nodeId);
           if (index !== -1) {
             this.currentCloudBoard.nodes[index] = response;
-            this.cloudBoardLoaded.next(this.currentCloudBoard);
           }
         }
       },
@@ -125,7 +123,6 @@ export class BoardProviderService {
         // If we have a current CloudBoard, remove the node from it
         if (this.currentCloudBoard) {
           this.currentCloudBoard.nodes = this.currentCloudBoard.nodes.filter(n => n.id !== nodeId);
-          this.cloudBoardLoaded.next(this.currentCloudBoard);
         }
       },
       (error) => {
@@ -155,7 +152,6 @@ export class BoardProviderService {
           const nodeIndex = this.currentCloudBoard.nodes.findIndex(n => n.id === connectorDto.nodeId);
           if (nodeIndex !== -1) {
             this.currentCloudBoard.nodes[nodeIndex].connectors.push(response);
-            this.cloudBoardLoaded.next(this.currentCloudBoard);
           }
         }
       },
@@ -175,7 +171,6 @@ export class BoardProviderService {
             const connectorIndex = node.connectors.findIndex(c => c.id === connectorId);
             if (connectorIndex !== -1) {
               node.connectors[connectorIndex] = response;
-              this.cloudBoardLoaded.next(this.currentCloudBoard);
               break;
             }
           }
@@ -197,7 +192,6 @@ export class BoardProviderService {
             const connectorIndex = node.connectors.findIndex(c => c.id === connectorId);
             if (connectorIndex !== -1) {
               node.connectors.splice(connectorIndex, 1);
-              this.cloudBoardLoaded.next(this.currentCloudBoard);
               break;
             }
           }
@@ -239,7 +233,6 @@ export class BoardProviderService {
         // If we have a current CloudBoard, add the new connection to it
         if (this.currentCloudBoard) {
           this.currentCloudBoard.connections.push(response);
-          this.cloudBoardLoaded.next(this.currentCloudBoard);
         }
       },
       (error) => {
@@ -257,7 +250,6 @@ export class BoardProviderService {
           const index = this.currentCloudBoard.connections.findIndex(c => c.id === connectionId);
           if (index !== -1) {
             this.currentCloudBoard.connections[index] = response;
-            this.cloudBoardLoaded.next(this.currentCloudBoard);
           }
         }
       },
@@ -274,7 +266,6 @@ export class BoardProviderService {
         // If we have a current CloudBoard, remove the connection from it
         if (this.currentCloudBoard) {
           this.currentCloudBoard.connections = this.currentCloudBoard.connections.filter(c => c.id !== connectionId);
-          this.cloudBoardLoaded.next(this.currentCloudBoard);
         }
       },
       (error) => {
