@@ -57,7 +57,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   protected flowContextMenu = viewChild<ContextMenu>('flowcontextmenu');
   protected nodeContextMenu = viewChild<ContextMenu>('nodecontextmenu');
   private flowControlService: FlowControlService = inject(FlowControlService);
-  private boardProviderService: BoardProviderService = inject(BoardProviderService);  
+  private boardProviderService: BoardProviderService = inject(BoardProviderService);
   private nodeRegistryService = inject(NodeRegistryService);
   private confirmationService = inject(ConfirmationService);
   private messageService = inject(MessageService);
@@ -65,11 +65,11 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public currentCloudBoard: CloudBoard | undefined;
   public isLoading = false;
-  
+
   // Properties for the PropertiesPanel
   public propertiesPanelVisible = signal(false);
   public propertiesPanelNodeProperties: NodeInfo | undefined;
-  
+
   // Currently selected nodes and connections
   private selectedNodeIds: string[] = [];
 
@@ -124,29 +124,29 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   constructor(
-    private changeDetectorRef: ChangeDetectorRef, 
-    private route: ActivatedRoute, 
+    private changeDetectorRef: ChangeDetectorRef,
+    private route: ActivatedRoute,
     private router: Router) { }
   ngOnInit(): void {
     // Subscribe to cloudBoard updates
     const boardSubscription = this.boardProviderService.cloudBoardLoaded.subscribe((cloudBoard) => {
       this.currentCloudBoard = cloudBoard;
-      this.fCanvas()?.resetScaleAndCenter(false);
-      
+
       // Update the route URL without reloading the page
       if (cloudBoard && cloudBoard.id) {
-        this.router.navigate(['/flowboard', cloudBoard.id.toString()], { 
+        this.router.navigate(['/flowboard', cloudBoard.id.toString()], {
           replaceUrl: true, // replace the current URL instead of adding to history
           skipLocationChange: false // update the browser URL
         });
       }
       this.changeDetectorRef.detectChanges();
-      
+      this.fCanvas()?.resetScaleAndCenter(false);
+
       // Set up auto-save for the new board
       this.setupAutoSave();
     });
     this.subscriptions.push(boardSubscription);
-      // Get the id from the route parameter
+    // Get the id from the route parameter
     const routeSubscription = this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id != null && (this.currentCloudBoard == null
@@ -182,7 +182,8 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         case ZoomAction.Reset:
           this.fCanvas()?.resetScaleAndCenter();
           break;
-      }});
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -190,7 +191,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.autoSaveTimer) {
       clearInterval(this.autoSaveTimer);
     }
-    
+
     // Unsubscribe from all subscriptions
     this.subscriptions.forEach(subscription => subscription.unsubscribe());
   }
@@ -199,7 +200,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     // fDraggable drag events are triggered after the selection change event
     // so we need to wait for the next tick to check if the drag event is triggered
     setTimeout(() => {
-      let draggable = this.fDraggable(); 
+      let draggable = this.fDraggable();
       if (draggable?.isDragStarted) return;
 
       // Store the selected node IDs for deletion handling
@@ -208,10 +209,10 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   protected onNodeDoubleClicked(event: Event, node: NodeInfo): void {
-      if (!node) return
+    if (!node) return
 
-      this.propertiesPanelNodeProperties = node;
-      this.propertiesPanelVisible.set(true);
+    this.propertiesPanelNodeProperties = node;
+    this.propertiesPanelVisible.set(true);
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -220,19 +221,19 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (event.key === 'Delete' && this.currentCloudBoard && this.selectedNodeIds.length > 0) {
       // Prevent default browser behavior for Delete key
       event.preventDefault();
-      
+
       // Get all selected nodes
       const selectedNodes = this.currentCloudBoard.nodes.filter(
         node => this.selectedNodeIds.includes(node.id)
       );
-      
+
       // Find all connections that involve the selected nodes
-      const connectionsToDelete = this.currentCloudBoard.connections.filter(conn => 
-        selectedNodes.some(node => 
+      const connectionsToDelete = this.currentCloudBoard.connections.filter(conn =>
+        selectedNodes.some(node =>
           node.connectors.some(c => c.id === conn.fromConnectorId || c.id === conn.toConnectorId)
         )
       );
-      
+
       // Show confirmation dialog
       this.confirmDeleteNodes(selectedNodes, connectionsToDelete);
     }
@@ -249,12 +250,14 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         this.deleteSelectedItems(nodesToDelete, connectionsToDelete);
       }
     });
-  }  private deleteSelectedItems(nodesToDelete: NodeInfo[], connectionsToDelete: Connection[]): void {
+  } 
+  
+  private deleteSelectedItems(nodesToDelete: NodeInfo[], connectionsToDelete: Connection[]): void {
     if (this.currentCloudBoard) {
       this.isLoading = true;
       // Create an array of promises for all delete operations
       const deleteOperations: Promise<any>[] = [];
-      
+
       // Delete connections first
       for (const connection of connectionsToDelete) {
         const deletePromise = new Promise<void>((resolve, reject) => {
@@ -271,7 +274,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         });
         deleteOperations.push(deletePromise);
       }
-      
+
       // Then delete nodes
       for (const node of nodesToDelete) {
         const deletePromise = new Promise<void>((resolve, reject) => {
@@ -288,7 +291,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         });
         deleteOperations.push(deletePromise);
       }
-      
+
       // When all delete operations are complete
       Promise.all(deleteOperations)
         .then(() => {
@@ -297,26 +300,26 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
           this.propertiesPanelNodeProperties = undefined;
           this.propertiesPanelVisible.set(false);
           this.selectedNodeIds = [];
-          
+
           this.messageService.add({
             severity: 'success',
             summary: 'Success',
             detail: `Successfully deleted ${nodesToDelete.length} node(s) and ${connectionsToDelete.length} connection(s)`
           });
-          
+
           // No need to update cloudBoard here as the service handles removing deleted items
           this.changeDetectorRef.detectChanges();
         })
         .catch(error => {
           this.isLoading = false;
           console.error('Error during deletion:', error);
-          
+
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
             detail: 'Failed to delete items: ' + (error.message || 'Unknown error')
           });
-          
+
           // Refresh the board to ensure UI consistency
           if (this.currentCloudBoard && this.currentCloudBoard.id) {
             this.boardProviderService.loadCloudBoardById(this.currentCloudBoard.id).subscribe();
@@ -329,15 +332,15 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (node) {
       // Update local position for immediate feedback
       node.position = newPosition;
-      
+
       // Debounce the API update to avoid too many calls during dragging
       if (this.positionUpdateTimer) {
         clearTimeout(this.positionUpdateTimer);
       }
-        this.positionUpdateTimer = setTimeout(() => {
+      this.positionUpdateTimer = setTimeout(() => {
         // Create a copy of the node with the updated position
-        const updatedNode = {...node};
-        
+        const updatedNode = { ...node };
+
         // Call API to update the node
         this.boardProviderService.updateNode(node.id, updatedNode).subscribe({
           next: response => {
@@ -355,7 +358,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       }, 300); // 300ms debounce
     }
   }
-  
+
   private positionUpdateTimer: any;
 
   protected showFlowContextMenu(event: MouseEvent): void {
@@ -369,7 +372,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.nodeContextMenu()) {
       // Store the selected node to delete it later if needed
       //this.propertiesPanelNodeProperties = node;
-      
+
       this.nodeContextMenu()?.show(event);
       event.preventDefault();
     }
@@ -379,11 +382,11 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       // Get the mouse position from the canvas
       let canvas = this.fCanvas();
       if (!canvas) return;
-      
+
       // Get default properties for the node type
       const defaultProperties = this.nodeRegistryService.getDefaultPropertiesForType(nodeType);
 
-      let position = this.fFlow()?.getPositionInFlow({x: event.x, y: event.y});
+      let position = this.fFlow()?.getPositionInFlow({ x: event.x, y: event.y });
       if (!position) {
         console.error('Could not determine position in flow for the event:', event);
         return;
@@ -398,16 +401,16 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         properties: defaultProperties,
         cloudBoardDocumentId: this.currentCloudBoard.id?.toString()
       };
-      
+
       // Create the node through the API
       this.isLoading = true;
       this.boardProviderService.createNode(nodeDto).subscribe({
         next: newNode => {
           console.log('Node created successfully:', newNode);
-          
+
           // Now create the default connectors for the node
           this.createDefaultConnectorsForNode(newNode.id);
-          
+
           this.isLoading = false;
           this.messageService.add({
             severity: 'success',
@@ -444,17 +447,17 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.currentCloudBoard && this.propertiesPanelNodeProperties) {
       // Get the node to delete
       const nodeToDelete: NodeInfo = this.propertiesPanelNodeProperties;
-      
+
       // Find connections to this node
-      const connectionsToDelete = this.currentCloudBoard.connections.filter(conn => 
+      const connectionsToDelete = this.currentCloudBoard.connections.filter(conn =>
         nodeToDelete.connectors.some(c => c.id === conn.fromConnectorId || c.id === conn.toConnectorId)
       );
-      
+
       // Use the common delete method with confirmation
       this.confirmDeleteNodes([nodeToDelete], connectionsToDelete);
     }
   }
-  
+
   private getDefaultNameForNodeType(type: NodeType): string {
     switch (type) {
       case NodeType.Note: return 'New Note';
@@ -465,7 +468,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       default: return 'New Node';
     }
   }
-  
+
   protected getComponentForNode(node: NodeInfo): any {
     return this.nodeRegistryService.getComponentForType(node.type);
   }
@@ -478,7 +481,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         toConnectorId: event.fInputId,
         cloudBoardDocumentId: this.currentCloudBoard.id?.toString()
       };
-        // Call API to create the connection
+      // Call API to create the connection
       this.isLoading = true;
       this.boardProviderService.createConnection(connectionDto).subscribe({
         next: newConnection => {
@@ -520,7 +523,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       type: type.toLowerCase(),
       nodeId: nodeId
     };
-    
+
     this.boardProviderService.createConnector(connectorDto).subscribe(
       response => {
         console.log('Connector added successfully');
@@ -530,7 +533,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     );
   }
-  
+
   // Method to remove a connector from a node
   removeConnector(connectorId: string): void {
     this.boardProviderService.deleteConnector(connectorId).subscribe(
@@ -545,7 +548,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private autoSaveTimer: any;
   private lastSaveTime: number = 0;
-  private readonly AUTO_SAVE_INTERVAL = 10000; // 10 seconds
+  private readonly AUTO_SAVE_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
   // Setup auto-save functionality
   private setupAutoSave(): void {
@@ -553,19 +556,19 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.autoSaveTimer) {
       clearInterval(this.autoSaveTimer);
     }
-    
+
     // Set up a new timer for auto-saving
     this.autoSaveTimer = setInterval(() => {
       const currentTime = Date.now();
-      
+
       // Only save if changes have been made since last save and it's been at least AUTO_SAVE_INTERVAL ms
-      if (this.currentCloudBoard && 
-          currentTime - this.lastSaveTime >= this.AUTO_SAVE_INTERVAL) {
+      if (this.currentCloudBoard &&
+        currentTime - this.lastSaveTime >= this.AUTO_SAVE_INTERVAL) {
         this.saveCloudBoard();
       }
     }, this.AUTO_SAVE_INTERVAL);
   }
-    // Save the current CloudBoard
+  // Save the current CloudBoard
   private saveCloudBoard(): void {
     if (this.currentCloudBoard) {
       this.isLoading = true;
@@ -591,7 +594,9 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       });
     }
-  }  private getApiTypeForNodeType(nodeType: NodeType): string {
+  }
+  
+  private getApiTypeForNodeType(nodeType: NodeType): string {
     // Return the enum value directly since it matches the C# enum
     return nodeType.toString();
   }
@@ -604,7 +609,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       type: 'in',
       nodeId: nodeId
     };
-    
+
     // Create output connector
     const outConnectorDto = {
       name: 'Out',
@@ -612,13 +617,13 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       type: 'out',
       nodeId: nodeId
     };
-    
+
     // Create both connectors
     this.boardProviderService.createConnector(inConnectorDto).subscribe({
       next: () => console.log('Input connector created'),
       error: (error) => console.error('Error creating input connector:', error)
     });
-    
+
     this.boardProviderService.createConnector(outConnectorDto).subscribe({
       next: () => console.log('Output connector created'),
       error: (error) => console.error('Error creating output connector:', error)

@@ -50,7 +50,8 @@ export class ToolbarComponent implements OnInit {
   }
 
   onSave(): void {
-    this.boardProviderService.saveCloudBoard();
+    // Change this to handle settings functionality instead
+    // Or if this method is still used by the cog button, leave it as is
   }
   onDelete(boardId: Guid, event: Event): void {
     /* 
