@@ -8,7 +8,7 @@ import { BoardProviderService } from '../services/board-provider.service';
 export abstract class BaseNodeComponent {
   node = input<Node>();
   private boardProviderService = inject(BoardProviderService);
-  private propertyUpdateTimer: any;
+  private propertyUpdateTimer: ReturnType<typeof setTimeout> | null = null;
   
   // Function to update a specific property
   updateProperty(key: string, value: any): void {
