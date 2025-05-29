@@ -21,18 +21,10 @@ export class BoardProviderService {
   listCloudBoards(): Observable<CloudBoard[]> {
     return this.http.get<CloudBoard[]>(`${this.apiUrl}/cloudboard`);
   }
-
   loadCloudBoardById(boardId: Guid): Observable<CloudBoard> {
     return this.http.get<CloudBoard>(`${this.apiUrl}/cloudboard/${boardId.toString()}`).pipe(
       tap(response => {
         this.currentCloudBoard = response;
-        this.currentCloudBoard.tempid = this.currentCloudBoard.id?.toString();
-        this.currentCloudBoard.nodes.forEach(node => {
-          node.tempid = node.id;
-          node.connectors.forEach(connector => {
-            connector.tempid = connector.id;
-          });
-        });
         this.cloudBoardLoaded.next(response);
       },
       (error) => {
@@ -41,7 +33,7 @@ export class BoardProviderService {
   }
   createNewCloudBoard(): Observable<CloudBoard> {
     let createCloudboardDocument: CloudBoard = {
-      id: undefined,
+      id: Guid.createEmpty(),
       name: 'Empty Cloudboard',
       nodes: [],
       connections: []
