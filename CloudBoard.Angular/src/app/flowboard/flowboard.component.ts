@@ -20,6 +20,7 @@ import { ImageNodeComponent } from '../nodes/image-node/image-node.component';
 import { CodeBlockComponent } from '../nodes/code-block/code-block.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ContextMenuService } from '../services/context-menu.service';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 
@@ -61,6 +62,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private nodeRegistryService = inject(NodeRegistryService);
   private confirmationService = inject(ConfirmationService);
   private messageService = inject(MessageService);
+  private contextMenuService = inject(ContextMenuService);
   private subscriptions: Subscription[] = [];
 
   public currentCloudBoard: CloudBoard | undefined;
@@ -73,64 +75,24 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   // Currently selected nodes and connections
   private selectedNodeIds: string[] = [];
 
-  public flowContextMenuItems: MenuItem[] = [
-    {
-      label: 'Add new node',
-      icon: 'pi pi-plus-circle',
-      items: [
-        {
-          label: 'Note',
-          icon: 'pi pi-file-edit',
-          command: (e) => this.addNode(NodeType.Note, e.originalEvent as PointerEvent)
-        },
-        {
-          label: 'Card',
-          icon: 'pi pi-id-card',
-          command: (e) => this.addNode(NodeType.Card, e.originalEvent as PointerEvent)
-        },
-        {
-          label: 'Link Collection',
-          icon: 'pi pi-link',
-          command: (e) => this.addNode(NodeType.LinkCollection, e.originalEvent as PointerEvent)
-        },
-        {
-          label: 'Image',
-          icon: 'pi pi-image',
-          command: (e) => this.addNode(NodeType.ImageNode, e.originalEvent as PointerEvent)
-        },
-        {
-          label: 'Code Block',
-          icon: 'pi pi-code',
-          command: (e) => this.addNode(NodeType.CodeBlock, e.originalEvent as PointerEvent)
-        }
-      ]
-    }
-  ];
-
-  public nodeContextMenuItems: MenuItem[] = [
-    {
-      label: 'Remove node',
-      icon: 'pi pi-trash',
-      command: () => this.deleteSelectedNode()
-    },
-    {
-      separator: true
-    },
-    {
-      label: 'Properties Panel',
-      icon: 'pi pi-cog',
-      command: (e) => this.openPropertiesPanelForNode(e.originalEvent as MouseEvent)
-    }
-  ];
+  public flowContextMenuItems: MenuItem[] = [];
+  public nodeContextMenuItems: MenuItem[] = [];
 
   constructor(
     private changeDetectorRef: ChangeDetectorRef,
     private route: ActivatedRoute,
     private router: Router) { }
+    
   ngOnInit(): void {
     // Subscribe to cloudBoard updates
     const boardSubscription = this.boardProviderService.cloudBoardLoaded.subscribe((cloudBoard) => {
       this.currentCloudBoard = cloudBoard;
+
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Board Loaded',
+        detail: `CloudBoard ${cloudBoard.name} loaded successfully`
+      });
 
       // Update the route URL without reloading the page
       if (cloudBoard && cloudBoard.id) {
@@ -362,35 +324,37 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private positionUpdateTimer: any;
 
   protected showFlowContextMenu(event: MouseEvent): void {
-    if (this.flowContextMenu()) {
-      this.flowContextMenu()?.show(event);
-      event.preventDefault();
+    if (this.fFlow() && this.flowContextMenu()) {
+      let nodePosition = this.fFlow()?.getPositionInFlow({ x: event.clientX, y: event.clientY });
+      if (nodePosition) {
+        this.flowContextMenuItems = this.contextMenuService.getFlowContextMenuItems({
+          x: nodePosition.x,
+          y: nodePosition.y
+        }, this.addNode.bind(this));
+
+        this.flowContextMenu()?.show(event);
+        event.preventDefault();
+      }
     }
   }
 
-  protected showNodeContextMenu(event: MouseEvent, node: NodeInfo): void {
+  protected showNodeContextMenu(event: Event, node: NodeInfo): void {
     if (this.nodeContextMenu()) {
-      // Store the selected node to delete it later if needed
-      //this.propertiesPanelNodeProperties = node;
+      this.nodeContextMenuItems = this.contextMenuService.getNodeContextMenuItems(
+        node,
+        this.deleteNode.bind(this),
+        this.openPropertiesPanelForNode.bind(this)
+      );
 
       this.nodeContextMenu()?.show(event);
       event.preventDefault();
     }
   }
-  protected addNode(nodeType: NodeType = NodeType.Note, event: PointerEvent): void {
+  
+  protected addNode(nodeType: NodeType, position: NodePosition): void {
     if (this.currentCloudBoard) {
-      // Get the mouse position from the canvas
-      let canvas = this.fCanvas();
-      if (!canvas) return;
-
       // Get default properties for the node type
       const defaultProperties = this.nodeRegistryService.getDefaultPropertiesForType(nodeType);
-
-      let position = this.fFlow()?.getPositionInFlow({ x: event.x, y: event.y });
-      if (!position) {
-        console.error('Could not determine position in flow for the event:', event);
-        return;
-      }
 
       // Prepare the node DTO for API (without connectors - they'll be created separately)
       const nodeDto = {
@@ -432,29 +396,20 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       });
     }
   }
-  protected openPropertiesPanelForNode(e: MouseEvent): void {
-    let selection = this.fFlow()?.getSelection();
 
-    if (selection && selection.fNodeIds && selection.fNodeIds.length > 0) {
-      let node = selection?.fNodeIds[0]
-      this.propertiesPanelNodeProperties = this.currentCloudBoard?.nodes.find(n => n.id === node);
-      this.propertiesPanelVisible.set(true);
+  protected deleteNode(node: NodeInfo): void {
+    if (this.currentCloudBoard) {
+      const connectionsToDelete = this.currentCloudBoard.connections.filter(conn =>
+        node.connectors.some((c: { id: string }) => c.id === conn.fromConnectorId || c.id === conn.toConnectorId)
+      );
+      this.confirmDeleteNodes([node], connectionsToDelete);
     }
   }
 
-
-  protected deleteSelectedNode(): void {
-    if (this.currentCloudBoard && this.propertiesPanelNodeProperties) {
-      // Get the node to delete
-      const nodeToDelete: NodeInfo = this.propertiesPanelNodeProperties;
-
-      // Find connections to this node
-      const connectionsToDelete = this.currentCloudBoard.connections.filter(conn =>
-        nodeToDelete.connectors.some(c => c.id === conn.fromConnectorId || c.id === conn.toConnectorId)
-      );
-
-      // Use the common delete method with confirmation
-      this.confirmDeleteNodes([nodeToDelete], connectionsToDelete);
+  protected openPropertiesPanelForNode(node: NodeInfo): void {
+    if (this.currentCloudBoard) {
+      this.propertiesPanelNodeProperties = node;
+      this.propertiesPanelVisible.set(true);
     }
   }
 

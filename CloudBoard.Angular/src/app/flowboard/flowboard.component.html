@@ -17,9 +17,10 @@
     <p-contextmenu #flowcontextmenu [model]="flowContextMenuItems" />
     <p-contextmenu #nodecontextmenu [model]="nodeContextMenuItems" />
     <f-flow class="grow" 
-        fDraggable (contextmenu)="showFlowContextMenu($event)"
+        fDraggable
         (fSelectionChange)="onSelectionChange($event)"
-        (fCreateConnection)="onConnectionAdded($event)">
+        (fCreateConnection)="onConnectionAdded($event)"
+        (contextmenu)="showFlowContextMenu($event)">
         <f-canvas fZoom>
             <!-- Render all connections from the cloudboard data -->
             <f-connection-for-create fBehavior="floating"></f-connection-for-create>
@@ -34,7 +35,7 @@
                 fDragHandle [fNodePosition]="node.position"
                 (fNodePositionChange)="onNodePositionChanged($event, node)"
                 (dblclick)="onNodeDoubleClicked($event, node)"
-                (contextmenu)="showNodeContextMenu($event, node)">                <!-- Dynamically render the correct component based on node type -->
+                (contextmenu)="showNodeContextMenu($event, node)">
                 @switch (node.type) {
                     @case ('Note') {
                         <simple-note [node]="node"></simple-note>
