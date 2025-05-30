@@ -41,45 +41,42 @@ public class NodeService : INodeService
         }
     }
 
-    public async Task<NodeDto> CreateNodeAsync(CreateNodeDto createNodeDto)
+    public async Task<NodeDto> CreateNodeAsync(Guid cloudBoardId, NodeDto nodeDto)
     {
         try
         {
-            var node = _mapper.Map<Node>(createNodeDto);
+            var node = _mapper.Map<Node>(nodeDto);
             var createdNode = await _nodeRepository.AddNodeAsync(node);
             return _mapper.Map<NodeDto>(createdNode);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating node {NodeName} for document {DocumentId}", 
-                createNodeDto.Name, createNodeDto.CloudBoardDocumentId);
+                nodeDto.Name, cloudBoardId);
             throw;
         }
     }
 
-    public async Task<NodeDto?> UpdateNodeAsync(Guid nodeId, NodeDto nodeDto)
+    public async Task<NodeDto?> UpdateNodeAsync(NodeDto nodeDto)
     {
         try
         {
             // Verify the node exists
-            var nodeExists = await _nodeRepository.GetNodeByIdAsync(nodeId);
+            var nodeExists = await _nodeRepository.GetNodeByIdAsync(nodeDto.Id);
             if (nodeExists == null)
             {
-                _logger.LogWarning("Node with ID {NodeId} not found for update", nodeId);
+                _logger.LogWarning("Node with ID {NodeId} not found for update", nodeDto.Id);
                 return null;
             }
 
             // Map DTO to entity
             var nodeToUpdate = _mapper.Map<Node>(nodeDto);
             
-            // Ensure the ID is set correctly
-            nodeToUpdate.Id = nodeId;
-
             // Update the node
             var updatedNode = await _nodeRepository.UpdateNodeAsync(nodeToUpdate);
             if (updatedNode == null)
             {
-                _logger.LogWarning("Node with ID {NodeId} could not be updated", nodeId);
+                _logger.LogWarning("Node with ID {NodeId} could not be updated", nodeDto.Id);
                 return null;
             }
 
@@ -87,7 +84,7 @@ public class NodeService : INodeService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating node with ID {NodeId}", nodeId);
+            _logger.LogError(ex, "Error updating node with ID {NodeId}", nodeDto.Id);
             throw;
         }
     }

@@ -11,18 +11,18 @@ public static class CloudBoardEndpoints
 {
     public static void MapCloudBoardEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/cloudboard", async ([FromBody] CreateCloudBoardDocumentDto document, ICloudBoardService cloudBoardService) =>
+        app.MapPost("/api/cloudboard", async ([FromBody] CloudBoardDto document, ICloudBoardService cloudBoardService) =>
         {
             var newDocument = await cloudBoardService.CreateDocumentAsync(document);
-            return Results.Created($"/api/cloudboard/{newDocument.Id}", newDocument);
+            return TypedResults.Created($"/api/cloudboard/{newDocument.Id}", newDocument);
         })
         .WithName("SaveCloudBoard")
-        .Produces<CloudBoardDocumentDto>();
+        .Produces<CloudBoardDto>();
 
         app.MapGet("/api/cloudboard", async (ICloudBoardService cloudBoardService) =>
         {
             var documentList = await cloudBoardService.GetAllCloudBoardDocumentsAsync();
-            return Results.Ok(documentList);
+            return TypedResults.Ok(documentList);
         })
         .WithName("GetAllCloudBoards");
 
@@ -30,28 +30,26 @@ public static class CloudBoardEndpoints
         {
             var document = await cloudBoardService.GetCloudBoardDocumentByIdAsync(id);
             return document is not null
-                ? Results.Ok(document)
+                ? TypedResults.Ok(document)
                 : Results.NotFound();
         })
         .WithName("GetCloudBoardById")
-        .Produces<CloudBoardDocumentDto>();
+        .Produces<CloudBoardDto>();
 
-        app.MapPut("/api/cloudboard/{id:guid}", async (Guid id, [FromBody] CloudBoardDocumentDto updateDto, ICloudBoardService cloudBoardService) =>
+        app.MapPut("/api/cloudboard/{id:guid}", async (Guid id, [FromBody] CloudBoardDto updateDto, ICloudBoardService cloudBoardService) =>
         {
-            var updated = await cloudBoardService.UpdateCloudBoardDocumentAsync(id, updateDto);
+            var updated = await cloudBoardService.UpdateCloudBoardDocumentAsync(updateDto);
             return updated is not null
-                ? Results.Ok(updated)
+                ? TypedResults.Ok(updated)
                 : Results.NotFound();
         })
         .WithName("UpdateCloudBoard")
-        .Produces<CloudBoardDocumentDto>();
+        .Produces<CloudBoardDto>();
 
         app.MapDelete("/api/cloudboard/{id:guid}", async (Guid id, ICloudBoardService cloudBoardService) =>
         {
             var deleted = await cloudBoardService.DeleteCloudBoardDocumentAsync(id);
-            return deleted
-                ? Results.NoContent()
-                : Results.NotFound();
+            return TypedResults.Ok(deleted);
         })
         .WithName("DeleteCloudBoard");
     }

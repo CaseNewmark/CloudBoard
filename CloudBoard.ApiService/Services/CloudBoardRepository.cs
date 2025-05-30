@@ -12,14 +12,14 @@ namespace CloudBoard.ApiService.Data
             _dbContext = dbContext;
         }
 
-        public async Task<CloudBoardDocument> CreateDocumentAsync(CloudBoardDocument document)
+        public async Task<CloudBoard> CreateDocumentAsync(CloudBoard document)
         {
             _dbContext.CloudBoardDocuments.Add(document);
             await _dbContext.SaveChangesAsync();
             return document;
         }
         
-        public async Task<CloudBoardDocument?> GetDocumentByIdAsync(Guid id)
+        public async Task<CloudBoard?> GetDocumentByIdAsync(Guid id)
         {
             return await _dbContext.CloudBoardDocuments
                 .Include(d => d.Nodes)
@@ -28,13 +28,13 @@ namespace CloudBoard.ApiService.Data
                 .FirstOrDefaultAsync(d => d.Id == id);
         }
 
-        public async Task<IEnumerable<CloudBoardDocument>> GetAllDocumentsAsync()
+        public async Task<IEnumerable<CloudBoard>> GetAllDocumentsAsync()
         {
             return await _dbContext.CloudBoardDocuments
                 .ToListAsync();
         }
 
-        public async Task UpdateDocumentAsync(CloudBoardDocument document)
+        public async Task UpdateDocumentAsync(CloudBoard document)
         {
             try
             {

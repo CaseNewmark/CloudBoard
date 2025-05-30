@@ -10,10 +10,10 @@ public class NodePositionDto
 
 public class NodeDto
 {
-    public required string Id { get; init; }
+    public Guid Id { get; set; }
+    public string Type { get; set; } = "note";
     public string Name { get; set; } = string.Empty;
     public NodePositionDto Position { get; set; } = new NodePositionDto();
     public List<ConnectorDto> Connectors { get; set; } = new List<ConnectorDto>();
-    public string Type { get; set; } = "note";
     public JsonDocument Properties { get; set; } = JsonDocument.Parse("{}");
 }

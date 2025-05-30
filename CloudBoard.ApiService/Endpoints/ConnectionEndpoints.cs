@@ -11,10 +11,10 @@ public static class ConnectionEndpoints
 {
     public static void MapConnectionEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/connection", async ([FromBody] CreateConnectionDto connectionDto, IConnectionService connectionService) =>
+        app.MapPost("/api/connection/{cloudboardid:guid}", async (Guid cloudBoardId, [FromBody] ConnectionDto connectionDto, IConnectionService connectionService) =>
         {
-            var newConnection = await connectionService.CreateConnectionAsync(connectionDto);
-            return Results.Created($"/api/connection/{newConnection.Id}", newConnection);
+            var newConnection = await connectionService.CreateConnectionAsync(cloudBoardId, connectionDto);
+            return TypedResults.Created($"/api/connection/{newConnection.Id}", newConnection);
         })
         .WithName("CreateConnection")
         .Produces<ConnectionDto>();
@@ -23,7 +23,7 @@ public static class ConnectionEndpoints
         {
             var connection = await connectionService.GetConnectionByIdAsync(id);
             return connection is not null
-                ? Results.Ok(connection)
+                ? TypedResults.Ok(connection)
                 : Results.NotFound();
         })
         .WithName("GetConnectionById")
@@ -32,7 +32,7 @@ public static class ConnectionEndpoints
         app.MapGet("/api/cloudboard/{cloudBoardDocumentId:guid}/connections", async (Guid cloudBoardDocumentId, IConnectionService connectionService) =>
         {
             var connections = await connectionService.GetConnectionsByCloudBoardDocumentIdAsync(cloudBoardDocumentId);
-            return Results.Ok(connections);
+            return TypedResults.Ok(connections);
         })
         .WithName("GetConnectionsByCloudBoardDocumentId")
         .Produces<IEnumerable<ConnectionDto>>();
@@ -40,16 +40,16 @@ public static class ConnectionEndpoints
         app.MapGet("/api/connector/{connectorId:guid}/connections", async (Guid connectorId, IConnectionService connectionService) =>
         {
             var connections = await connectionService.GetConnectionsByConnectorIdAsync(connectorId);
-            return Results.Ok(connections);
+            return TypedResults.Ok(connections);
         })
         .WithName("GetConnectionsByConnectorId")
         .Produces<IEnumerable<ConnectionDto>>();
 
         app.MapPut("/api/connection/{id:guid}", async (Guid id, [FromBody] ConnectionDto connectionDto, IConnectionService connectionService) =>
         {
-            var updated = await connectionService.UpdateConnectionAsync(id, connectionDto);
+            var updated = await connectionService.UpdateConnectionAsync(connectionDto);
             return updated is not null
-                ? Results.Ok(updated)
+                ? TypedResults.Ok(updated)
                 : Results.NotFound();
         })
         .WithName("UpdateConnection")
@@ -58,9 +58,7 @@ public static class ConnectionEndpoints
         app.MapDelete("/api/connection/{id:guid}", async (Guid id, IConnectionService connectionService) =>
         {
             var deleted = await connectionService.DeleteConnectionAsync(id);
-            return deleted
-                ? Results.NoContent()
-                : Results.NotFound();
+            return TypedResults.Ok(deleted);
         })
         .WithName("DeleteConnection");
     }

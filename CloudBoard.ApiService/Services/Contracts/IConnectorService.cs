@@ -6,7 +6,7 @@ public interface IConnectorService
 {
     Task<ConnectorDto?> GetConnectorByIdAsync(Guid connectorId);
     Task<IEnumerable<ConnectorDto>> GetConnectorsByNodeIdAsync(Guid nodeId);
-    Task<ConnectorDto> CreateConnectorAsync(CreateConnectorDto createConnectorDto);
-    Task<ConnectorDto?> UpdateConnectorAsync(Guid connectorId, ConnectorDto connectorDto);
+    Task<ConnectorDto> CreateConnectorAsync(Guid nodeId, ConnectorDto connectorDto);
+    Task<ConnectorDto?> UpdateConnectorAsync(ConnectorDto connectorDto);
     Task<bool> DeleteConnectorAsync(Guid connectorId);
 }

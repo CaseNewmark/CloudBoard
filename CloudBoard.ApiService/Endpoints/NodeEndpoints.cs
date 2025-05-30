@@ -11,10 +11,10 @@ public static class NodeEndpoints
 {
     public static void MapNodeEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/node", async ([FromBody] CreateNodeDto nodeDto, INodeService nodeService) =>
+        app.MapPost("/api/node/{cloudboardid:guid}", async (Guid cloudBoardId, [FromBody] NodeDto nodeDto, INodeService nodeService) =>
         {
-            var newNode = await nodeService.CreateNodeAsync(nodeDto);
-            return Results.Created($"/api/node/{newNode.Id}", newNode);
+            var newNode = await nodeService.CreateNodeAsync(cloudBoardId, nodeDto);
+            return TypedResults.Created($"/api/node/{newNode.Id}", newNode);
         })
         .WithName("CreateNode")
         .Produces<NodeDto>();
@@ -23,7 +23,7 @@ public static class NodeEndpoints
         {
             var node = await nodeService.GetNodeByIdAsync(id);
             return node is not null
-                ? Results.Ok(node)
+                ? TypedResults.Ok(node)
                 : Results.NotFound();
         })
         .WithName("GetNodeById")
@@ -31,9 +31,9 @@ public static class NodeEndpoints
 
         app.MapPut("/api/node/{id:guid}", async (Guid id, [FromBody] NodeDto nodeDto, INodeService nodeService) =>
         {
-            var updated = await nodeService.UpdateNodeAsync(id, nodeDto);
+            var updated = await nodeService.UpdateNodeAsync(nodeDto);
             return updated is not null
-                ? Results.Ok(updated)
+                ? TypedResults.Ok(updated)
                 : Results.NotFound();
         })
         .WithName("UpdateNode")
@@ -42,9 +42,7 @@ public static class NodeEndpoints
         app.MapDelete("/api/node/{id:guid}", async (Guid id, INodeService nodeService) =>
         {
             var deleted = await nodeService.DeleteNodeAsync(id);
-            return deleted
-                ? Results.NoContent()
-                : Results.NotFound();
+            return TypedResults.Ok(deleted);
         })
         .WithName("DeleteNode");
     }

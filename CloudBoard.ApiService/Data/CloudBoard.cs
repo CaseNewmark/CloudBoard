@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CloudBoard.ApiService.Data;
 
-public class CloudBoardDocument
+public class CloudBoard
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

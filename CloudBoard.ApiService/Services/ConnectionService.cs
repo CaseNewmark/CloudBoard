@@ -69,15 +69,15 @@ public class ConnectionService : IConnectionService
         }
     }
 
-    public async Task<ConnectionDto> CreateConnectionAsync(CreateConnectionDto createConnectionDto)
+    public async Task<ConnectionDto> CreateConnectionAsync(Guid cloudBoardId, ConnectionDto connectionDto)
     {
         try
         {
             var connection = new Connection
             {
-                FromConnectorId = Guid.Parse(createConnectionDto.FromConnectorId),
-                ToConnectorId = Guid.Parse(createConnectionDto.ToConnectorId),
-                CloudBoardDocumentId = createConnectionDto.CloudBoardDocumentId
+                FromConnectorId = Guid.Parse(connectionDto.FromConnectorId),
+                ToConnectorId = Guid.Parse(connectionDto.ToConnectorId),
+                CloudBoardDocumentId = cloudBoardId
             };
 
             var createdConnection = await _connectionRepository.AddConnectionAsync(connection);
@@ -86,42 +86,31 @@ public class ConnectionService : IConnectionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating connection between connectors {FromConnectorId} and {ToConnectorId}",
-                createConnectionDto.FromConnectorId, createConnectionDto.ToConnectorId);
+                connectionDto.FromConnectorId, connectionDto.ToConnectorId);
             throw;
         }
     }
 
-    public async Task<ConnectionDto?> UpdateConnectionAsync(Guid connectionId, ConnectionDto connectionDto)
+    public async Task<ConnectionDto?> UpdateConnectionAsync(ConnectionDto connectionDto)
     {
         try
         {
             // Verify the connection exists
-            var connectionExists = await _connectionRepository.GetConnectionByIdAsync(connectionId);
-            if (connectionExists == null)
-            {
-                _logger.LogWarning("Connection with ID {ConnectionId} not found for update", connectionId);
-                return null;
-            }
+            var connectionExists = await _connectionRepository.GetConnectionByIdAsync(connectionDto.Id);
+            if (connectionExists == null) return null;
 
             // Map DTO to entity
             var connectionToUpdate = _mapper.Map<Connection>(connectionDto);
             
-            // Ensure the ID is set correctly
-            connectionToUpdate.Id = connectionId;
-
             // Update the connection
             var updatedConnection = await _connectionRepository.UpdateConnectionAsync(connectionToUpdate);
-            if (updatedConnection == null)
-            {
-                _logger.LogWarning("Connection with ID {ConnectionId} could not be updated", connectionId);
-                return null;
-            }
+            if (updatedConnection == null) return null;
 
             return _mapper.Map<ConnectionDto>(updatedConnection);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating connection with ID {ConnectionId}", connectionId);
+            _logger.LogError(ex, "Error updating connection with ID {ConnectionId}", connectionDto.Id);
             throw;
         }
     }
