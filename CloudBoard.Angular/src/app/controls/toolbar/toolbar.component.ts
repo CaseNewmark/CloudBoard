@@ -1,3 +1,4 @@
+import { Router } from '@angular/router';
 import { Component, inject, OnInit } from '@angular/core';
 import { CloudboardService } from '../../services/cloudboard.service';
 import { FlowControlService } from '../../services/flow-control.service';
@@ -33,7 +34,8 @@ export class ToolbarComponent implements OnInit {
 
   availableBoards: CloudBoard[] = [];
   deletionBoard: CloudBoard | undefined;
-  constructor() { }
+
+  constructor(private router: Router) { }
 
   ngOnInit(): void {
     this.refreshBoards();
@@ -47,11 +49,13 @@ export class ToolbarComponent implements OnInit {
       connections: []
     };
 
-    this.cloudboardService.createCloudBoard(createCloudboardDocument).subscribe();
+    this.cloudboardService.createCloudBoard(createCloudboardDocument).subscribe(
+      cloudboard => this.router.navigate(['/flowboard', cloudboard.id]),
+    );
   }
 
   onOpen(boardId: string): void {
-    this.cloudboardService.loadCloudBoardById(boardId).subscribe();
+    this.router.navigate(['/flowboard', boardId]);
   }
 
   onDelete(boardId: string, event: Event): void {
@@ -65,8 +69,10 @@ export class ToolbarComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
         this.cloudboardService.deleteCloudBoard(this.deletionBoard?.id!).subscribe({
-          next: () => {
-            this.availableBoards = this.availableBoards.filter(board => board.id !== boardId);
+          next: (success: boolean) => {
+            if (success) {
+              this.availableBoards = this.availableBoards.filter(board => board.id !== boardId);
+            }
           },
           error: (error) => {
             console.error('Error deleting cloudboard', error);

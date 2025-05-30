@@ -1,41 +1,54 @@
 import { inject, Injectable } from '@angular/core';
 import { CloudBoard } from '../data/cloudboard';
-import { Observable, map } from 'rxjs';
+import { Observable, ReplaySubject, map, tap } from 'rxjs';
 import { ApiClientService, CloudBoardDto } from './api-client-service';
-import { AutoMapperService } from './automapper.service';
+import { mapCloudBoardDtoToCloudBoard, mapCloudBoardToCloudBoardDto } from '../data/mapper';
+import { MessageService } from 'primeng/api';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CloudboardService {
-
   private apiClient: ApiClientService = inject(ApiClientService);
-  private autoMapper: AutoMapperService = inject(AutoMapperService);
-  
+  private messageService: MessageService = inject(MessageService);
+
+  constructor() { }
+
   public listCloudBoards(): Observable<CloudBoard[]> {
     return this.apiClient.getAllCloudBoards().pipe(
-      map(dtos => dtos.map(dto => this.autoMapper.mapCloudBoardDtoToCloudBoard(dto)))
+      map((dtos: CloudBoardDto[]) => dtos.map((dto: CloudBoardDto) => mapCloudBoardDtoToCloudBoard(dto)))
     );
   }
   
-    public deleteCloudBoard(cloudboardId: string): Observable<void> {
-    return this.apiClient.deleteCloudBoard(cloudboardId).pipe(
-      map(() => void 0)
-    );
-  }
-
   public loadCloudBoardById(cloudboardId: string): Observable<CloudBoard> {
     return this.apiClient.getCloudBoardById(cloudboardId).pipe(
-      map(dto => this.autoMapper.mapCloudBoardDtoToCloudBoard(dto))
+      map((dto: CloudBoardDto) => mapCloudBoardDtoToCloudBoard(dto)),
+      tap((cloudboard: CloudBoard) => this.messageService.add({
+                                            severity: 'info',
+                                            summary: 'Board Loaded',
+                                            detail: `CloudBoard ${cloudboard.name} loaded successfully`}),
+          (error) => this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: `Failed to load CloudBoard: ${error.message || 'Unknown error'}`}))
     );
   }
   
   public createCloudBoard(cloudboard: CloudBoard): Observable<CloudBoard> {
-    const dto = this.autoMapper.mapCloudBoardToCloudBoardDto(cloudboard);
-    return this.apiClient.saveCloudBoard(dto).pipe(
-      map(responseDto => this.autoMapper.mapCloudBoardDtoToCloudBoard(responseDto))
+    const dto = mapCloudBoardToCloudBoardDto(cloudboard);
+    return this.apiClient.createCloudBoard(dto).pipe(
+      map((newDto: CloudBoardDto) => mapCloudBoardDtoToCloudBoard(newDto))
     );
   }
 
-  constructor() { }
+  public saveCloudBoard(currentCloudBoard: CloudBoard): Observable<boolean> {
+    return Observable.create((observer: any) => {
+      observer.next(true);
+      observer.complete();  
+    });
+  }
+
+  public deleteCloudBoard(cloudboardId: string): Observable<boolean> {
+    return this.apiClient.deleteCloudBoard(cloudboardId);
+  }
 }

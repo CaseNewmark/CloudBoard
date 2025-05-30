@@ -1,7 +1,5 @@
 // src/app/data/cloudboard.ts
 
-import { Guid } from "guid-typescript";
-
 export enum ConnectorPosition {
   Top = 'Top',
   Bottom = 'Bottom',

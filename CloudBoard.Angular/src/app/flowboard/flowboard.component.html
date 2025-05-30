@@ -1,8 +1,6 @@
 <div class="toolbar-container">
     <toolbar></toolbar>
 </div>
-<p-toast position="top-right"></p-toast>
-<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
 @if (!currentCloudBoard) {
 <div class="grow h-full flex justify-center items-center">
     @if (isLoading) {
@@ -18,7 +16,6 @@
     <p-contextmenu #nodecontextmenu [model]="nodeContextMenuItems" />
     <f-flow class="grow" 
         fDraggable
-        (fSelectionChange)="onSelectionChange($event)"
         (fCreateConnection)="onConnectionAdded($event)"
         (contextmenu)="showFlowContextMenu($event)">
         <f-canvas fZoom>

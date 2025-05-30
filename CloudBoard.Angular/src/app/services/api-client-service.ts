@@ -25,13 +25,13 @@ export class ApiClientService {
 
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
-        this.baseUrl = baseUrl ?? "https://localhost:59812";
+        this.baseUrl = baseUrl ?? "https://localhost:64428";
     }
 
     /**
      * @return OK
      */
-    saveCloudBoard(body: CloudBoardDto): Observable<CloudBoardDto> {
+    createCloudBoard(body: CloudBoardDto): Observable<CloudBoardDto> {
         let url_ = this.baseUrl + "/api/cloudboard";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -48,11 +48,11 @@ export class ApiClientService {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processSaveCloudBoard(response_);
+            return this.processCreateCloudBoard(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processSaveCloudBoard(response_ as any);
+                    return this.processCreateCloudBoard(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<CloudBoardDto>;
                 }
@@ -61,7 +61,7 @@ export class ApiClientService {
         }));
     }
 
-    protected processSaveCloudBoard(response: HttpResponseBase): Observable<CloudBoardDto> {
+    protected processCreateCloudBoard(response: HttpResponseBase): Observable<CloudBoardDto> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -141,11 +141,11 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    getCloudBoardById(id: string): Observable<CloudBoardDto> {
-        let url_ = this.baseUrl + "/api/cloudboard/{id}";
-        if (id === undefined || id === null)
-            throw new Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    getCloudBoardById(cloudboardId: string): Observable<CloudBoardDto> {
+        let url_ = this.baseUrl + "/api/cloudboard/{cloudboardId}";
+        if (cloudboardId === undefined || cloudboardId === null)
+            throw new Error("The parameter 'cloudboardId' must be defined.");
+        url_ = url_.replace("{cloudboardId}", encodeURIComponent("" + cloudboardId));
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -194,11 +194,11 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    updateCloudBoard(id: string, body: CloudBoardDto): Observable<CloudBoardDto> {
-        let url_ = this.baseUrl + "/api/cloudboard/{id}";
-        if (id === undefined || id === null)
-            throw new Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    updateCloudBoard(cloudboardId: string, body: CloudBoardDto): Observable<CloudBoardDto> {
+        let url_ = this.baseUrl + "/api/cloudboard/{cloudboardId}";
+        if (cloudboardId === undefined || cloudboardId === null)
+            throw new Error("The parameter 'cloudboardId' must be defined.");
+        url_ = url_.replace("{cloudboardId}", encodeURIComponent("" + cloudboardId));
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -251,11 +251,11 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    deleteCloudBoard(id: string): Observable<boolean> {
-        let url_ = this.baseUrl + "/api/cloudboard/{id}";
-        if (id === undefined || id === null)
-            throw new Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    deleteCloudBoard(cloudboardId: string): Observable<boolean> {
+        let url_ = this.baseUrl + "/api/cloudboard/{cloudboardId}";
+        if (cloudboardId === undefined || cloudboardId === null)
+            throw new Error("The parameter 'cloudboardId' must be defined.");
+        url_ = url_.replace("{cloudboardId}", encodeURIComponent("" + cloudboardId));
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -304,11 +304,11 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    createNode(cloudboardid: string, body: NodeDto): Observable<NodeDto> {
-        let url_ = this.baseUrl + "/api/node/{cloudboardid}";
-        if (cloudboardid === undefined || cloudboardid === null)
-            throw new Error("The parameter 'cloudboardid' must be defined.");
-        url_ = url_.replace("{cloudboardid}", encodeURIComponent("" + cloudboardid));
+    createNode(cloudboardId: string, body: NodeDto): Observable<NodeDto> {
+        let url_ = this.baseUrl + "/api/cloudboard/{cloudboardId}/node";
+        if (cloudboardId === undefined || cloudboardId === null)
+            throw new Error("The parameter 'cloudboardId' must be defined.");
+        url_ = url_.replace("{cloudboardId}", encodeURIComponent("" + cloudboardId));
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -367,11 +367,12 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    getNodeById(id: string): Observable<NodeDto> {
-        let url_ = this.baseUrl + "/api/node/{id}";
-        if (id === undefined || id === null)
-            throw new Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    getNodeById(nodeId: string): Observable<NodeDto> {
+        let url_ = this.baseUrl + "/api/node/{id}?";
+        if (nodeId === undefined || nodeId === null)
+            throw new Error("The parameter 'nodeId' must be defined and cannot be null.");
+        else
+            url_ += "nodeId=" + encodeURIComponent("" + nodeId) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -420,11 +421,11 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    updateNode(id: string, body: NodeDto): Observable<NodeDto> {
-        let url_ = this.baseUrl + "/api/node/{id}";
-        if (id === undefined || id === null)
-            throw new Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    updateNode(nodeId: string, body: NodeDto): Observable<NodeDto> {
+        let url_ = this.baseUrl + "/api/node/{nodeId}";
+        if (nodeId === undefined || nodeId === null)
+            throw new Error("The parameter 'nodeId' must be defined.");
+        url_ = url_.replace("{nodeId}", encodeURIComponent("" + nodeId));
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -477,11 +478,11 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    deleteNode(id: string): Observable<boolean> {
-        let url_ = this.baseUrl + "/api/node/{id}";
-        if (id === undefined || id === null)
-            throw new Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    deleteNode(nodeId: string): Observable<boolean> {
+        let url_ = this.baseUrl + "/api/node/{nodeId}";
+        if (nodeId === undefined || nodeId === null)
+            throw new Error("The parameter 'nodeId' must be defined.");
+        url_ = url_.replace("{nodeId}", encodeURIComponent("" + nodeId));
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -530,11 +531,11 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    createConnector(nodeid: string, body: ConnectorDto): Observable<ConnectorDto> {
-        let url_ = this.baseUrl + "/api/connector/{nodeid}";
-        if (nodeid === undefined || nodeid === null)
-            throw new Error("The parameter 'nodeid' must be defined.");
-        url_ = url_.replace("{nodeid}", encodeURIComponent("" + nodeid));
+    createConnector(nodeId: string, body: ConnectorDto): Observable<ConnectorDto> {
+        let url_ = this.baseUrl + "/api/node/{nodeId}/connector";
+        if (nodeId === undefined || nodeId === null)
+            throw new Error("The parameter 'nodeId' must be defined.");
+        url_ = url_.replace("{nodeId}", encodeURIComponent("" + nodeId));
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -593,11 +594,11 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    getConnectorById(id: string): Observable<ConnectorDto> {
-        let url_ = this.baseUrl + "/api/connector/{id}";
-        if (id === undefined || id === null)
-            throw new Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    getConnectorById(connectorId: string): Observable<ConnectorDto> {
+        let url_ = this.baseUrl + "/api/connector/{connectorId}";
+        if (connectorId === undefined || connectorId === null)
+            throw new Error("The parameter 'connectorId' must be defined.");
+        url_ = url_.replace("{connectorId}", encodeURIComponent("" + connectorId));
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -646,11 +647,11 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    updateConnector(id: string, body: ConnectorDto): Observable<ConnectorDto> {
-        let url_ = this.baseUrl + "/api/connector/{id}";
-        if (id === undefined || id === null)
-            throw new Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    updateConnector(connectorId: string, body: ConnectorDto): Observable<ConnectorDto> {
+        let url_ = this.baseUrl + "/api/connector/{connectorId}";
+        if (connectorId === undefined || connectorId === null)
+            throw new Error("The parameter 'connectorId' must be defined.");
+        url_ = url_.replace("{connectorId}", encodeURIComponent("" + connectorId));
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -703,11 +704,11 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    deleteConnector(id: string): Observable<boolean> {
-        let url_ = this.baseUrl + "/api/connector/{id}";
-        if (id === undefined || id === null)
-            throw new Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    deleteConnector(connectorId: string): Observable<boolean> {
+        let url_ = this.baseUrl + "/api/connector/{connectorId}";
+        if (connectorId === undefined || connectorId === null)
+            throw new Error("The parameter 'connectorId' must be defined.");
+        url_ = url_.replace("{connectorId}", encodeURIComponent("" + connectorId));
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -809,11 +810,11 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    createConnection(cloudboardid: string, body: ConnectionDto): Observable<ConnectionDto> {
-        let url_ = this.baseUrl + "/api/connection/{cloudboardid}";
-        if (cloudboardid === undefined || cloudboardid === null)
-            throw new Error("The parameter 'cloudboardid' must be defined.");
-        url_ = url_.replace("{cloudboardid}", encodeURIComponent("" + cloudboardid));
+    createConnection(cloudboardId: string, body: ConnectionDto): Observable<ConnectionDto> {
+        let url_ = this.baseUrl + "/api/cloudboard/{cloudboardId}/connection";
+        if (cloudboardId === undefined || cloudboardId === null)
+            throw new Error("The parameter 'cloudboardId' must be defined.");
+        url_ = url_.replace("{cloudboardId}", encodeURIComponent("" + cloudboardId));
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -872,11 +873,64 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    getConnectionById(id: string): Observable<ConnectionDto> {
-        let url_ = this.baseUrl + "/api/connection/{id}";
-        if (id === undefined || id === null)
-            throw new Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    getConnectionsByCloudBoardDocumentId(cloudboardId: string): Observable<ConnectionDto[]> {
+        let url_ = this.baseUrl + "/api/cloudboard/{cloudboardId}/connection";
+        if (cloudboardId === undefined || cloudboardId === null)
+            throw new Error("The parameter 'cloudboardId' must be defined.");
+        url_ = url_.replace("{cloudboardId}", encodeURIComponent("" + cloudboardId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetConnectionsByCloudBoardDocumentId(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetConnectionsByCloudBoardDocumentId(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ConnectionDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ConnectionDto[]>;
+        }));
+    }
+
+    protected processGetConnectionsByCloudBoardDocumentId(response: HttpResponseBase): Observable<ConnectionDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConnectionDto[];
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    getConnectionById(connectionId: string): Observable<ConnectionDto> {
+        let url_ = this.baseUrl + "/api/connection/{connectionId}";
+        if (connectionId === undefined || connectionId === null)
+            throw new Error("The parameter 'connectionId' must be defined.");
+        url_ = url_.replace("{connectionId}", encodeURIComponent("" + connectionId));
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -925,11 +979,11 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    updateConnection(id: string, body: ConnectionDto): Observable<ConnectionDto> {
-        let url_ = this.baseUrl + "/api/connection/{id}";
-        if (id === undefined || id === null)
-            throw new Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    updateConnection(connectionId: string, body: ConnectionDto): Observable<ConnectionDto> {
+        let url_ = this.baseUrl + "/api/connection/{connectionId}";
+        if (connectionId === undefined || connectionId === null)
+            throw new Error("The parameter 'connectionId' must be defined.");
+        url_ = url_.replace("{connectionId}", encodeURIComponent("" + connectionId));
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -982,11 +1036,11 @@ export class ApiClientService {
     /**
      * @return OK
      */
-    deleteConnection(id: string): Observable<boolean> {
-        let url_ = this.baseUrl + "/api/connection/{id}";
-        if (id === undefined || id === null)
-            throw new Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+    deleteConnection(connectionId: string): Observable<boolean> {
+        let url_ = this.baseUrl + "/api/connection/{connectionId}";
+        if (connectionId === undefined || connectionId === null)
+            throw new Error("The parameter 'connectionId' must be defined.");
+        url_ = url_.replace("{connectionId}", encodeURIComponent("" + connectionId));
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -1022,59 +1076,6 @@ export class ApiClientService {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as boolean;
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
-    /**
-     * @return OK
-     */
-    getConnectionsByCloudBoardDocumentId(cloudBoardDocumentId: string): Observable<ConnectionDto[]> {
-        let url_ = this.baseUrl + "/api/cloudboard/{cloudBoardDocumentId}/connections";
-        if (cloudBoardDocumentId === undefined || cloudBoardDocumentId === null)
-            throw new Error("The parameter 'cloudBoardDocumentId' must be defined.");
-        url_ = url_.replace("{cloudBoardDocumentId}", encodeURIComponent("" + cloudBoardDocumentId));
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_ : any = {
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetConnectionsByCloudBoardDocumentId(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetConnectionsByCloudBoardDocumentId(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<ConnectionDto[]>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<ConnectionDto[]>;
-        }));
-    }
-
-    protected processGetConnectionsByCloudBoardDocumentId(response: HttpResponseBase): Observable<ConnectionDto[]> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ConnectionDto[];
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {

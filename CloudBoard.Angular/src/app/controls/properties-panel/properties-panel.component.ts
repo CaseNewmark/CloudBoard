@@ -8,7 +8,7 @@ import { Node, NodeType } from '../../data/cloudboard';
 import { BlurOnEnterDirective } from '../../helpers/blur-on-enter.directive';
 import { TextareaModule } from 'primeng/textarea';
 import { ColorPickerModule } from 'primeng/colorpicker';
-import { NodeRegistryService } from '../../nodes/node-registry.service';
+import { NodeService } from '../../services/node.service';
 import { DropdownModule } from 'primeng/dropdown';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputSwitchModule } from 'primeng/inputswitch';
@@ -56,8 +56,8 @@ export class PropertiesPanelComponent {
     { name: 'JSON', value: 'json' }
   ];
 
-  private nodeRegistryService = inject(NodeRegistryService);
   private boardProviderService = inject(BoardProviderService);
+  private nodeService = inject(NodeService);
 
   changeNodeType(newType: NodeType): void {
     if (this.nodeProperties()) {
@@ -70,7 +70,7 @@ export class PropertiesPanelComponent {
       
       // Update the node type and set default properties for that type
       node.type = newType;
-      node.properties = this.nodeRegistryService.getDefaultPropertiesForType(newType);
+      node.properties = this.nodeService.getDefaultPropertiesForType(newType);
       
       // Restore unchanged properties
       node.id = id;
