@@ -10,8 +10,8 @@ public class NodePositionDto
 
 public class NodeDto
 {
-    public Guid Id { get; set; }
-    public string Type { get; set; } = "note";
+    public string Id { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public NodePositionDto Position { get; set; } = new NodePositionDto();
     public List<ConnectorDto> Connectors { get; set; } = new List<ConnectorDto>();

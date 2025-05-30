@@ -11,17 +11,17 @@ public static class ConnectorEndpoints
 {
     public static void MapConnectorEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/connector/{nodeid:guid}", async (Guid nodeId, [FromBody] ConnectorDto connectorDto, IConnectorService connectorService) =>
+        app.MapPost("/api/node/{nodeId:guid}/connector", async (string nodeId, [FromBody] ConnectorDto connectorDto, IConnectorService connectorService) =>
         {
             var newConnector = await connectorService.CreateConnectorAsync(nodeId, connectorDto);
-            return TypedResults.Created($"/api/connector/{newConnector.Id}", newConnector);
+            return TypedResults.Created($"/api/node/{nodeId}/connector/{newConnector.Id}", newConnector);
         })
         .WithName("CreateConnector")
         .Produces<ConnectorDto>();
 
-        app.MapGet("/api/connector/{id:guid}", async (Guid id, IConnectorService connectorService) =>
+        app.MapGet("/api/connector/{connectorId:guid}", async (string connectorId, IConnectorService connectorService) =>
         {
-            var connector = await connectorService.GetConnectorByIdAsync(id);
+            var connector = await connectorService.GetConnectorByIdAsync(connectorId);
             return connector is not null
                 ? TypedResults.Ok(connector)
                 : Results.NotFound();
@@ -29,7 +29,7 @@ public static class ConnectorEndpoints
         .WithName("GetConnectorById")
         .Produces<ConnectorDto>();
 
-        app.MapGet("/api/node/{nodeId:guid}/connectors", async (Guid nodeId, IConnectorService connectorService) =>
+        app.MapGet("/api/node/{nodeId:guid}/connectors", async (string nodeId, IConnectorService connectorService) =>
         {
             var connectors = await connectorService.GetConnectorsByNodeIdAsync(nodeId);
             return TypedResults.Ok(connectors);
@@ -37,7 +37,7 @@ public static class ConnectorEndpoints
         .WithName("GetConnectorsByNodeId")
         .Produces<IEnumerable<ConnectorDto>>();
 
-        app.MapPut("/api/connector/{id:guid}", async (Guid id, [FromBody] ConnectorDto connectorDto, IConnectorService connectorService) =>
+        app.MapPut("/api/connector/{connectorId:guid}", async (string connectorId, [FromBody] ConnectorDto connectorDto, IConnectorService connectorService) =>
         {
             var updated = await connectorService.UpdateConnectorAsync(connectorDto);
             return updated is not null
@@ -47,9 +47,9 @@ public static class ConnectorEndpoints
         .WithName("UpdateConnector")
         .Produces<ConnectorDto>();
 
-        app.MapDelete("/api/connector/{id:guid}", async (Guid id, IConnectorService connectorService) =>
+        app.MapDelete("/api/connector/{connectorId:guid}", async (string connectorId, IConnectorService connectorService) =>
         {
-            var deleted = await connectorService.DeleteConnectorAsync(id);
+            var deleted = await connectorService.DeleteConnectorAsync(connectorId);
             return TypedResults.Ok(deleted);
         })
         .WithName("DeleteConnector");

@@ -21,8 +21,9 @@ public class ConnectorService : IConnectorService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<ConnectorDto?> GetConnectorByIdAsync(Guid connectorId)
+    public async Task<ConnectorDto?> GetConnectorByIdAsync(string id)
     {
+        var connectorId = Guid.Parse(id);
         try
         {
             var connector = await _connectorRepository.GetConnectorByIdAsync(connectorId);
@@ -41,8 +42,9 @@ public class ConnectorService : IConnectorService
         }
     }
 
-    public async Task<IEnumerable<ConnectorDto>> GetConnectorsByNodeIdAsync(Guid nodeId)
+    public async Task<IEnumerable<ConnectorDto>> GetConnectorsByNodeIdAsync(string id)
     {
+        var nodeId = Guid.Parse(id);
         try
         {
             var connectors = await _connectorRepository.GetConnectorsByNodeIdAsync(nodeId);
@@ -55,8 +57,9 @@ public class ConnectorService : IConnectorService
         }
     }
 
-    public async Task<ConnectorDto> CreateConnectorAsync(Guid nodeId, ConnectorDto connectorDto)
+    public async Task<ConnectorDto> CreateConnectorAsync(string id, ConnectorDto connectorDto)
     {
+        var nodeId = Guid.Parse(id);
         try
         {
             var connector = _mapper.Map<Connector>(connectorDto);
@@ -73,24 +76,25 @@ public class ConnectorService : IConnectorService
 
     public async Task<ConnectorDto?> UpdateConnectorAsync(ConnectorDto connectorDto)
     {
+        var connectorId = Guid.Parse(connectorDto.Id);
         try
         {
             // Verify the connector exists
-            var connectorExists = await _connectorRepository.GetConnectorByIdAsync(connectorDto.Id);
+            var connectorExists = await _connectorRepository.GetConnectorByIdAsync(connectorId);
             if (connectorExists == null)
             {
-                _logger.LogWarning("Connector with ID {ConnectorId} not found for update", connectorDto.Id);
+                _logger.LogWarning("Connector with ID {ConnectorId} not found for update", connectorId);
                 return null;
             }
 
             // Map DTO to entity
             var connectorToUpdate = _mapper.Map<Connector>(connectorDto);
-            
+
             // Update the connector
             var updatedConnector = await _connectorRepository.UpdateConnectorAsync(connectorToUpdate);
             if (updatedConnector == null)
             {
-                _logger.LogWarning("Connector with ID {ConnectorId} could not be updated", connectorDto.Id);
+                _logger.LogWarning("Connector with ID {ConnectorId} could not be updated", connectorId);
                 return null;
             }
 
@@ -98,13 +102,14 @@ public class ConnectorService : IConnectorService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating connector with ID {ConnectorId}", connectorDto.Id);
+            _logger.LogError(ex, "Error updating connector with ID {ConnectorId}", connectorId);
             throw;
         }
     }
 
-    public async Task<bool> DeleteConnectorAsync(Guid connectorId)
+    public async Task<bool> DeleteConnectorAsync(string id)
     {
+        var connectorId = Guid.Parse(id);
         try
         {
             return await _connectorRepository.DeleteConnectorAsync(connectorId);

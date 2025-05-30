@@ -1,9 +1,8 @@
 using CloudBoard.ApiService.Data;
-using CloudBoard.ApiService.Data.Repositories;
 using CloudBoard.ApiService.Services.Contracts;
 using Microsoft.EntityFrameworkCore;
 
-namespace CloudBoard.ApiService.Data.Repositories;
+namespace CloudBoard.ApiService.Services;
 
 public class NodeRepository : INodeRepository
 {

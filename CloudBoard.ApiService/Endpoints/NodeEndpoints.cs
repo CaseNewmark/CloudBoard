@@ -11,17 +11,17 @@ public static class NodeEndpoints
 {
     public static void MapNodeEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/node/{cloudboardid:guid}", async (Guid cloudBoardId, [FromBody] NodeDto nodeDto, INodeService nodeService) =>
+        app.MapPost("/api/cloudboard/{cloudboardId:guid}/node", async (string cloudboardId, [FromBody] NodeDto nodeDto, INodeService nodeService) =>
         {
-            var newNode = await nodeService.CreateNodeAsync(cloudBoardId, nodeDto);
-            return TypedResults.Created($"/api/node/{newNode.Id}", newNode);
+            var newNode = await nodeService.CreateNodeAsync(cloudboardId, nodeDto);
+            return TypedResults.Created($"/api/cloudboard/{cloudboardId}/node/{newNode.Id}", newNode);
         })
         .WithName("CreateNode")
         .Produces<NodeDto>();
 
-        app.MapGet("/api/node/{id:guid}", async (Guid id, INodeService nodeService) =>
+        app.MapGet("/api/node/{id:guid}", async (string nodeId, INodeService nodeService) =>
         {
-            var node = await nodeService.GetNodeByIdAsync(id);
+            var node = await nodeService.GetNodeByIdAsync(nodeId);
             return node is not null
                 ? TypedResults.Ok(node)
                 : Results.NotFound();
@@ -29,7 +29,7 @@ public static class NodeEndpoints
         .WithName("GetNodeById")
         .Produces<NodeDto>();
 
-        app.MapPut("/api/node/{id:guid}", async (Guid id, [FromBody] NodeDto nodeDto, INodeService nodeService) =>
+        app.MapPut("/api/node/{nodeId:guid}", async (string nodeId, [FromBody] NodeDto nodeDto, INodeService nodeService) =>
         {
             var updated = await nodeService.UpdateNodeAsync(nodeDto);
             return updated is not null
@@ -39,9 +39,9 @@ public static class NodeEndpoints
         .WithName("UpdateNode")
         .Produces<NodeDto>();
 
-        app.MapDelete("/api/node/{id:guid}", async (Guid id, INodeService nodeService) =>
+        app.MapDelete("/api/node/{nodeId:guid}", async (string nodeId, INodeService nodeService) =>
         {
-            var deleted = await nodeService.DeleteNodeAsync(id);
+            var deleted = await nodeService.DeleteNodeAsync(nodeId);
             return TypedResults.Ok(deleted);
         })
         .WithName("DeleteNode");

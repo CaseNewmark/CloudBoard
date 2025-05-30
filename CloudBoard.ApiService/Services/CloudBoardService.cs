@@ -1,6 +1,7 @@
 using AutoMapper;
 using CloudBoard.ApiService.Dtos;
 using CloudBoard.ApiService.Services.Contracts;
+using Microsoft.Extensions.ObjectPool;
 
 namespace CloudBoard.ApiService.Services;
 
@@ -49,15 +50,16 @@ public class CloudBoardService : ICloudBoardService
         }
     }
 
-    public async Task<CloudBoardDto> GetCloudBoardDocumentByIdAsync(Guid id)
+    public async Task<CloudBoardDto> GetCloudBoardDocumentByIdAsync(string id)
     {
+        var cloudboardId = Guid.Parse(id);
         try
         {
-            var document = await _cloudBoardRepository.GetDocumentByIdAsync(id);
+            var document = await _cloudBoardRepository.GetDocumentByIdAsync(cloudboardId);
             if (document == null)
             {
-                _logger.LogWarning("CloudBoard document with ID {Id} not found", id);
-                throw new KeyNotFoundException($"CloudBoard document with ID {id} not found");
+                _logger.LogWarning("CloudBoard document with ID {Id} not found", cloudboardId);
+                throw new KeyNotFoundException($"CloudBoard document with ID {cloudboardId} not found");
             }
             return _mapper.Map<CloudBoardDto>(document);
         }
@@ -70,13 +72,14 @@ public class CloudBoardService : ICloudBoardService
 
     public async Task<CloudBoardDto?> UpdateCloudBoardDocumentAsync(CloudBoardDto updateDto)
     {
+        var cloudboardId = Guid.Parse(updateDto.Id);
         try
         {
             // First verify the document exists
-            var documentExists = await _cloudBoardRepository.GetDocumentByIdAsync(updateDto.Id);
+            var documentExists = await _cloudBoardRepository.GetDocumentByIdAsync(cloudboardId);
             if (documentExists == null)
             {
-                _logger.LogWarning("CloudBoard document with ID {Id} not found for update", updateDto.Id);
+                _logger.LogWarning("CloudBoard document with ID {Id} not found for update", cloudboardId);
                 return null;
             }
 
@@ -88,25 +91,26 @@ public class CloudBoardService : ICloudBoardService
             await _cloudBoardRepository.UpdateDocumentAsync(documentToUpdate);
 
             // Get the fresh entity after update
-            var updatedDocument = await _cloudBoardRepository.GetDocumentByIdAsync(updateDto.Id);
+            var updatedDocument = await _cloudBoardRepository.GetDocumentByIdAsync(cloudboardId);
             return _mapper.Map<CloudBoardDto>(updatedDocument);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating CloudBoard document with ID {Id}", updateDto.Id);
+            _logger.LogError(ex, "Error updating CloudBoard document with ID {Id}", cloudboardId);
             throw;
         }
     }
 
-    public async Task<bool> DeleteCloudBoardDocumentAsync(Guid id)
+    public async Task<bool> DeleteCloudBoardDocumentAsync(string id)
     {
+        var cloudboardId = Guid.Parse(id);
         try
         {
-            return await _cloudBoardRepository.DeleteDocumentAsync(id);
+            return await _cloudBoardRepository.DeleteDocumentAsync(cloudboardId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting CloudBoard document with ID {Id}", id);
+            _logger.LogError(ex, "Error deleting CloudBoard document with ID {Id}", cloudboardId);
             throw;
         }
     }
