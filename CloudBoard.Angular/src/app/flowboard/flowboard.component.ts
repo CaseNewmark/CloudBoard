@@ -14,7 +14,7 @@ import { NodeService } from '../services/node.service';
 import { ConnectorService } from '../services/connector.service';
 import { ConnectionService } from '../services/connection.service';
 import { FlowControlService, ZoomAction } from '../services/flow-control.service';
-import { ConfirmationService, MenuItem } from 'primeng/api';
+import { MenuItem } from 'primeng/api';
 import { CardNodeComponent } from '../nodes/card-node/card-node.component';
 import { LinkCollectionComponent } from '../nodes/link-collection/link-collection.component';
 import { ImageNodeComponent } from '../nodes/image-node/image-node.component';
@@ -41,7 +41,6 @@ import { ToastModule } from 'primeng/toast';
     ProgressSpinnerModule,
     ToastModule],
   providers: [
-    ConfirmationService,
     MessageService
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,7 +60,6 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private nodeService = inject(NodeService);
   private connectorService = inject(ConnectorService);
   private connectionService = inject(ConnectionService);
-  private confirmationService = inject(ConfirmationService);
   private messageService = inject(MessageService);
   private contextMenuService = inject(ContextMenuService);
   private subscriptions: Subscription[] = [];
@@ -134,14 +132,11 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       };
 
       // Create the node through the API
-      this.isLoading = true;
       this.nodeService.createNode(this.currentCloudBoard.id, nodeDto).subscribe({
         next: newNode => {
-          this.isLoading = false;
           this.currentCloudBoard?.nodes.push(newNode);
           this.changeDetectorRef.detectChanges();
-        },
-        error: error => this.isLoading = false
+        }
       });
     }
   }
@@ -153,25 +148,6 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       );
     }
   }
-
-  // Method to add a new connector to a node
-  addConnector(nodeId: string, position: string, type: string): void {
-    const connectorDto = {
-      id: '',
-      name: type === 'in' ? 'Input' : type === 'out' ? 'Output' : 'I/O',
-      position: ConnectorPosition.Right,
-      type: ConnectorType.In,
-      nodeId: nodeId
-    };
-
-    this.connectorService.createConnector(nodeId, connectorDto).subscribe();
-  }
-
-  // Method to remove a connector from a node
-  removeConnector(connectorId: string): void {
-    this.connectorService.deleteConnection(connectorId).subscribe();
-  }
-
 
   protected onNodeDoubleClicked(event: Event, node: Node): void {
     if (!node) return
@@ -301,7 +277,6 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-
   private autoSaveTimer: any;
   private lastSaveTime: number = 0;
   private readonly AUTO_SAVE_INTERVAL = 5 * 60 * 1000; // 5 minutes
@@ -323,35 +298,6 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         this.cloudboardService.saveCloudBoard(this.currentCloudBoard).subscribe();
       }
     }, this.AUTO_SAVE_INTERVAL);
-  }
-  
-  private createDefaultConnectorsForNode(nodeId: string): void {
-    // Create input connector
-    const inConnectorDto = {
-      id: '',
-      name: 'In',
-      position: ConnectorPosition.Left,
-      type: ConnectorType.In,
-    };
-
-    // Create output connector
-    const outConnectorDto = {
-      id: '',
-      name: 'Out',
-      position: ConnectorPosition.Right,
-      type: ConnectorType.Out,
-    };
-
-    // Create both connectors
-    this.connectorService.createConnector(nodeId, inConnectorDto).subscribe({
-      next: () => console.log('Input connector created'),
-      error: (error) => console.error('Error creating input connector:', error)
-    });
-
-    this.connectorService.createConnector(nodeId, outConnectorDto).subscribe({
-      next: () => console.log('Output connector created'),
-      error: (error) => console.error('Error creating output connector:', error)
-    });
   }
 
   private loadCloudBoardById(cloudboardId: string): void {

@@ -1,13 +1,13 @@
 import { Component, input, inject } from '@angular/core';
 import { Node } from '../data/cloudboard';
-import { BoardProviderService } from '../services/board-provider.service';
+import { NodeService } from '../services/node.service';
 
 @Component({
   template: ''
 })
 export abstract class BaseNodeComponent {
   node = input<Node>();
-  private boardProviderService = inject(BoardProviderService);
+  private nodeService = inject(NodeService);
   private propertyUpdateTimer: ReturnType<typeof setTimeout> | null = null;
   
   // Function to update a specific property
@@ -25,14 +25,7 @@ export abstract class BaseNodeComponent {
         const updatedNode = { ...this.node()! };
         
         // Call API to update the node
-        this.boardProviderService.updateNode(this.node()!.id, updatedNode).subscribe(
-          response => {
-            console.log(`Node property ${key} updated successfully`);
-          },
-          error => {
-            console.error(`Error updating node property ${key}:`, error);
-          }
-        );
+        this.nodeService.updateNode(this.node()!.id, updatedNode).subscribe();
       }, 500); // 500ms debounce
     }
   }
