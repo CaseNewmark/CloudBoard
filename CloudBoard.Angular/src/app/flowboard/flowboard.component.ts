@@ -7,10 +7,10 @@ import { PropertiesPanelComponent } from '../controls/properties-panel/propertie
 import { SimpleNoteComponent } from '../nodes/simple-note/simple-note.component';
 import { BoardProviderService } from '../services/board-provider.service';
 import { DoubleClickDirective } from '../helpers/double-click.directive';
-import { CloudBoard, Connection, ConnectorPosition, ConnectorType, Node as NodeInfo, NodePosition, NodeType } from '../data/cloudboard';
+import { CloudBoard, Connection, ConnectorPosition, ConnectorType, Node, Node as NodeInfo, NodePosition, NodeType } from '../data/cloudboard';
 import { ContextMenu, ContextMenuModule } from 'primeng/contextmenu';
 import { Subscription } from 'rxjs';
-import { Guid } from 'guid-typescript';
+import { CloudboardService } from '../services/cloudboard.service';
 import { FlowControlService, ZoomAction } from '../services/flow-control.service';
 import { ConfirmationService, MenuItem } from 'primeng/api';
 import { NodeRegistryService } from '../nodes/node-registry.service';
@@ -59,6 +59,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   protected nodeContextMenu = viewChild<ContextMenu>('nodecontextmenu');
   private flowControlService: FlowControlService = inject(FlowControlService);
   private boardProviderService: BoardProviderService = inject(BoardProviderService);
+  private cloudboardService = inject(CloudboardService);
   private nodeRegistryService = inject(NodeRegistryService);
   private confirmationService = inject(ConfirmationService);
   private messageService = inject(MessageService);
@@ -84,6 +85,8 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     private router: Router) { }
     
   ngOnInit(): void {
+    //this.cloudboardService.loadCloudBoardById
+
     // Subscribe to cloudBoard updates
     const boardSubscription = this.boardProviderService.cloudBoardLoaded.subscribe((cloudBoard) => {
       this.currentCloudBoard = cloudBoard;
@@ -107,6 +110,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       // Set up auto-save for the new board
       this.setupAutoSave();
     });
+
     this.subscriptions.push(boardSubscription);
     // Get the id from the route parameter
     const routeSubscription = this.route.paramMap.subscribe(params => {
@@ -114,7 +118,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       if (id != null && (this.currentCloudBoard == null
         || this.currentCloudBoard.id?.toString() !== id)) {
         this.isLoading = true;
-        this.boardProviderService.loadCloudBoardById(Guid.parse(id)).subscribe({
+        this.boardProviderService.loadCloudBoardById(id).subscribe({
           next: () => {
             this.isLoading = false;
           },
@@ -186,7 +190,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // Get all selected nodes
       const selectedNodes = this.currentCloudBoard.nodes.filter(
-        node => this.selectedNodeIds.includes(node.id)
+        node => this.selectedNodeIds.includes(node.id.toString())
       );
 
       // Find all connections that involve the selected nodes
@@ -357,23 +361,23 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       const defaultProperties = this.nodeRegistryService.getDefaultPropertiesForType(nodeType);
 
       // Prepare the node DTO for API (without connectors - they'll be created separately)
-      const nodeDto = {
+      const nodeDto: Node = {
+        id: '', 
         name: this.getDefaultNameForNodeType(nodeType),
         position: { x: position.x, y: position.y },
         connectors: [], // Empty array - connectors will be created after node creation
-        type: this.getApiTypeForNodeType(nodeType),
-        properties: defaultProperties,
-        cloudBoardDocumentId: this.currentCloudBoard.id?.toString()
+        type: nodeType,
+        properties: defaultProperties
       };
 
       // Create the node through the API
       this.isLoading = true;
-      this.boardProviderService.createNode(nodeDto).subscribe({
+      this.boardProviderService.createNode(this.currentCloudBoard.id.toString(), nodeDto).subscribe({
         next: newNode => {
           console.log('Node created successfully:', newNode);
 
           // Now create the default connectors for the node
-          this.createDefaultConnectorsForNode(newNode.id);
+          this.createDefaultConnectorsForNode(newNode.id?.toString());
 
           this.isLoading = false;
           this.messageService.add({
@@ -400,7 +404,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   protected deleteNode(node: NodeInfo): void {
     if (this.currentCloudBoard) {
       const connectionsToDelete = this.currentCloudBoard.connections.filter(conn =>
-        node.connectors.some((c: { id: string }) => c.id === conn.fromConnectorId || c.id === conn.toConnectorId)
+        node.connectors.some((c: { id: string }) => c.id.toString() === conn.fromConnectorId || c.id.toString() === conn.toConnectorId)
       );
       this.confirmDeleteNodes([node], connectionsToDelete);
     }
@@ -432,6 +436,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.currentCloudBoard && event.fOutputId && event.fInputId) {
       // Prepare connection DTO
       const connectionDto = {
+        id: '',
         fromConnectorId: event.fOutputId,
         toConnectorId: event.fInputId,
         cloudBoardDocumentId: this.currentCloudBoard.id?.toString()
@@ -473,13 +478,14 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   // Method to add a new connector to a node
   addConnector(nodeId: string, position: string, type: string): void {
     const connectorDto = {
+      id: '',
       name: type === 'in' ? 'Input' : type === 'out' ? 'Output' : 'I/O',
-      position: position.toLowerCase(),
-      type: type.toLowerCase(),
+      position: ConnectorPosition.Right,
+      type: ConnectorType.In,
       nodeId: nodeId
     };
 
-    this.boardProviderService.createConnector(connectorDto).subscribe(
+    this.boardProviderService.createConnector(nodeId, connectorDto).subscribe(
       response => {
         console.log('Connector added successfully');
       },
@@ -559,27 +565,27 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private createDefaultConnectorsForNode(nodeId: string): void {
     // Create input connector
     const inConnectorDto = {
+      id: '',
       name: 'In',
-      position: 'left',
-      type: 'in',
-      nodeId: nodeId
+      position: ConnectorPosition.Left,
+      type: ConnectorType.In,
     };
 
     // Create output connector
     const outConnectorDto = {
+      id: '',
       name: 'Out',
-      position: 'right',
-      type: 'out',
-      nodeId: nodeId
+      position: ConnectorPosition.Right,
+      type: ConnectorType.Out,
     };
 
     // Create both connectors
-    this.boardProviderService.createConnector(inConnectorDto).subscribe({
+    this.boardProviderService.createConnector(nodeId, inConnectorDto).subscribe({
       next: () => console.log('Input connector created'),
       error: (error) => console.error('Error creating input connector:', error)
     });
 
-    this.boardProviderService.createConnector(outConnectorDto).subscribe({
+    this.boardProviderService.createConnector(nodeId, outConnectorDto).subscribe({
       next: () => console.log('Output connector created'),
       error: (error) => console.error('Error creating output connector:', error)
     });

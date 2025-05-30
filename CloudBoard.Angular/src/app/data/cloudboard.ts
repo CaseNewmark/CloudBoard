@@ -95,7 +95,7 @@ export interface Connection {
 }
 
 export interface CloudBoard {
-  id: Guid;
+  id: string;
   name: string;
   nodes: Node[];
   connections: Connection[];

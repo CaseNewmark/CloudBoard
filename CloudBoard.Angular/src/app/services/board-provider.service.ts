@@ -1,9 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, ReplaySubject } from 'rxjs';
-import { CloudBoard, Connection, Connector, ConnectorPosition, ConnectorType, NodeType } from '../data/cloudboard';
-import { tap } from 'rxjs/operators';
-import { Guid } from 'guid-typescript';
+import { Observable, ReplaySubject, tap } from 'rxjs';
+import { CloudBoard, Connection, Connector, ConnectorPosition, ConnectorType, Node, NodeType } from '../data/cloudboard';
 
 @Injectable({
   providedIn: 'root'
@@ -21,8 +19,9 @@ export class BoardProviderService {
   listCloudBoards(): Observable<CloudBoard[]> {
     return this.http.get<CloudBoard[]>(`${this.apiUrl}/cloudboard`);
   }
-  loadCloudBoardById(boardId: Guid): Observable<CloudBoard> {
-    return this.http.get<CloudBoard>(`${this.apiUrl}/cloudboard/${boardId.toString()}`).pipe(
+  
+  loadCloudBoardById(boardId: string): Observable<CloudBoard> {
+    return this.http.get<CloudBoard>(`${this.apiUrl}/cloudboard/${boardId}`).pipe(
       tap(response => {
         this.currentCloudBoard = response;
         this.cloudBoardLoaded.next(response);
@@ -31,14 +30,9 @@ export class BoardProviderService {
         console.error('Error loading cloudboard', error);
       }));
   }
-  createNewCloudBoard(): Observable<CloudBoard> {
-    let createCloudboardDocument: CloudBoard = {
-      id: Guid.createEmpty(),
-      name: 'Empty Cloudboard',
-      nodes: [],
-      connections: []
-    };
-    return this.http.post<CloudBoard>(`${this.apiUrl}/cloudboard`, createCloudboardDocument).pipe(
+
+  createCloudBoard(cloudboard: CloudBoard): Observable<CloudBoard> {
+    return this.http.post<CloudBoard>(`${this.apiUrl}/cloudboard`, cloudboard).pipe(
       tap(response => {
         this.currentCloudBoard = response;
         this.cloudBoardLoaded.next(response);
@@ -47,6 +41,7 @@ export class BoardProviderService {
         console.error('Error creating cloudboard', error);
       }));
   }
+
   saveCloudBoard(): Observable<CloudBoard> {
     if (!this.currentCloudBoard) {
       return new Observable(observer => {
@@ -64,18 +59,18 @@ export class BoardProviderService {
       }));
   }
 
-  deleteCloudBoard(boardId: Guid): Observable<any> {
+  deleteCloudBoard(boardId: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/cloudboard/${boardId.toString()}`).pipe(
       tap(response => { 
-        console.log('Cloudboard deleted successfully'); 
+        console.log('Cloudboard deleted successfully');
       },
-      (error) => { console.error('Error deleting cloudboard', error);
-
+      (error) => { 
+        console.error('Error deleting cloudboard', error);
       }));
   }
 
   // Node API Methods
-  createNode(nodeDto: any): Observable<any> {
+  createNode(cloudboardId: string, nodeDto: Node): Observable<Node> {
     return this.http.post<any>(`${this.apiUrl}/node`, nodeDto).pipe(
       tap(response => {
         console.log('Node created successfully', response);
@@ -90,7 +85,7 @@ export class BoardProviderService {
     );
   }
 
-  updateNode(nodeId: string, nodeDto: any): Observable<any> {
+  updateNode(nodeId: string, nodeDto: Node): Observable<Node> {
     return this.http.put<any>(`${this.apiUrl}/node/${nodeId}`, nodeDto).pipe(
       tap(response => {
         console.log('Node updated successfully', response);
@@ -135,13 +130,13 @@ export class BoardProviderService {
     );
   }
 
-  createConnector(connectorDto: any): Observable<Connector> {
+  createConnector(nodeId: string, connectorDto: Connector): Observable<Connector> {
     return this.http.post<Connector>(`${this.apiUrl}/connector`, connectorDto).pipe(
       tap(response => {
         console.log('Connector created successfully', response);
         // If we have a current CloudBoard, add the new connector to the appropriate node
         if (this.currentCloudBoard) {
-          const nodeIndex = this.currentCloudBoard.nodes.findIndex(n => n.id === connectorDto.nodeId);
+          const nodeIndex = this.currentCloudBoard.nodes.findIndex(n => n.id === nodeId);
           if (nodeIndex !== -1) {
             this.currentCloudBoard.nodes[nodeIndex].connectors.push(response);
           }
@@ -153,7 +148,7 @@ export class BoardProviderService {
     );
   }
 
-  updateConnector(connectorId: string, connectorDto: any): Observable<Connector> {
+  updateConnector(connectorId: string, connectorDto: Connector): Observable<Connector> {
     return this.http.put<Connector>(`${this.apiUrl}/connector/${connectorId}`, connectorDto).pipe(
       tap(response => {
         console.log('Connector updated successfully', response);
@@ -218,7 +213,7 @@ export class BoardProviderService {
     );
   }
 
-  createConnection(connectionDto: any): Observable<Connection> {
+  createConnection(connectionDto: Connection): Observable<Connection> {
     return this.http.post<Connection>(`${this.apiUrl}/connection`, connectionDto).pipe(
       tap(response => {
         console.log('Connection created successfully', response);
