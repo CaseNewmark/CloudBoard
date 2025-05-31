@@ -7,15 +7,18 @@ namespace CloudBoard.ApiService.Services;
 
 public class ConnectionService : IConnectionService
 {
+    private readonly ICloudBoardRepository _cloudBoardRepository;
     private readonly IConnectionRepository _connectionRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<ConnectionService> _logger;
 
     public ConnectionService(
+        ICloudBoardRepository cloudBoardRepository,
         IConnectionRepository connectionRepository,
         IMapper mapper,
         ILogger<ConnectionService> logger)
     {
+        _cloudBoardRepository = cloudBoardRepository ?? throw new ArgumentNullException(nameof(cloudBoardRepository));
         _connectionRepository = connectionRepository ?? throw new ArgumentNullException(nameof(connectionRepository));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -77,12 +80,16 @@ public class ConnectionService : IConnectionService
         var cloudboardId = Guid.Parse(id);
         try
         {
-            var connection = new Connection
+            // Validate the CloudBoard document exists
+            var cloudboard = await _cloudBoardRepository.GetDocumentByIdAsync(cloudboardId);
+            if (cloudboard == null)
             {
-                FromConnectorId = Guid.Parse(connectionDto.FromConnectorId),
-                ToConnectorId = Guid.Parse(connectionDto.ToConnectorId),
-                CloudBoardDocumentId = cloudboardId
-            };
+                _logger.LogWarning("CloudBoard document with ID {DocumentId} not found", cloudboardId);
+                throw new ArgumentException($"CloudBoard document with ID {cloudboardId} does not exist.");
+            }
+
+            var connection = _mapper.Map<Connection>(connectionDto);
+            connection.CloudBoardDocumentId = cloudboardId;
 
             var createdConnection = await _connectionRepository.AddConnectionAsync(connection);
             return _mapper.Map<ConnectionDto>(createdConnection);

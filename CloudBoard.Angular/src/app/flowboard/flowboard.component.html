@@ -20,7 +20,7 @@
         (contextmenu)="showFlowContextMenu($event)">
         <f-canvas fZoom>
             <!-- Render all connections from the cloudboard data -->
-            <f-connection-for-create fBehavior="floating"></f-connection-for-create>
+            <f-connection-for-create fType="segment" fBehavior="floating"></f-connection-for-create>
             @for (connection of currentCloudBoard.connections; track $index) {
             <f-connection fType="segment" [fOutputId]="connection.fromConnectorId" [fInputId]="connection.toConnectorId">
             </f-connection>
@@ -32,6 +32,8 @@
                 fDragHandle [fNodePosition]="node.position"
                 (fNodePositionChange)="onNodePositionChanged($event, node)"
                 (dblclick)="onNodeDoubleClicked($event, node)"
+                (mouseenter)="onNodeMouseEnter($event, node)"
+                (mouseleave)="onNodeMouseLeave($event, node)"
                 (contextmenu)="showNodeContextMenu($event, node)">
                 @switch (node.type) {
                     @case ('Note') {
@@ -54,19 +56,34 @@
                     }
                 }
 
-                @for (connector of node.connectors; track $index) {
-                    @switch (connector.type.toString().toLowerCase()) {
-                        @case ('in') {
-                        <div fNodeInput [fInputId]="connector.id" class="connector left"></div>
-                        }
-                        @case ('out') {
-                        <div fNodeOutput [fOutputId]="connector.id" class="connector right"></div>
-                        }
-                        @case ('inout') {
-                        <div fNodeInput [fInputId]="connector.id" fNodeOutput [fOutputId]="connector.id" class="connector top"></div>
+                <!-- <div class="connectors"> -->
+                    @for (connector of getConnectorsForNode(node); track $index) {
+                        @switch (connector.type.toString().toLowerCase()) {
+                            @case ('in') {
+                            <div fNodeInput 
+                                [fInputId]="connector.id"
+                                (mousedown)="onConnectorMouseDown($event, connector)"
+                                class="connector"
+                                [class]="connector.position.toLowerCase()"></div>
+                            }
+                            @case ('out') {
+                            <div fNodeOutput
+                                [fOutputId]="connector.id"
+                                (mousedown)="onConnectorMouseDown($event, connector)"
+                                class="connector"
+                                [class]="connector.position.toLowerCase()"></div>
+                            }
+                            @case ('inout') {
+                                <div fNodeInput 
+                                    [fInputId]="connector.id" 
+                                    fNodeOutput [fOutputId]="connector.id"
+                                    (mousedown)="onConnectorMouseDown($event, connector)"
+                                    class="connector"
+                                    [class]="connector.position.toLowerCase()"></div>
+                            }
                         }
                     }
-                }
+                <!-- </div> -->
             </div>
             }
         </f-canvas>

@@ -6,9 +6,9 @@ import { ToolbarComponent } from '../controls/toolbar/toolbar.component';
 import { PropertiesPanelComponent } from '../controls/properties-panel/properties-panel.component';
 import { SimpleNoteComponent } from '../nodes/simple-note/simple-note.component';
 import { DoubleClickDirective } from '../helpers/double-click.directive';
-import { CloudBoard, Connection, ConnectorPosition, ConnectorType, Node, NodePosition, NodeType } from '../data/cloudboard';
+import { CloudBoard, Connection, Connector, ConnectorPosition, ConnectorType, Node, NodePosition, NodeType } from '../data/cloudboard';
 import { ContextMenu, ContextMenuModule } from 'primeng/contextmenu';
-import { Subscription } from 'rxjs';
+import { combineLatest, concat, merge, pipe, Subscription, switchMap } from 'rxjs';
 import { CloudboardService } from '../services/cloudboard.service';
 import { NodeService } from '../services/node.service';
 import { ConnectorService } from '../services/connector.service';
@@ -65,6 +65,10 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private subscriptions: Subscription[] = [];
   private positionUpdateTimer: any;
 
+  private connectionDragging: boolean = false;
+  private connectionSource: { node: Node, connector: Connector } | undefined;
+  private connectionDestination:  { node: Node, connector: Connector } | undefined;
+
   public currentCloudBoard: CloudBoard | undefined;
   public isLoading = false;
 
@@ -77,8 +81,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     private changeDetectorRef: ChangeDetectorRef,
-    private route: ActivatedRoute,
-    private router: Router) { }
+    private route: ActivatedRoute) { }
     
   ngOnInit(): void {
     // Get the id from the route parameter
@@ -146,6 +149,14 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
       const connectionsToDelete = this.currentCloudBoard.connections.filter(conn =>
         node.connectors.some((c: { id: string }) => c.id.toString() === conn.fromConnectorId || c.id.toString() === conn.toConnectorId)
       );
+      this.nodeService.deleteNodesAndConnections([node.id], connectionsToDelete.map(c => c.id)).then(success => {
+        // Remove the node and its connections from the currentCloudBoard
+        if (this.currentCloudBoard && success.length > 0 && success.every(s => s)) {
+          this.currentCloudBoard.nodes = this.currentCloudBoard.nodes.filter(n => n.id !== node.id);
+          this.currentCloudBoard.connections = this.currentCloudBoard.connections.filter(c => !connectionsToDelete.some(conn => conn.id === c.id));
+          this.changeDetectorRef.detectChanges();
+        }
+      });
     }
   }
 
@@ -154,6 +165,92 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.propertiesPanelNodeProperties = node;
     this.propertiesPanelVisible.set(true);
+  }
+
+  protected onNodeMouseEnter(event: MouseEvent, node: Node): void {
+    let type = this.connectionDragging ? ConnectorType.In : ConnectorType.Out;
+    let position = this.connectionDragging ? ConnectorPosition.Left : ConnectorPosition.Right;
+    let connector = {
+      id: `temp-${type.toLocaleLowerCase()}-${node.id}`,
+      type: type,
+      position: position,
+      name: 'temp',
+    };
+    if (!this.connectionDragging) {
+      this.connectionSource = { node: node, connector: connector };
+    } else {
+      this.connectionDestination = { node: node, connector: connector };
+    }
+    this.changeDetectorRef.detectChanges();
+  }
+
+  protected onNodeMouseLeave(event: MouseEvent, node: Node): void {
+    if (!this.connectionDragging && this.connectionSource) {
+      this.connectionSource = undefined;
+      this.changeDetectorRef.detectChanges();
+    }
+    else if (this.connectionDragging && this.connectionDestination) {
+      this.connectionDestination = undefined;
+      this.changeDetectorRef.detectChanges();
+    }
+  }
+
+  protected onConnectorMouseDown(event: MouseEvent, connector: Connector): void {
+    // If the connector is temporary, we don't want to do anything
+    if (connector.id.startsWith('temp-')) {
+      this.connectionDragging = true;
+    }
+  }
+
+  protected onConnectionAdded(event: FCreateConnectionEvent): void {
+    this.connectionDragging = false;
+    if (this.currentCloudBoard && this.connectionSource && this.connectionDestination) {
+      this.connectionSource.connector.id = '';
+      this.connectionDestination.connector.id = '';
+      combineLatest([
+        this.connectorService.createConnector(this.connectionSource.node.id, this.connectionSource.connector),
+        this.connectorService.createConnector(this.connectionDestination.node.id, this.connectionDestination.connector)
+      ]).pipe(
+        switchMap(([sourceConnector, destinationConnector]) => {
+          this.connectionSource?.node.connectors.push(sourceConnector);
+          this.connectionDestination?.node.connectors.push(destinationConnector);
+          const connectionDto: Connection = {
+            id: '',
+            fromConnectorId: sourceConnector.id,
+            toConnectorId: destinationConnector.id,
+          };
+          return this.connectionService.createConnection(this.currentCloudBoard!.id, connectionDto);
+        })
+      )
+      .subscribe({
+        next: newConnection => {
+          this.currentCloudBoard?.connections.push(newConnection);
+          this.connectionSource = undefined;
+          this.connectionDestination = undefined;
+          this.changeDetectorRef.detectChanges();
+        }
+      });
+    }
+    else {
+      this.connectionSource = undefined;
+      this.connectionDestination = undefined;
+      this.changeDetectorRef.detectChanges();
+    }
+  }
+
+  protected getConnectorsForNode(node: Node): Connector[] {
+    const connectors: Connector[] = [...node.connectors];
+    if (this.connectionSource && 
+        this.connectionSource.connector && 
+        this.connectionSource.node.id === node.id) {
+      connectors.push(this.connectionSource.connector);
+    }
+    if (this.connectionDestination && 
+        this.connectionDestination.connector &&
+        this.connectionDestination.node.id === node.id) {
+      connectors.push(this.connectionDestination.connector);
+    }
+    return connectors;
   }
 
   @HostListener('document:keydown', ['$event'])
@@ -232,48 +329,6 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.currentCloudBoard) {
       this.propertiesPanelNodeProperties = node;
       this.propertiesPanelVisible.set(true);
-    }
-  }
-
-  onConnectionAdded(event: FCreateConnectionEvent): void {
-    if (this.currentCloudBoard && event.fOutputId && event.fInputId) {
-      // Prepare connection DTO
-      const connectionDto: Connection = {
-        id: '',
-        fromConnectorId: event.fOutputId,
-        toConnectorId: event.fInputId,
-      };
-      // Call API to create the connection
-      this.isLoading = true;
-      this.connectionService.createConnection(this.currentCloudBoard.id, connectionDto).subscribe({
-        next: newConnection => {
-          this.isLoading = false;
-          console.log('Connection created successfully:', newConnection);
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Connection created successfully'
-          });
-          // Connection has been added to the board in the service
-          this.changeDetectorRef.detectChanges();
-        },
-        error: error => {
-          this.isLoading = false;
-          console.error('Error creating connection:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Failed to create connection: ' + (error.message || 'Unknown error')
-          });
-          // If there's an error, remove the connection from the UI
-          if (this.currentCloudBoard) {
-            this.currentCloudBoard.connections = this.currentCloudBoard.connections.filter(
-              c => c.fromConnectorId !== event.fOutputId || c.toConnectorId !== event.fInputId
-            );
-            this.changeDetectorRef.detectChanges();
-          }
-        }
-      });
     }
   }
 

@@ -7,15 +7,18 @@ namespace CloudBoard.ApiService.Services;
 
 public class ConnectorService : IConnectorService
 {
+    private readonly INodeRepository _nodeRepository;
     private readonly IConnectorRepository _connectorRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<ConnectorService> _logger;
 
     public ConnectorService(
+        INodeRepository nodeRepository,
         IConnectorRepository connectorRepository,
         IMapper mapper,
         ILogger<ConnectorService> logger)
     {
+        _nodeRepository = nodeRepository ?? throw new ArgumentNullException(nameof(nodeRepository));    
         _connectorRepository = connectorRepository ?? throw new ArgumentNullException(nameof(connectorRepository));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -62,7 +65,17 @@ public class ConnectorService : IConnectorService
         var nodeId = Guid.Parse(id);
         try
         {
+            // Verify the node exists
+            var nodeExists = await _nodeRepository.GetNodeByIdAsync(nodeId);
+            if (nodeExists == null)
+            {
+                _logger.LogWarning("Node with ID {NodeId} not found for connector creation", nodeId);
+                throw new ArgumentException($"Node with ID {nodeId} does not exist.");
+            }
+
             var connector = _mapper.Map<Connector>(connectorDto);
+            connector.NodeId = nodeId;
+            
             var createdConnector = await _connectorRepository.AddConnectorAsync(connector);
             return _mapper.Map<ConnectorDto>(createdConnector);
         }
