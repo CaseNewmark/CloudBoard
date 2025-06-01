@@ -32,8 +32,6 @@
                 fDragHandle [fNodePosition]="node.position"
                 (fNodePositionChange)="onNodePositionChanged($event, node)"
                 (dblclick)="onNodeDoubleClicked($event, node)"
-                (mouseenter)="onNodeMouseEnter($event, node)"
-                (mouseleave)="onNodeMouseLeave($event, node)"
                 (contextmenu)="showNodeContextMenu($event, node)">
                 @switch (node.type) {
                     @case ('Note') {
@@ -56,34 +54,40 @@
                     }
                 }
 
-                <!-- <div class="connectors"> -->
-                    @for (connector of getConnectorsForNode(node); track $index) {
-                        @switch (connector.type.toString().toLowerCase()) {
-                            @case ('in') {
-                            <div fNodeInput 
-                                [fInputId]="connector.id"
-                                (mousedown)="onConnectorMouseDown($event, connector)"
-                                class="connector"
-                                [class]="connector.position.toLowerCase()"></div>
+                <div class="connector-bars">
+                    @for (position of getConnectorPositions(); track position) {
+                        <div class="connector-bar" [class]="position.toLowerCase()"
+                            (mouseenter)="onNodeMouseEnter($event, node, position)"
+                            (mouseleave)="onNodeMouseLeave($event, node, position)">
+                            @for (connector of getConnectorsForNodeByPosition(node, position); track $index) {
+                                @switch (connector.type.toString().toLowerCase()) {
+                                    @case ('in') {
+                                    <div fNodeInput 
+                                        [fInputId]="connector.id"
+                                        (mousedown)="onConnectorMouseDown($event, connector)"
+                                        class="connector"
+                                        [class]="connector.position.toLowerCase()"></div>
+                                    }
+                                    @case ('out') {
+                                    <div fNodeOutput
+                                        [fOutputId]="connector.id"
+                                        (mousedown)="onConnectorMouseDown($event, connector)"
+                                        class="connector"
+                                        [class]="connector.position.toLowerCase()"></div>
+                                    }
+                                    @case ('inout') {
+                                        <div fNodeInput 
+                                            [fInputId]="connector.id" 
+                                            fNodeOutput [fOutputId]="connector.id"
+                                            (mousedown)="onConnectorMouseDown($event, connector)"
+                                            class="connector"
+                                            [class]="connector.position.toLowerCase()"></div>
+                                    }
+                                }
                             }
-                            @case ('out') {
-                            <div fNodeOutput
-                                [fOutputId]="connector.id"
-                                (mousedown)="onConnectorMouseDown($event, connector)"
-                                class="connector"
-                                [class]="connector.position.toLowerCase()"></div>
-                            }
-                            @case ('inout') {
-                                <div fNodeInput 
-                                    [fInputId]="connector.id" 
-                                    fNodeOutput [fOutputId]="connector.id"
-                                    (mousedown)="onConnectorMouseDown($event, connector)"
-                                    class="connector"
-                                    [class]="connector.position.toLowerCase()"></div>
-                            }
-                        }
+                        </div>
                     }
-                <!-- </div> -->
+                </div>
             </div>
             }
         </f-canvas>

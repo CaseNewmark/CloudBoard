@@ -167,9 +167,8 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.propertiesPanelVisible.set(true);
   }
 
-  protected onNodeMouseEnter(event: MouseEvent, node: Node): void {
+  protected onNodeMouseEnter(event: MouseEvent, node: Node, position: ConnectorPosition): void {
     let type = this.connectionDragging ? ConnectorType.In : ConnectorType.Out;
-    let position = this.connectionDragging ? ConnectorPosition.Left : ConnectorPosition.Right;
     let connector = {
       id: `temp-${type.toLocaleLowerCase()}-${node.id}`,
       type: type,
@@ -184,7 +183,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.changeDetectorRef.detectChanges();
   }
 
-  protected onNodeMouseLeave(event: MouseEvent, node: Node): void {
+  protected onNodeMouseLeave(event: MouseEvent, node: Node, position: ConnectorPosition): void {
     if (!this.connectionDragging && this.connectionSource) {
       this.connectionSource = undefined;
       this.changeDetectorRef.detectChanges();
@@ -238,7 +237,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  protected getConnectorsForNode(node: Node): Connector[] {
+  protected getConnectorsForNodeByPosition(node: Node, position: ConnectorPosition): Connector[] {
     const connectors: Connector[] = [...node.connectors];
     if (this.connectionSource && 
         this.connectionSource.connector && 
@@ -250,7 +249,11 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         this.connectionDestination.node.id === node.id) {
       connectors.push(this.connectionDestination.connector);
     }
-    return connectors;
+    return connectors.filter(conn => conn.position === position);
+  }
+
+  protected getConnectorPositions(): ConnectorPosition[] {
+    return Object.values(ConnectorPosition);
   }
 
   @HostListener('document:keydown', ['$event'])
