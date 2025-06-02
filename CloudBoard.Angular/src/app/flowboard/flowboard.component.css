@@ -2,33 +2,90 @@
     height: 100%;
 }
 
-:host .connector  {
+:host .connector-bars {
     position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0px;
+
+    display: grid;
+    grid-template-rows: [top] 0 [middle] auto [bottom] 0;
+    grid-template-columns: [left] 0 [center] auto [right] 0;
+}
+
+:host .connector-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    /* background-color: #00ff0033; */
+}
+
+:host .connector-bar.left,
+:host .connector-bar.right
+{
+    grid-row: middle;
+    justify-self: center;
+    align-self: stretch;
+
+    min-width: 2em;
+    flex-direction: column;
+    row-gap: 0.3em;
+}
+
+:host .connector-bar.left {
+    grid-column: left;
+}
+
+:host .connector-bar.right  {
+    grid-column: right;
+}
+
+:host .connector-bar.top,
+:host .connector-bar.bottom
+{
+    grid-column: center;
+    justify-self: stretch;
+    align-self: center;
+
+    min-height: 2em;
+    flex-direction: row;
+    column-gap: 0.3em;
+}
+
+:host .connector-bar.top  {
+    grid-row: top;
+}
+
+:host .connector-bar.bottom  {
+    grid-row: bottom;
+}
+
+:host .connector  {
     width: 20px;
     height: 20px;
     border: 1px solid gray;
     border-radius: 50%;
+    border-width: 2px;
+    /* border-style: dashed; */
     background-color: #00ff0033;
 }
 
 :host .connector.left  {
-    top: 50%;
-    left: -10px;
-    transform: translateY(-50%);
     background-color: #cfc;
 }
 
 :host .connector.right  {
-    top: 50%;
-    right: -10px;
-    transform: translateY(-50%);
     background-color: #ffc;
 }
 
 :host .connector.top  {
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
+    background-color: #fcc;
+}
+
+:host .connector.bottom  {
     background-color: #fcc;
 }
 

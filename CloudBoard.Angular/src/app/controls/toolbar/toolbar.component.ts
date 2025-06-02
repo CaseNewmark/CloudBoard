@@ -1,5 +1,6 @@
+import { Router } from '@angular/router';
 import { Component, inject, OnInit } from '@angular/core';
-import { BoardProviderService } from '../../services/board-provider.service';
+import { CloudboardService } from '../../services/cloudboard.service';
 import { FlowControlService } from '../../services/flow-control.service';
 import { MenuModule } from 'primeng/menu';
 import { MenubarModule } from 'primeng/menubar';
@@ -9,7 +10,6 @@ import { PopoverModule } from 'primeng/popover';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmPopupModule } from 'primeng/confirmpopup';
 import { CloudBoard } from '../../data/cloudboard';
-import { Guid } from 'guid-typescript';
 
 @Component({
   selector: 'toolbar',
@@ -28,36 +28,37 @@ import { Guid } from 'guid-typescript';
 })
 export class ToolbarComponent implements OnInit {
 
-  boardProviderService: BoardProviderService = inject(BoardProviderService);
+  cloudboardService: CloudboardService = inject(CloudboardService);
   flowControlService: FlowControlService = inject(FlowControlService);
   confirmationService: ConfirmationService = inject(ConfirmationService);
 
   availableBoards: CloudBoard[] = [];
   deletionBoard: CloudBoard | undefined;
-  constructor() { }
+
+  constructor(private router: Router) { }
 
   ngOnInit(): void {
-    // Load available CloudBoards when component initializes
     this.refreshBoards();
   }
 
   onCreate(): void {
-    this.boardProviderService.createNewCloudBoard().subscribe();
+    let createCloudboardDocument: CloudBoard = {
+      id: '',
+      name: 'Empty Cloudboard',
+      nodes: [],
+      connections: []
+    };
+
+    this.cloudboardService.createCloudBoard(createCloudboardDocument).subscribe(
+      cloudboard => this.router.navigate(['/flowboard', cloudboard.id]),
+    );
   }
 
-  onOpen(boardId: Guid): void {
-    this.boardProviderService.loadCloudBoardById(boardId).subscribe();
+  onOpen(boardId: string): void {
+    this.router.navigate(['/flowboard', boardId]);
   }
 
-  onSave(): void {
-    // Change this to handle settings functionality instead
-    // Or if this method is still used by the cog button, leave it as is
-  }
-  onDelete(boardId: Guid, event: Event): void {
-    /* 
-        TODO: check if boardId is valid
-        TODO: check if boardId is not the current board and deal with it
-    */
+  onDelete(boardId: string, event: Event): void {
 
     this.deletionBoard = this.availableBoards.find(board => board.id === boardId);
     
@@ -67,9 +68,11 @@ export class ToolbarComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
-        this.boardProviderService.deleteCloudBoard(this.deletionBoard?.id!).subscribe({
-          next: () => {
-            this.availableBoards = this.availableBoards.filter(board => board.id !== boardId);
+        this.cloudboardService.deleteCloudBoard(this.deletionBoard?.id!).subscribe({
+          next: (success: boolean) => {
+            if (success) {
+              this.availableBoards = this.availableBoards.filter(board => board.id !== boardId);
+            }
           },
           error: (error) => {
             console.error('Error deleting cloudboard', error);
@@ -83,7 +86,7 @@ export class ToolbarComponent implements OnInit {
   }
 
   refreshBoards(): void {
-    this.boardProviderService.listCloudBoards().subscribe(
+    this.cloudboardService.listCloudBoards().subscribe(
       response => {
         this.availableBoards = response;
       },

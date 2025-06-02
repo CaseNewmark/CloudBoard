@@ -1,7 +1,5 @@
 using AutoMapper;
 using CloudBoard.ApiService.Data;
-using CloudBoard.ApiService.Data.Repositories;
-using CloudBoard.ApiService.Dtos;
 using CloudBoard.ApiService.Endpoints;
 using CloudBoard.ApiService.Services;
 using CloudBoard.ApiService.Services.Contracts;

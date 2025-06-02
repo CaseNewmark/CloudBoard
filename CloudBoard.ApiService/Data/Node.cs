@@ -15,13 +15,7 @@ public class Node : IDisposable
     public NodeType Type { get; set; } = NodeType.Note;
     public JsonDocument Properties { get; set; } = JsonDocument.Parse("{}");
     public Guid CloudBoardDocumentId { get; set; }
-    public CloudBoardDocument CloudBoardDocument { get; set; } = null!;
+    public CloudBoard CloudBoardDocument { get; set; } = null!;
 
     public void Dispose() => Properties?.Dispose();
-}
-
-public class NodePosition
-{
-    public float X { get; set; }
-    public float Y { get; set; }
 }

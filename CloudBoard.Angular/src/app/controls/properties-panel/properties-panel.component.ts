@@ -8,11 +8,10 @@ import { Node, NodeType } from '../../data/cloudboard';
 import { BlurOnEnterDirective } from '../../helpers/blur-on-enter.directive';
 import { TextareaModule } from 'primeng/textarea';
 import { ColorPickerModule } from 'primeng/colorpicker';
-import { NodeRegistryService } from '../../nodes/node-registry.service';
+import { NodeService } from '../../services/node.service';
 import { DropdownModule } from 'primeng/dropdown';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputSwitchModule } from 'primeng/inputswitch';
-import { BoardProviderService } from '../../services/board-provider.service';
 
 @Component({
   selector: 'properties-panel',
@@ -35,7 +34,7 @@ import { BoardProviderService } from '../../services/board-provider.service';
 export class PropertiesPanelComponent {
   visible = model<boolean>(false);
   nodeProperties = model<Node|undefined>(undefined);
-  
+
   nodeTypes = Object.values(NodeType);
   nodeTypeLabels: Record<NodeType, string> = {
     [NodeType.Note]: 'Simple Note',
@@ -56,8 +55,7 @@ export class PropertiesPanelComponent {
     { name: 'JSON', value: 'json' }
   ];
 
-  private nodeRegistryService = inject(NodeRegistryService);
-  private boardProviderService = inject(BoardProviderService);
+  private nodeService = inject(NodeService);
 
   changeNodeType(newType: NodeType): void {
     if (this.nodeProperties()) {
@@ -70,7 +68,7 @@ export class PropertiesPanelComponent {
       
       // Update the node type and set default properties for that type
       node.type = newType;
-      node.properties = this.nodeRegistryService.getDefaultPropertiesForType(newType);
+      node.properties = this.nodeService.getDefaultPropertiesForType(newType);
       
       // Restore unchanged properties
       node.id = id;
@@ -79,14 +77,7 @@ export class PropertiesPanelComponent {
       node.connectors = connectors;
       
       // Update the node via API
-      this.boardProviderService.updateNode(id, node).subscribe(
-        response => {
-          console.log('Node type updated successfully');
-        },
-        error => {
-          console.error('Error updating node type:', error);
-        }
-      );
+      this.nodeService.updateNode(id, node).subscribe();
     }
   }
 
@@ -102,14 +93,7 @@ export class PropertiesPanelComponent {
       node.properties['links'] = links;
       
       // Update the node via API
-      this.boardProviderService.updateNode(node.id, node).subscribe(
-        response => {
-          console.log('Link added successfully');
-        },
-        error => {
-          console.error('Error adding link:', error);
-        }
-      );
+      this.nodeService.updateNode(node.id, node).subscribe();
     }
   }
   
@@ -121,14 +105,7 @@ export class PropertiesPanelComponent {
       node.properties['links'] = links;
       
       // Update the node via API
-      this.boardProviderService.updateNode(node.id, node).subscribe(
-        response => {
-          console.log('Link removed successfully');
-        },
-        error => {
-          console.error('Error removing link:', error);
-        }
-      );
+      this.nodeService.updateNode(node.id, node).subscribe();
     }
   }
 
@@ -139,14 +116,7 @@ export class PropertiesPanelComponent {
       node.name = name;
       
       // Update the node via API
-      this.boardProviderService.updateNode(node.id, node).subscribe(
-        response => {
-          console.log('Node name updated successfully');
-        },
-        error => {
-          console.error('Error updating node name:', error);
-        }
-      );
+      this.nodeService.updateNode(node.id, node).subscribe();
     }
   }
 }

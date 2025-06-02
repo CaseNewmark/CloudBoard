@@ -7,22 +7,26 @@ namespace CloudBoard.ApiService.Services;
 
 public class ConnectionService : IConnectionService
 {
+    private readonly ICloudBoardRepository _cloudBoardRepository;
     private readonly IConnectionRepository _connectionRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<ConnectionService> _logger;
 
     public ConnectionService(
+        ICloudBoardRepository cloudBoardRepository,
         IConnectionRepository connectionRepository,
         IMapper mapper,
         ILogger<ConnectionService> logger)
     {
+        _cloudBoardRepository = cloudBoardRepository ?? throw new ArgumentNullException(nameof(cloudBoardRepository));
         _connectionRepository = connectionRepository ?? throw new ArgumentNullException(nameof(connectionRepository));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<ConnectionDto?> GetConnectionByIdAsync(Guid connectionId)
+    public async Task<ConnectionDto?> GetConnectionByIdAsync(string id)
     {
+        var connectionId = Guid.Parse(id);
         try
         {
             var connection = await _connectionRepository.GetConnectionByIdAsync(connectionId);
@@ -41,22 +45,24 @@ public class ConnectionService : IConnectionService
         }
     }
 
-    public async Task<IEnumerable<ConnectionDto>> GetConnectionsByCloudBoardDocumentIdAsync(Guid cloudBoardDocumentId)
+    public async Task<IEnumerable<ConnectionDto>> GetConnectionsByCloudBoardDocumentIdAsync(string id)
     {
+        var cloudboardId = Guid.Parse(id);
         try
         {
-            var connections = await _connectionRepository.GetConnectionsByCloudBoardDocumentIdAsync(cloudBoardDocumentId);
+            var connections = await _connectionRepository.GetConnectionsByCloudBoardDocumentIdAsync(cloudboardId);
             return _mapper.Map<IEnumerable<ConnectionDto>>(connections);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving connections for CloudBoard document with ID {CloudBoardDocumentId}", cloudBoardDocumentId);
+            _logger.LogError(ex, "Error retrieving connections for CloudBoard document with ID {CloudBoardDocumentId}", cloudboardId);
             throw;
         }
     }
 
-    public async Task<IEnumerable<ConnectionDto>> GetConnectionsByConnectorIdAsync(Guid connectorId)
+    public async Task<IEnumerable<ConnectionDto>> GetConnectionsByConnectorIdAsync(string id)
     {
+        var connectorId = Guid.Parse(id);
         try
         {
             var connections = await _connectionRepository.GetConnectionsByConnectorIdAsync(connectorId);
@@ -69,16 +75,21 @@ public class ConnectionService : IConnectionService
         }
     }
 
-    public async Task<ConnectionDto> CreateConnectionAsync(CreateConnectionDto createConnectionDto)
+    public async Task<ConnectionDto> CreateConnectionAsync(string id, ConnectionDto connectionDto)
     {
+        var cloudboardId = Guid.Parse(id);
         try
         {
-            var connection = new Connection
+            // Validate the CloudBoard document exists
+            var cloudboard = await _cloudBoardRepository.GetDocumentByIdAsync(cloudboardId);
+            if (cloudboard == null)
             {
-                FromConnectorId = Guid.Parse(createConnectionDto.FromConnectorId),
-                ToConnectorId = Guid.Parse(createConnectionDto.ToConnectorId),
-                CloudBoardDocumentId = createConnectionDto.CloudBoardDocumentId
-            };
+                _logger.LogWarning("CloudBoard document with ID {DocumentId} not found", cloudboardId);
+                throw new ArgumentException($"CloudBoard document with ID {cloudboardId} does not exist.");
+            }
+
+            var connection = _mapper.Map<Connection>(connectionDto);
+            connection.CloudBoardDocumentId = cloudboardId;
 
             var createdConnection = await _connectionRepository.AddConnectionAsync(connection);
             return _mapper.Map<ConnectionDto>(createdConnection);
@@ -86,36 +97,26 @@ public class ConnectionService : IConnectionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating connection between connectors {FromConnectorId} and {ToConnectorId}",
-                createConnectionDto.FromConnectorId, createConnectionDto.ToConnectorId);
+                connectionDto.FromConnectorId, connectionDto.ToConnectorId);
             throw;
         }
     }
 
-    public async Task<ConnectionDto?> UpdateConnectionAsync(Guid connectionId, ConnectionDto connectionDto)
+    public async Task<ConnectionDto?> UpdateConnectionAsync(ConnectionDto connectionDto)
     {
+        var connectionId = Guid.Parse(connectionDto.Id);
         try
         {
             // Verify the connection exists
             var connectionExists = await _connectionRepository.GetConnectionByIdAsync(connectionId);
-            if (connectionExists == null)
-            {
-                _logger.LogWarning("Connection with ID {ConnectionId} not found for update", connectionId);
-                return null;
-            }
+            if (connectionExists == null) return null;
 
             // Map DTO to entity
             var connectionToUpdate = _mapper.Map<Connection>(connectionDto);
-            
-            // Ensure the ID is set correctly
-            connectionToUpdate.Id = connectionId;
 
             // Update the connection
             var updatedConnection = await _connectionRepository.UpdateConnectionAsync(connectionToUpdate);
-            if (updatedConnection == null)
-            {
-                _logger.LogWarning("Connection with ID {ConnectionId} could not be updated", connectionId);
-                return null;
-            }
+            if (updatedConnection == null) return null;
 
             return _mapper.Map<ConnectionDto>(updatedConnection);
         }
@@ -126,8 +127,9 @@ public class ConnectionService : IConnectionService
         }
     }
 
-    public async Task<bool> DeleteConnectionAsync(Guid connectionId)
+    public async Task<bool> DeleteConnectionAsync(string id)
     {
+        var connectionId = Guid.Parse(id);
         try
         {
             return await _connectionRepository.DeleteConnectionAsync(connectionId);

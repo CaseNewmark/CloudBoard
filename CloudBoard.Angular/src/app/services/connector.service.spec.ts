@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { BoardProviderService } from './board-provider.service';
+import { ConnectorService } from './connector.service';
 
-describe('BoardProviderService', () => {
-  let service: BoardProviderService;
+describe('ConnectorService', () => {
+  let service: ConnectorService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(BoardProviderService);
+    service = TestBed.inject(ConnectorService);
   });
 
   it('should be created', () => {

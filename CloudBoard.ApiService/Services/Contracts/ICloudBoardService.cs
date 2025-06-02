@@ -5,9 +5,9 @@ namespace CloudBoard.ApiService.Services.Contracts;
 
 public interface ICloudBoardService
 {
-    Task<CloudBoardDocumentDto> CreateDocumentAsync(CreateCloudBoardDocumentDto createDocumentDto);
-    Task<IEnumerable<CloudBoardDocumentDto>> GetAllCloudBoardDocumentsAsync();
-    Task<CloudBoardDocumentDto> GetCloudBoardDocumentByIdAsync(Guid id);
-    Task<CloudBoardDocumentDto?> UpdateCloudBoardDocumentAsync(Guid id, CloudBoardDocumentDto updateDto);
-    Task<bool> DeleteCloudBoardDocumentAsync(Guid id);
+    Task<CloudBoardDto> CreateDocumentAsync(CloudBoardDto documentDto);
+    Task<IEnumerable<CloudBoardDto>> GetAllCloudBoardDocumentsAsync();
+    Task<CloudBoardDto> GetCloudBoardDocumentByIdAsync(string id);
+    Task<CloudBoardDto?> UpdateCloudBoardDocumentAsync(CloudBoardDto updateDto);
+    Task<bool> DeleteCloudBoardDocumentAsync(string id);
 }

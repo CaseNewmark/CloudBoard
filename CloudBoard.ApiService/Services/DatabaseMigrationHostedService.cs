@@ -2,6 +2,7 @@ using CloudBoard.ApiService.Data;
  using Microsoft.EntityFrameworkCore;
 
 namespace CloudBoard.ApiService.Services;
+
 public class DatabaseMigrationHostedService : IHostedService
 {
     private readonly IServiceProvider _serviceProvider;

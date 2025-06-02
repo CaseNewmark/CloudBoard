@@ -1,8 +1,6 @@
 <div class="toolbar-container">
     <toolbar></toolbar>
 </div>
-<p-toast position="top-right"></p-toast>
-<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
 @if (!currentCloudBoard) {
 <div class="grow h-full flex justify-center items-center">
     @if (isLoading) {
@@ -18,12 +16,11 @@
     <p-contextmenu #nodecontextmenu [model]="nodeContextMenuItems" />
     <f-flow class="grow" 
         fDraggable
-        (fSelectionChange)="onSelectionChange($event)"
         (fCreateConnection)="onConnectionAdded($event)"
         (contextmenu)="showFlowContextMenu($event)">
         <f-canvas fZoom>
             <!-- Render all connections from the cloudboard data -->
-            <f-connection-for-create fBehavior="floating"></f-connection-for-create>
+            <f-connection-for-create fType="segment" fBehavior="floating"></f-connection-for-create>
             @for (connection of currentCloudBoard.connections; track $index) {
             <f-connection fType="segment" [fOutputId]="connection.fromConnectorId" [fInputId]="connection.toConnectorId">
             </f-connection>
@@ -57,19 +54,40 @@
                     }
                 }
 
-                @for (connector of node.connectors; track $index) {
-                    @switch (connector.type.toString().toLowerCase()) {
-                        @case ('in') {
-                        <div fNodeInput [fInputId]="connector.id" class="connector left"></div>
-                        }
-                        @case ('out') {
-                        <div fNodeOutput [fOutputId]="connector.id" class="connector right"></div>
-                        }
-                        @case ('inout') {
-                        <div fNodeInput [fInputId]="connector.id" fNodeOutput [fOutputId]="connector.id" class="connector top"></div>
-                        }
+                <div class="connector-bars">
+                    @for (position of getConnectorPositions(); track position) {
+                        <div class="connector-bar" [class]="position.toLowerCase()"
+                            (mouseenter)="onNodeMouseEnter($event, node, position)"
+                            (mouseleave)="onNodeMouseLeave($event, node, position)">
+                            @for (connector of getConnectorsForNodeByPosition(node, position); track $index) {
+                                @switch (connector.type.toString().toLowerCase()) {
+                                    @case ('in') {
+                                    <div fNodeInput 
+                                        [fInputId]="connector.id"
+                                        (mousedown)="onConnectorMouseDown($event, connector)"
+                                        class="connector"
+                                        [class]="connector.position.toLowerCase()"></div>
+                                    }
+                                    @case ('out') {
+                                    <div fNodeOutput
+                                        [fOutputId]="connector.id"
+                                        (mousedown)="onConnectorMouseDown($event, connector)"
+                                        class="connector"
+                                        [class]="connector.position.toLowerCase()"></div>
+                                    }
+                                    @case ('inout') {
+                                        <div fNodeInput 
+                                            [fInputId]="connector.id" 
+                                            fNodeOutput [fOutputId]="connector.id"
+                                            (mousedown)="onConnectorMouseDown($event, connector)"
+                                            class="connector"
+                                            [class]="connector.position.toLowerCase()"></div>
+                                    }
+                                }
+                            }
+                        </div>
                     }
-                }
+                </div>
             </div>
             }
         </f-canvas>

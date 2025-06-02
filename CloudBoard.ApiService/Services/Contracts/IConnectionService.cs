@@ -4,10 +4,10 @@ namespace CloudBoard.ApiService.Services.Contracts;
 
 public interface IConnectionService
 {
-    Task<ConnectionDto?> GetConnectionByIdAsync(Guid connectionId);
-    Task<IEnumerable<ConnectionDto>> GetConnectionsByCloudBoardDocumentIdAsync(Guid cloudBoardDocumentId);
-    Task<IEnumerable<ConnectionDto>> GetConnectionsByConnectorIdAsync(Guid connectorId);
-    Task<ConnectionDto> CreateConnectionAsync(CreateConnectionDto createConnectionDto);
-    Task<ConnectionDto?> UpdateConnectionAsync(Guid connectionId, ConnectionDto connectionDto);
-    Task<bool> DeleteConnectionAsync(Guid connectionId);
+    Task<ConnectionDto?> GetConnectionByIdAsync(string connectionId);
+    Task<IEnumerable<ConnectionDto>> GetConnectionsByCloudBoardDocumentIdAsync(string cloudBoardId);
+    Task<IEnumerable<ConnectionDto>> GetConnectionsByConnectorIdAsync(string connectorId);
+    Task<ConnectionDto> CreateConnectionAsync(string cloudBoardId, ConnectionDto connectionDto);
+    Task<ConnectionDto?> UpdateConnectionAsync(ConnectionDto connectionDto);
+    Task<bool> DeleteConnectionAsync(string connectionId);
 }

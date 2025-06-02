@@ -5,8 +5,8 @@ namespace CloudBoard.ApiService.Services.Contracts;
 
 public interface INodeService
 {
-    Task<NodeDto?> GetNodeByIdAsync(Guid nodeId);
-    Task<NodeDto> CreateNodeAsync(CreateNodeDto createNodeDto);
-    Task<NodeDto?> UpdateNodeAsync(Guid nodeId, NodeDto nodeDto);
-    Task<bool> DeleteNodeAsync(Guid nodeId);
+    Task<NodeDto?> GetNodeByIdAsync(string nodeId);
+    Task<NodeDto> CreateNodeAsync(string cloudBoardId, NodeDto nodeDto);
+    Task<NodeDto?> UpdateNodeAsync(NodeDto nodeDto);
+    Task<bool> DeleteNodeAsync(string nodeId);
 }

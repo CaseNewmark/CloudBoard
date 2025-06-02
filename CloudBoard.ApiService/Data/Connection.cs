@@ -11,5 +11,5 @@ public class Connection
     public Guid FromConnectorId { get; set; }
     public Guid ToConnectorId { get; set; }
     public Guid CloudBoardDocumentId { get; set; }
-    public CloudBoardDocument CloudBoardDocument { get; set; } = null!;
+    public CloudBoard CloudBoardDocument { get; set; } = null!;
 }

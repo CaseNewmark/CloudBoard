@@ -9,7 +9,7 @@ public class CloudBoardDbContext : DbContext
     {
     }
     
-    public DbSet<CloudBoardDocument> CloudBoardDocuments { get; set; }
+    public DbSet<CloudBoard> CloudBoardDocuments { get; set; }
     public DbSet<Node> Nodes { get; set; }
     public DbSet<Connection> Connections { get; set; }
     public DbSet<Connector> Connectors { get; set; }
@@ -18,7 +18,7 @@ public class CloudBoardDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         
-        modelBuilder.Entity<CloudBoardDocument>(entity =>
+        modelBuilder.Entity<CloudBoard>(entity =>
         {
             entity.Property(s => s.Name).IsRequired().HasMaxLength(100);
             entity.HasMany(s => s.Nodes)
@@ -61,7 +61,6 @@ public class CloudBoardDbContext : DbContext
 
         modelBuilder.Entity<Connector>(entity =>
         {
-            entity.Property(c => c.Name).IsRequired();
             entity.ToTable("Connectors");
         });
     }
