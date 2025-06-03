@@ -1,0 +1,102 @@
+# Ingress for CloudBoard Application
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cloudboard-ingress
+  namespace: cloudboard
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+spec:
+  rules:
+  # Main CloudBoard Application
+  - host: cloudboard.local
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: cloudboard-api-service
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: cloudboard-angular-service
+            port:
+              number: 80
+  
+  # Keycloak Identity Service
+  - host: keycloak.cloudboard.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: keycloak-service
+            port:
+              number: 8080
+
+---
+# Alternative: NodePort Services for direct access without ingress
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudboard-angular-nodeport
+  namespace: cloudboard
+  labels:
+    app: cloudboard-angular
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30080
+    protocol: TCP
+  selector:
+    app: cloudboard-angular
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudboard-api-nodeport
+  namespace: cloudboard
+  labels:
+    app: cloudboard-api
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 30081
+    protocol: TCP
+  selector:
+    app: cloudboard-api
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak-nodeport
+  namespace: cloudboard
+  labels:
+    app: keycloak
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 30082
+    protocol: TCP
+  selector:
+    app: keycloak

@@ -1,0 +1,90 @@
+# CloudBoard API ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudboard-api-config
+  namespace: cloudboard
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:8080"
+  DATABASE_HOST: "postgres-service"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "cloudboard"
+  KEYCLOAK_URL: "http://keycloak-service:8080"
+  KEYCLOAK_REALM: "cloudboard"
+  KEYCLOAK_CLIENT_ID: "cloudboard-api"
+  CORS_ORIGINS: "http://localhost:3000,https://cloudboard.local"
+
+---
+# Keycloak ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-config
+  namespace: cloudboard
+data:
+  KC_DB: "postgres"
+  KC_DB_URL: "jdbc:postgresql://postgres-service:5432/keycloak"
+  KC_DB_USERNAME: "postgres"
+  KC_HOSTNAME_STRICT: "false"
+  KC_HOSTNAME_STRICT_HTTPS: "false"
+  KC_HTTP_ENABLED: "true"
+  KC_PROXY: "edge"
+  KEYCLOAK_FRONTEND_URL: "http://keycloak.cloudboard.local"
+
+---
+# Angular ConfigMap (for nginx configuration)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: angular-nginx-config
+  namespace: cloudboard
+data:
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+        include       /etc/nginx/mime.types;
+        default_type  application/octet-stream;
+
+        # Gzip compression
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1024;
+        gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+        # Security headers
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+        server {
+            listen 80;
+            server_name _;
+            root /usr/share/nginx/html;
+            index index.html;
+
+            # API proxy
+            location /api/ {
+                proxy_pass http://cloudboard-api-service:8080/api/;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+
+            # Angular app
+            location / {
+                try_files $uri $uri/ /index.html;
+            }
+
+            # Cache static assets
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+                expires 1y;
+                add_header Cache-Control "public, immutable";
+            }
+        }
+    }

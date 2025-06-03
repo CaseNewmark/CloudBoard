@@ -1,0 +1,68 @@
+# CloudBoard Angular Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudboard-angular-deployment
+  namespace: cloudboard
+  labels:
+    app: cloudboard-angular
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cloudboard-angular
+  template:
+    metadata:
+      labels:
+        app: cloudboard-angular
+    spec:
+      containers:
+      - name: cloudboard-angular
+        image: jack:32000/cloudboard-angular:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: angular-nginx-config
+
+---
+# CloudBoard Angular Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudboard-angular-service
+  namespace: cloudboard
+  labels:
+    app: cloudboard-angular
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: cloudboard-angular

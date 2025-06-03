@@ -1,0 +1,144 @@
+# CloudBoard API Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudboard-api-deployment
+  namespace: cloudboard
+  labels:
+    app: cloudboard-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cloudboard-api
+  template:
+    metadata:
+      labels:
+        app: cloudboard-api
+    spec:
+      initContainers:
+      - name: wait-for-postgres
+        image: postgres:16-alpine
+        command:
+        - sh
+        - -c
+        - |
+          until pg_isready -h postgres-service -p 5432 -U postgres; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
+      - name: wait-for-keycloak
+        image: curlimages/curl:latest
+        command:
+        - sh
+        - -c
+        - |
+          until curl -f http://keycloak-service:8080/health/ready; do
+            echo "Waiting for Keycloak..."
+            sleep 5
+          done
+          echo "Keycloak is ready!"
+      containers:
+      - name: cloudboard-api
+        image: jack:32000/cloudboard-api:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: cloudboard-api-config
+              key: ASPNETCORE_ENVIRONMENT
+        - name: ASPNETCORE_URLS
+          valueFrom:
+            configMapKeyRef:
+              name: cloudboard-api-config
+              key: ASPNETCORE_URLS
+        - name: DATABASE_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: cloudboard-api-config
+              key: DATABASE_HOST
+        - name: DATABASE_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: cloudboard-api-config
+              key: DATABASE_PORT
+        - name: DATABASE_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: cloudboard-api-config
+              key: DATABASE_NAME
+        - name: DATABASE_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_USER
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        - name: KEYCLOAK_URL
+          valueFrom:
+            configMapKeyRef:
+              name: cloudboard-api-config
+              key: KEYCLOAK_URL
+        - name: KEYCLOAK_REALM
+          valueFrom:
+            configMapKeyRef:
+              name: cloudboard-api-config
+              key: KEYCLOAK_REALM
+        - name: KEYCLOAK_CLIENT_ID
+          valueFrom:
+            configMapKeyRef:
+              name: cloudboard-api-config
+              key: KEYCLOAK_CLIENT_ID
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: cloudboard-api-secret
+              key: JWT_SECRET
+        - name: CORS_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: cloudboard-api-config
+              key: CORS_ORIGINS
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+# CloudBoard API Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudboard-api-service
+  namespace: cloudboard
+  labels:
+    app: cloudboard-api
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: cloudboard-api
