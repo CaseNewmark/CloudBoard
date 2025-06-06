@@ -8,6 +8,8 @@ metadata:
     app: keycloak
 spec:
   replicas: 1
+  strategy:
+    type: Recreate  # Ensures old pod is terminated before new one starts
   selector:
     matchLabels:
       app: keycloak
@@ -19,24 +21,24 @@ spec:
       initContainers:
       - name: wait-for-postgres
         image: postgres:16-alpine
-        command:
-        - sh
-        - -c
-        - |
-          until pg_isready -h postgres-service -p 5432 -U postgres; do
-            echo "Waiting for PostgreSQL..."
-            sleep 2
-          done
-          echo "PostgreSQL is ready!"
+        command: ['sh', '-c']
+        args: ['until pg_isready -h postgres-service -p 5432; do sleep 2; done']
       containers:
       - name: keycloak
-        image: quay.io/keycloak/keycloak:23.0
+        image: quay.io/keycloak/keycloak:23.0        
         args:
-        - start
-        - --optimized
+        - start-dev
+        - --db=postgres
+        - --db-url=jdbc:postgresql://postgres-service:5432/keycloak
+        - --db-username=postgres
+        - --db-password=postgres
+        - --hostname-strict=false
+        - --hostname-strict-https=false
+        - --http-enabled=true
+        - --cache=local  # Use local cache to avoid clustering issues
         ports:
         - containerPort: 8080
-        env:
+        env:        
         - name: KEYCLOAK_ADMIN
           valueFrom:
             secretKeyRef:
@@ -47,46 +49,6 @@ spec:
             secretKeyRef:
               name: keycloak-secret
               key: KEYCLOAK_ADMIN_PASSWORD
-        - name: KC_DB
-          valueFrom:
-            configMapKeyRef:
-              name: keycloak-config
-              key: KC_DB
-        - name: KC_DB_URL
-          valueFrom:
-            configMapKeyRef:
-              name: keycloak-config
-              key: KC_DB_URL
-        - name: KC_DB_USERNAME
-          valueFrom:
-            configMapKeyRef:
-              name: keycloak-config
-              key: KC_DB_USERNAME
-        - name: KC_DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: postgres-secret
-              key: POSTGRES_PASSWORD
-        - name: KC_HOSTNAME_STRICT
-          valueFrom:
-            configMapKeyRef:
-              name: keycloak-config
-              key: KC_HOSTNAME_STRICT
-        - name: KC_HOSTNAME_STRICT_HTTPS
-          valueFrom:
-            configMapKeyRef:
-              name: keycloak-config
-              key: KC_HOSTNAME_STRICT_HTTPS
-        - name: KC_HTTP_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              name: keycloak-config
-              key: KC_HTTP_ENABLED
-        - name: KC_PROXY
-          valueFrom:
-            configMapKeyRef:
-              name: keycloak-config
-              key: KC_PROXY
         volumeMounts:
         - name: keycloak-storage
           mountPath: /opt/keycloak/data

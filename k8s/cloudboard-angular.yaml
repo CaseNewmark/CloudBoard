@@ -18,7 +18,8 @@ spec:
     spec:
       containers:
       - name: cloudboard-angular
-        image: jack:32000/cloudboard-angular:latest
+        image: localhost:32000/cloudboard-angular:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
         volumeMounts:

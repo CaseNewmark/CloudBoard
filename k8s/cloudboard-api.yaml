@@ -38,10 +38,11 @@ spec:
             echo "Waiting for Keycloak..."
             sleep 5
           done
-          echo "Keycloak is ready!"
+          echo "Keycloak is ready!"      
       containers:
       - name: cloudboard-api
-        image: jack:32000/cloudboard-api:latest
+        image: localhost:32000/cloudboard-api:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         env:
