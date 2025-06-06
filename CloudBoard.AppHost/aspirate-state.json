@@ -1,0 +1,14 @@
+{
+  "projectPath": ".",
+  "outputPath": "aspirate-output",
+  "containerRegistry": "jack:32000",
+  "containerImageTags": [
+    "latest"
+  ],
+  "imagePullPolicy": "Always",
+  "containerBuilder": "podman",
+  "outputFormat": "kustomize",
+  "disableSecrets": true,
+  "privateRegistryEmail": "aspir8@aka.ms",
+  "includeDashboard": true
+}

@@ -1,0 +1,13 @@
+{
+  "TemplatePath": null,
+  "ContainerSettings": {
+    "Registry": "jack:32000",
+    "RepositoryPrefix": null,
+    "Tags": [
+      "latest"
+    ],
+    "Builder": "podman",
+    "BuildArgs": null,
+    "Context": null
+  }
+}
