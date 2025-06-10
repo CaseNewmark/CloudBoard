@@ -16,37 +16,7 @@ data:
   CORS_ORIGINS: "http://localhost:3000,https://cloudboard.local"
 
 ---
-# PostgreSQL Init Script ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: postgres-init-script
-  namespace: cloudboard
-data:
-  create-multiple-databases.sh: |
-    #!/bin/bash
-    set -e
-    set -u
-    
-    function create_user_and_database() {
-        local database=$1
-        echo "  Creating database '$database'"
-        psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
-            CREATE DATABASE $database;
-            GRANT ALL PRIVILEGES ON DATABASE $database TO $POSTGRES_USER;
-    EOSQL
-    }
-    
-    if [ -n "$POSTGRES_MULTIPLE_DATABASES" ]; then
-        echo "Multiple database creation requested: $POSTGRES_MULTIPLE_DATABASES"
-        for db in $(echo $POSTGRES_MULTIPLE_DATABASES | tr ',' ' '); do
-            create_user_and_database $db
-        done
-        echo "Multiple databases created"
-    fi
-
----
-# Keycloak ConfigMap
+# Keycloak ConfigMap - Updated to use secrets for DB credentials
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -55,12 +25,12 @@ metadata:
 data:
   KC_DB: "postgres"
   KC_DB_URL: "jdbc:postgresql://postgres-service:5432/keycloak"
-  KC_DB_USERNAME: "postgres"
   KC_HOSTNAME_STRICT: "false"
   KC_HOSTNAME_STRICT_HTTPS: "false"
   KC_HTTP_ENABLED: "true"
   KC_PROXY: "edge"
   KEYCLOAK_FRONTEND_URL: "http://keycloak.cloudboard.local"
+  # Note: KC_DB_USERNAME removed - now handled via secrets in deployment
 
 ---
 # Angular ConfigMap (for nginx configuration)

@@ -8,8 +8,6 @@ metadata:
     app: keycloak
 spec:
   replicas: 1
-  strategy:
-    type: Recreate  # Ensures old pod is terminated before new one starts
   selector:
     matchLabels:
       app: keycloak
@@ -25,20 +23,21 @@ spec:
         args: ['until pg_isready -h postgres-service -p 5432; do sleep 2; done']
       containers:
       - name: keycloak
-        image: quay.io/keycloak/keycloak:23.0        
+        image: quay.io/keycloak/keycloak:23.0
+        imagePullPolicy: Always
         args:
         - start-dev
         - --db=postgres
         - --db-url=jdbc:postgresql://postgres-service:5432/keycloak
-        - --db-username=postgres
-        - --db-password=postgres
+        - --db-username=$(KC_DB_USERNAME)
+        - --db-password=$(KC_DB_PASSWORD)
         - --hostname-strict=false
         - --hostname-strict-https=false
         - --http-enabled=true
-        - --cache=local  # Use local cache to avoid clustering issues
+        - --proxy=edge
         ports:
         - containerPort: 8080
-        env:        
+        env:
         - name: KEYCLOAK_ADMIN
           valueFrom:
             secretKeyRef:
@@ -49,32 +48,42 @@ spec:
             secretKeyRef:
               name: keycloak-secret
               key: KEYCLOAK_ADMIN_PASSWORD
-        volumeMounts:
-        - name: keycloak-storage
-          mountPath: /opt/keycloak/data
+        - name: KC_DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_USER
+        - name: KC_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        envFrom:
+        - configMapRef:
+            name: keycloak-config
         resources:
           requests:
             memory: "512Mi"
-            cpu: "500m"
+            cpu: "250m"
           limits:
             memory: "1Gi"
-            cpu: "1000m"
+            cpu: "500m"
         livenessProbe:
           httpGet:
-            path: /health/live
+            path: /
             port: 8080
-          initialDelaySeconds: 60
-          periodSeconds: 10
+          initialDelaySeconds: 120     # Wait 2 minutes
+          periodSeconds: 60            # Check every minute
+          timeoutSeconds: 30           # Allow 30 seconds for response
+          failureThreshold: 5          # Allow 5 failures before restart
         readinessProbe:
           httpGet:
-            path: /health/ready
+            path: /
             port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 5
-      volumes:
-      - name: keycloak-storage
-        persistentVolumeClaim:
-          claimName: keycloak-pvc
+          initialDelaySeconds: 60      # Wait 1 minute
+          periodSeconds: 10            # Check every 10 seconds
+          timeoutSeconds: 5            # 5 second timeout
+          failureThreshold: 3          # Allow 3 failures
 
 ---
 # Keycloak Service

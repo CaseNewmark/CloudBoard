@@ -3,14 +3,13 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: postgres-pv
-  namespace: cloudboard
 spec:
   capacity:
     storage: 5Gi
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: local-storage
+  storageClassName: microk8s-hostpath
   hostPath:
     path: /opt/cloudboard/postgres-data
     type: DirectoryOrCreate
@@ -28,7 +27,7 @@ spec:
   resources:
     requests:
       storage: 5Gi
-  storageClassName: local-storage
+  storageClassName: microk8s-hostpath
 
 ---
 # Keycloak Persistent Volume
@@ -36,14 +35,13 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: keycloak-pv
-  namespace: cloudboard
 spec:
   capacity:
     storage: 2Gi
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: local-storage
+  storageClassName: microk8s-hostpath
   hostPath:
     path: /opt/cloudboard/keycloak-data
     type: DirectoryOrCreate
@@ -61,4 +59,4 @@ spec:
   resources:
     requests:
       storage: 2Gi
-  storageClassName: local-storage
+  storageClassName: microk8s-hostpath

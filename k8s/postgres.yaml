@@ -1,4 +1,4 @@
-# PostgreSQL Deployment
+# PostgreSQL Deployment with Custom Image
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,7 +18,8 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:16-alpine
+        image: localhost:32000/postgres-cloudboard:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 5432
         env:
@@ -44,9 +45,6 @@ spec:
         volumeMounts:
         - name: postgres-storage
           mountPath: /var/lib/postgresql/data
-        - name: postgres-init-script
-          mountPath: /docker-entrypoint-initdb.d/create-multiple-databases.sh
-          subPath: create-multiple-databases.sh
         resources:
           requests:
             memory: "256Mi"
@@ -69,14 +67,11 @@ spec:
             - -U
             - postgres
           initialDelaySeconds: 5
-          periodSeconds: 5      volumes:
+          periodSeconds: 5
+      volumes:
       - name: postgres-storage
         persistentVolumeClaim:
           claimName: postgres-pvc
-      - name: postgres-init-script
-        configMap:
-          name: postgres-init-script
-          defaultMode: 0755
 
 ---
 # PostgreSQL Service
