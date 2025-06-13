@@ -9,17 +9,30 @@
       </h1>
       <p class="mt-6 text-lg leading-8 text-gray-600">
         Your centralized platform for project management, workflow visualization, and timeline tracking.
-        Get started by exploring your projects or creating a new flowboard.
+        Sign in to access your projects and create new flowboards.
       </p>
       <div class="mt-10 flex items-center justify-center gap-x-6">
-        <a routerLink="/projects" 
-           class="rounded-md bg-purple-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600">
-          View Projects
-        </a>
-        <a routerLink="/flowboard" 
-           class="text-sm font-semibold leading-6 text-gray-900 hover:text-purple-600">
-          Create FlowBoard <span aria-hidden="true">→</span>
-        </a>
+        <ng-container *ngIf="!(authService.isLoggedIn$ | async); else loggedInButtons">
+          <button
+            (click)="login()"
+            class="rounded-md bg-purple-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600">
+            Sign In
+          </button>
+          <a routerLink="/login" 
+             class="text-sm font-semibold leading-6 text-gray-900 hover:text-purple-600">
+            Learn more <span aria-hidden="true">→</span>
+          </a>
+        </ng-container>
+        <ng-template #loggedInButtons>
+          <a routerLink="/projects" 
+             class="rounded-md bg-purple-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600">
+            View Projects
+          </a>
+          <a routerLink="/flowboard" 
+             class="text-sm font-semibold leading-6 text-gray-900 hover:text-purple-600">
+            Create FlowBoard <span aria-hidden="true">→</span>
+          </a>
+        </ng-template>
       </div>
     </div>
     

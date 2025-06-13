@@ -13,17 +13,40 @@
               <a routerLink="/home"
                 class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-500 hover:text-white"
                 routerLinkActive="bg-gray-700 text-white">Home</a>
-              <a routerLink="/flowboard"
-                class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-500 hover:text-white"
-                routerLinkActive="bg-gray-700 text-white">FlowBoard</a>
-              <a routerLink="/projects"
-                class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-500 hover:text-white"
-                routerLinkActive="bg-gray-700 text-white">Projects</a>
-              <a routerLink="/timeline"
-                class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-500 hover:text-white"
-                routerLinkActive="bg-gray-700 text-white">Timeline</a>
+              <ng-container *ngIf="authService.isLoggedIn$ | async">
+                <a routerLink="/flowboard"
+                  class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-500 hover:text-white"
+                  routerLinkActive="bg-gray-700 text-white">FlowBoard</a>
+                <a routerLink="/projects"
+                  class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-500 hover:text-white"
+                  routerLinkActive="bg-gray-700 text-white">Projects</a>
+                <a routerLink="/timeline"
+                  class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-500 hover:text-white"
+                  routerLinkActive="bg-gray-700 text-white">Timeline</a>
+              </ng-container>
             </div>
           </div>
+        </div>
+        <div class="flex items-center space-x-4">
+          <ng-container *ngIf="authService.isLoggedIn$ | async; else loginButton">
+            <span class="text-sm text-gray-600">
+              Welcome, {{ (authService.currentUser$ | async)?.firstName || (authService.currentUser$ | async)?.username }}
+            </span>
+            <button
+              (click)="logout()"
+              class="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-500 hover:text-white">
+              <i class="pi pi-sign-out mr-1"></i>
+              Logout
+            </button>
+          </ng-container>
+          <ng-template #loginButton>
+            <button
+              (click)="login()"
+              class="rounded-md bg-purple-600 px-3 py-2 text-sm font-medium text-white hover:bg-purple-500">
+              <i class="pi pi-sign-in mr-1"></i>
+              Sign In
+            </button>
+          </ng-template>
         </div>
       </div>
     </div>
