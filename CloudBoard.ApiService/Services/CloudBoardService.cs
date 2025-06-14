@@ -36,16 +36,16 @@ public class CloudBoardService : ICloudBoardService
         }
     }
 
-    public async Task<IEnumerable<CloudBoardDto>> GetAllCloudBoardDocumentsAsync()
+    public async Task<IEnumerable<CloudBoardDto>> GetAllCloudBoardDocumentsByUserAsync(string userId)
     {
         try
         {
-            var documents = await _cloudBoardRepository.GetAllDocumentsAsync();
+            var documents = await _cloudBoardRepository.GetAllDocumentsByUserAsync(userId);
             return _mapper.Map<IEnumerable<CloudBoardDto>>(documents);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving all CloudBoard documents");
+            _logger.LogError(ex, "Error retrieving all CloudBoard documents for user {UserId}", userId);
             throw;
         }
     }

@@ -29,9 +29,10 @@ public class CloudBoardRepository : ICloudBoardRepository
             .FirstOrDefaultAsync(d => d.Id == id);
     }
 
-    public async Task<IEnumerable<Data.CloudBoard>> GetAllDocumentsAsync()
+    public async Task<IEnumerable<Data.CloudBoard>> GetAllDocumentsByUserAsync(string userId)
     {
         return await _dbContext.CloudBoardDocuments
+            .Where(d => d.CreatedBy == userId)
             .ToListAsync();
     }
 
