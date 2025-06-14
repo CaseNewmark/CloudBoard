@@ -17,14 +17,17 @@ public static class CloudBoardEndpoints
             return TypedResults.Created($"/api/cloudboard/{newDocument.Id}", newDocument);
         })
         .WithName("CreateCloudBoard")
-        .Produces<CloudBoardDto>();
+        .Produces<CloudBoardDto>()
+        .RequireAuthorization();
 
         app.MapGet("/api/cloudboard", async (ICloudBoardService cloudBoardService) =>
         {
             var documentList = await cloudBoardService.GetAllCloudBoardDocumentsAsync();
             return TypedResults.Ok(documentList);
         })
-        .WithName("GetAllCloudBoards");
+        .WithName("GetAllCloudBoards")
+        .Produces<IEnumerable<CloudBoardDto>>()
+        .RequireAuthorization();
 
         app.MapGet("/api/cloudboard/{cloudboardId:guid}", async (string cloudboardId, ICloudBoardService cloudBoardService) =>
         {
@@ -34,7 +37,8 @@ public static class CloudBoardEndpoints
                 : Results.NotFound();
         })
         .WithName("GetCloudBoardById")
-        .Produces<CloudBoardDto>();
+        .Produces<CloudBoardDto>()
+        .RequireAuthorization();
 
         app.MapPut("/api/cloudboard/{cloudboardId:guid}", async (string cloudboardId, [FromBody] CloudBoardDto updateDto, ICloudBoardService cloudBoardService) =>
         {
@@ -44,13 +48,15 @@ public static class CloudBoardEndpoints
                 : Results.NotFound();
         })
         .WithName("UpdateCloudBoard")
-        .Produces<CloudBoardDto>();
+        .Produces<CloudBoardDto>()
+        .RequireAuthorization();
 
         app.MapDelete("/api/cloudboard/{cloudboardId:guid}", async (string cloudboardId, ICloudBoardService cloudBoardService) =>
         {
             var deleted = await cloudBoardService.DeleteCloudBoardDocumentAsync(cloudboardId);
             return TypedResults.Ok(deleted);
         })
-        .WithName("DeleteCloudBoard");
+        .WithName("DeleteCloudBoard")
+        .RequireAuthorization();
     }
 }

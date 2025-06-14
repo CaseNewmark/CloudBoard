@@ -25,7 +25,7 @@ export class ApiClientService {
 
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
-        this.baseUrl = baseUrl ?? "https://localhost:64428";
+        this.baseUrl = baseUrl ?? "https://localhost:52247";
     }
 
     /**

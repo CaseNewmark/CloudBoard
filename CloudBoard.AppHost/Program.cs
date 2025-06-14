@@ -1,8 +1,8 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var keycloak = builder.AddKeycloak("keycloak", 8080)
-                      .WithDataVolume()
-                      .WithRealmImport("./Realms/cloudboard.json");
+                      .WithRealmImport("./Realms/cloudboard.json")
+                      .WithDataVolume();
 
 var dbserver = builder.AddPostgres("postgres")
                       .WithDataVolume()

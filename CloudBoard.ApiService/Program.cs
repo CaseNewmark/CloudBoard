@@ -14,6 +14,18 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
+builder.Services.AddAuthentication()
+                .AddKeycloakJwtBearer(
+                    serviceName: "keycloak",
+                    realm: "cloudboard",
+                    configureOptions: options =>
+                    {
+                        options.RequireHttpsMetadata = false; // Set to true in production
+                        options.Audience = "cloudboard-client";
+                    }
+                );
+builder.Services.AddAuthorizationBuilder();
+
 builder.Services.AddAutoMapper(config => config.AddProfile<DtoMappingProfile>());
 
 builder.Services.AddScoped<ICloudBoardService, CloudBoardService>();

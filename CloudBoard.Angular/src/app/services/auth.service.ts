@@ -123,10 +123,10 @@ export class AuthService {
     this.isLoggedInSubject.next(false);
     this.currentUserSubject.next(null);
     
-    // Redirect to Keycloak logout
+    // Redirect to Keycloak logout with post logout redirect
     const keycloakLogoutUrl = 'http://localhost:8080/realms/cloudboard/protocol/openid-connect/logout';
-    const redirectUri = encodeURIComponent(window.location.origin);
-    window.location.href = `${keycloakLogoutUrl}?redirect_uri=${redirectUri}`;
+    const postLogoutRedirectUri = encodeURIComponent(window.location.origin + '/home');
+    window.location.href = `${keycloakLogoutUrl}?post_logout_redirect_uri=${postLogoutRedirectUri}`;
   }
 
   isLoggedIn(): boolean {

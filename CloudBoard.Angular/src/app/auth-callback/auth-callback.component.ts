@@ -30,7 +30,7 @@ export class AuthCallbackComponent implements OnInit {
 
       if (code) {
         await this.authService.handleCallback(code);
-        this.router.navigate(['/projects']);
+        this.router.navigate(['/cloudboard']);
       } else {
         throw new Error('No authorization code received');
       }
