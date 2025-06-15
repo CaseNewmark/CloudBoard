@@ -105,22 +105,34 @@ export class CloudboardService {
   }
 
   private handleAuthError = (error: any) => {
-    if (error.status === 401 || error.status === 403) {
+    console.error('API Error:', error);
+    
+    if (error.status === 401) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Authentication Required',
-        detail: 'Please sign in to access this resource'
+        summary: 'Session Expired',
+        detail: 'Your session has expired. Please sign in again.'
       });
-      //this.authService.logout();
-      //this.router.navigate(['/home']);
-      return throwError(() => new Error('Authentication required'));
+      // Don't immediately logout, let the interceptor handle token refresh
+      // Only logout if refresh fails
+      setTimeout(() => {
+        if (!this.authService.isLoggedIn()) {
+          this.router.navigate(['/home']);
+        }
+      }, 1000);
+    } else if (error.status === 403) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Access Denied',
+        detail: 'You do not have permission to access this resource'
+      });
+    } else {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: error.message || 'An unexpected error occurred'
+      });
     }
-    
-    this.messageService.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message || 'An unexpected error occurred'
-    });
     
     return throwError(() => error);
   };
