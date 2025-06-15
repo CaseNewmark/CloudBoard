@@ -1,6 +1,8 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var keycloak = builder.AddKeycloak("keycloak", 8080);
+var keycloak = builder.AddKeycloak("keycloak", 8080)
+                      .WithRealmImport("./Realms/cloudboard.json")
+                      .WithDataVolume();
 
 var dbserver = builder.AddPostgres("postgres")
                       .WithDataVolume()
@@ -12,7 +14,7 @@ var apiService = builder.AddProject<Projects.CloudBoard_ApiService>("apiservice"
                         .WithReference(database)
                         .WithReference(keycloak)
                         .WaitFor(database)
-                        //.WaitFor(keycloak)
+                        .WaitFor(keycloak)
                         .WithHttpsHealthCheck("/health");
 
 builder.AddNpmApp("angular", "../CloudBoard.Angular")

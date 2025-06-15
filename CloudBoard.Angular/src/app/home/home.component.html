@@ -1,0 +1,67 @@
+<div class="min-h-full bg-gray-50">
+  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="text-center">
+      <div class="mb-8">
+        <i class="pi pi-clipboard text-purple-800" style="font-size: 4rem;"></i>
+      </div>
+      <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+        Welcome to CloudBoard
+      </h1>
+      <p class="mt-6 text-lg leading-8 text-gray-600">
+        Your centralized platform for project management, workflow visualization, and timeline tracking.
+        Sign in to access your projects and create new flowboards.
+      </p>
+      <div class="mt-10 flex items-center justify-center gap-x-6">
+        <ng-container *ngIf="!(authService.isLoggedIn$ | async); else loggedInButtons">
+          <button
+            (click)="login()"
+            class="rounded-md bg-purple-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600">
+            Sign In
+          </button>
+          <a routerLink="/login" 
+             class="text-sm font-semibold leading-6 text-gray-900 hover:text-purple-600">
+            Learn more <span aria-hidden="true">→</span>
+          </a>
+        </ng-container>
+        <ng-template #loggedInButtons>
+          <a routerLink="/projects" 
+             class="rounded-md bg-purple-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600">
+            View Projects
+          </a>
+          <a routerLink="/flowboard" 
+             class="text-sm font-semibold leading-6 text-gray-900 hover:text-purple-600">
+            Create FlowBoard <span aria-hidden="true">→</span>
+          </a>
+        </ng-template>
+      </div>
+    </div>
+    
+    <div class="mt-16">
+      <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div class="mb-4">
+            <i class="pi pi-sitemap text-purple-600" style="font-size: 2rem;"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">FlowBoard</h3>
+          <p class="text-gray-600">Visualize your workflows and processes with interactive flowcharts and diagrams.</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div class="mb-4">
+            <i class="pi pi-folder text-purple-600" style="font-size: 2rem;"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Projects</h3>
+          <p class="text-gray-600">Organize and manage your projects with comprehensive tracking and collaboration tools.</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div class="mb-4">
+            <i class="pi pi-calendar text-purple-600" style="font-size: 2rem;"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">Timeline</h3>
+          <p class="text-gray-600">Track project milestones and deadlines with intuitive timeline visualization.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
