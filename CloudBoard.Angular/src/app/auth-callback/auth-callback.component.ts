@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
 @Component({
-  selector: 'app-auth-callback',
+  selector: 'auth-callback',
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './auth-callback.component.html',
@@ -39,7 +39,7 @@ export class AuthCallbackComponent implements OnInit {
         
         // Check if authentication was successful
         if (this.authService.isLoggedIn()) {
-          console.log('Authentication successful, redirecting to projects...');
+          console.log('Authentication successful, redirecting to flowboards...');
           await this.router.navigate(['/flowboard']);
         } else {
           throw new Error('Authentication failed - user not logged in after callback');

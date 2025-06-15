@@ -119,7 +119,7 @@ public static class CloudBoardEndpoints
 
         app.MapDelete("/api/cloudboard/{cloudboardId:guid}", async (string cloudboardId, ICloudBoardService cloudBoardService, HttpContext context) =>
         {
-            var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+            var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                         ?? context.User.FindFirst("sub")?.Value;
 
             if (string.IsNullOrEmpty(userId))
@@ -143,6 +143,7 @@ public static class CloudBoardEndpoints
             return TypedResults.Ok(deleted);
         })
         .WithName("DeleteCloudBoard")
+        .Produces<bool>()
         .RequireAuthorization();
     }
 }
