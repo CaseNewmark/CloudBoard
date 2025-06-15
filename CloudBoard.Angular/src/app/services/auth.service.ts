@@ -1,313 +1,106 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  roles: string[];
-}
+import { Injectable, inject } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+import { TokenService } from './token.service';
+import { KeycloakApiService } from './keycloak-api.service';
+import { UserService, User } from './user.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  private tokenService = inject(TokenService);
+  private keycloakApi = inject(KeycloakApiService);
+  private userService = inject(UserService);
+  
   private isLoggedInSubject = new BehaviorSubject<boolean>(false);
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
-
   public isLoggedIn$ = this.isLoggedInSubject.asObservable();
-  public currentUser$ = this.currentUserSubject.asObservable();
+  public currentUser$ = this.userService.currentUser$;
 
   constructor() {
-    // Check if user is already logged in (e.g., from localStorage)
-    this.checkAuthState();
-    
-    // Set up automatic token refresh check
-    this.setupTokenRefreshCheck();
+    this.initializeAuth();
+    this.startTokenRefreshTimer();
   }
 
-  private checkAuthState(): void {
-    const token = localStorage.getItem('access_token');
-    const user = localStorage.getItem('user');
-    
-    if (token && user) {
-      // Check if token is still valid
-      if (this.isTokenValid(token)) {
-        this.isLoggedInSubject.next(true);
-        this.currentUserSubject.next(JSON.parse(user));
-      } else {
-        // Token is expired, try to refresh it
-        this.refreshTokenIfPossible();
-      }
+  private initializeAuth(): void {
+    if (this.tokenService.hasValidToken()) {
+      this.userService.loadUserFromStorage();
+      this.isLoggedInSubject.next(true);
+    } else if (this.tokenService.getRefreshToken()) {
+      this.refreshTokenSilently();
     }
   }
 
-  private isTokenValid(token: string): boolean {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const exp = payload.exp * 1000; // Convert to milliseconds
-      const now = Date.now();
-
-      // Add 1 minute buffer before expiration
-      const bufferTime = 1 * 60 * 1000;
-      return now < (exp - bufferTime);
-    } catch (error) {
-      console.error('Error parsing token:', error);
-      return false;
-    }
-  }
-
-  private setupTokenRefreshCheck(): void {
-    // Check token validity every 5 minutes
+  private startTokenRefreshTimer(): void {
     setInterval(() => {
-      if (this.isLoggedIn()) {
-        const token = localStorage.getItem('access_token');
-        if (token && !this.isTokenValid(token)) {
-          console.log('Token expired, attempting refresh...');
-          this.refreshTokenIfPossible();
-        }
+      if (this.isLoggedIn() && !this.tokenService.hasValidToken()) {
+        this.refreshTokenSilently();
       }
-    }, 1 * 60 * 1000); // 1 minute
+    }, 60000); // Check every minute
   }
 
-  private async refreshTokenIfPossible(): Promise<void> {
-    const refreshToken = localStorage.getItem('refresh_token');
-    
+  async login(): Promise<void> {
+    window.location.href = this.keycloakApi.buildLoginUrl();
+  }
+
+  async handleCallback(code: string): Promise<void> {
+    try {
+      const tokens = await this.keycloakApi.exchangeCodeForTokens(code);
+      this.tokenService.setTokens(tokens.access_token, tokens.refresh_token, tokens.id_token);
+      
+      const userInfo = await this.keycloakApi.getUserInfo(tokens.access_token);
+      this.userService.setUser(userInfo);
+      
+      this.isLoggedInSubject.next(true);
+    } catch (error) {
+      console.error('Authentication failed:', error);
+      this.logout();
+      throw error;
+    }
+  }
+
+  private async refreshTokenSilently(): Promise<void> {
+    const refreshToken = this.tokenService.getRefreshToken();
     if (!refreshToken) {
-      console.log('No refresh token available, logging out...');
       this.logout();
       return;
     }
 
     try {
-      const newTokens = await this.refreshAccessToken(refreshToken);
+      const tokens = await this.keycloakApi.refreshToken(refreshToken);
+      this.tokenService.setTokens(tokens.access_token, tokens.refresh_token, tokens.id_token);
       
-      if (newTokens.access_token) {
-        localStorage.setItem('access_token', newTokens.access_token);
-        if (newTokens.refresh_token) {
-          localStorage.setItem('refresh_token', newTokens.refresh_token);
-        }
-        // Store ID token if present
-        if (newTokens.id_token) {
-          localStorage.setItem('id_token', newTokens.id_token);
-        }
-        
-        // Get updated user info
-        const userInfo = await this.getUserInfo(newTokens.access_token);
-        localStorage.setItem('user', JSON.stringify(userInfo));
-        
-        this.isLoggedInSubject.next(true);
-        this.currentUserSubject.next(userInfo);
-        
-        console.log('Token refreshed successfully');
-      } else {
-        throw new Error('No access token received');
-      }
+      const userInfo = await this.keycloakApi.getUserInfo(tokens.access_token);
+      this.userService.setUser(userInfo);
+      
+      this.isLoggedInSubject.next(true);
     } catch (error) {
       console.error('Token refresh failed:', error);
       this.logout();
     }
   }
 
-  private async refreshAccessToken(refreshToken: string): Promise<any> {
-    const tokenUrl = 'http://localhost:8080/realms/cloudboard/protocol/openid-connect/token';
-    const clientId = 'cloudboard-client';
-
-    const response = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
-        client_id: clientId,
-        refresh_token: refreshToken,
-      }),
-    });
-
-    const result = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(`Token refresh failed: ${result.error_description || result.error}`);
-    }
-    
-    return result;
-  }
-
-  // Add method to check if token needs refresh
-  public async ensureValidToken(): Promise<boolean> {
-    const token = localStorage.getItem('access_token');
-    
-    if (!token) {
-      return false;
-    }
-
-    if (this.isTokenValid(token)) {
+  async ensureValidToken(): Promise<boolean> {
+    if (this.tokenService.hasValidToken()) {
       return true;
     }
 
-    // Token is expired or about to expire, try to refresh
-    await this.refreshTokenIfPossible();
-    
-    // Check if we now have a valid token
-    const newToken = localStorage.getItem('access_token');
-    return newToken ? this.isTokenValid(newToken) : false;
-  }
-
-  login(keycloakUrl: string = 'http://localhost:8080'): void {
-    // Redirect to Keycloak login
-    const clientId = 'cloudboard-client';
-    const redirectUri = encodeURIComponent(window.location.origin + '/auth/callback');
-    const postLogoutRedirectUri = encodeURIComponent(window.location.origin + '/home');
-    const scope = 'openid profile email';
-    const responseType = 'code';
-    
-    const authUrl = `${keycloakUrl}/realms/cloudboard/protocol/openid-connect/auth?` +
-      `client_id=${clientId}&` +
-      `redirect_uri=${redirectUri}&` +
-      `post_logout_redirect_uri=${postLogoutRedirectUri}&` +
-      `scope=${scope}&` +
-      `response_type=${responseType}`;
-      
-    window.location.href = authUrl;
-  }
-
-  async handleCallback(code: string): Promise<void> {
-    try {
-      console.log('Handling auth callback with code:', code);
-      
-      // Exchange code for tokens
-      const tokenResponse = await this.exchangeCodeForTokens(code);
-      
-      console.log('Token response received:', tokenResponse ? 'Success' : 'Failed');
-      
-      if (tokenResponse.access_token) {
-        localStorage.setItem('access_token', tokenResponse.access_token);
-        
-        if (tokenResponse.refresh_token) {
-          localStorage.setItem('refresh_token', tokenResponse.refresh_token);
-        }
-        
-        // Store ID token - this is crucial for logout
-        if (tokenResponse.id_token) {
-          localStorage.setItem('id_token', tokenResponse.id_token);
-        }
-        
-        // Get user info
-        const userInfo = await this.getUserInfo(tokenResponse.access_token);
-        localStorage.setItem('user', JSON.stringify(userInfo));
-        
-        this.isLoggedInSubject.next(true);
-        this.currentUserSubject.next(userInfo);
-        
-        console.log('Authentication completed successfully for user:', userInfo.username);
-      } else {
-        throw new Error('No access token in response');
-      }
-    } catch (error) {
-      console.error('Authentication failed:', error);
-      this.logout();
-      throw error; // Re-throw so the callback component can handle it
-    }
-  }
-
-  private async exchangeCodeForTokens(code: string): Promise<any> {
-    const tokenUrl = 'http://localhost:8080/realms/cloudboard/protocol/openid-connect/token';
-    const clientId = 'cloudboard-client';
-    const redirectUri = window.location.origin + '/auth/callback';
-
-    console.log('Exchanging code for tokens...');
-    console.log('Token URL:', tokenUrl);
-    console.log('Redirect URI:', redirectUri);
-    
-    const response = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: clientId,
-        code: code,
-        redirect_uri: redirectUri,
-      }),
-    });
-
-    const result = await response.json();
-    console.log('Token exchange response status:', response.status);
-    console.log('Token exchange response:', result);
-    
-    if (!response.ok) {
-      throw new Error(`Token exchange failed: ${result.error_description || result.error || 'Unknown error'}`);
-    }
-    
-    return result;
-  }
-
-  private async getUserInfo(accessToken: string): Promise<User> {
-    const userInfoUrl = 'http://localhost:8080/realms/cloudboard/protocol/openid-connect/userinfo';
-    
-    const response = await fetch(userInfoUrl, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to get user info');
-    }
-
-    const userInfo = await response.json();
-    
-    return {
-      id: userInfo.sub,
-      username: userInfo.preferred_username,
-      email: userInfo.email,
-      firstName: userInfo.given_name,
-      lastName: userInfo.family_name,
-      roles: userInfo.realm_access?.roles || []
-    };
+    await this.refreshTokenSilently();
+    return this.tokenService.hasValidToken();
   }
 
   logout(): void {
-    const idToken = localStorage.getItem('id_token');
-    
-    // Clear local storage
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('id_token');
-    localStorage.removeItem('user');
-    
+    const idToken = this.tokenService.getIdToken();
+    this.tokenService.clearTokens();
+    this.userService.clearUser();
     this.isLoggedInSubject.next(false);
-    this.currentUserSubject.next(null);
     
-    // Build logout URL with id_token_hint
-    const keycloakLogoutUrl = 'http://localhost:8080/realms/cloudboard/protocol/openid-connect/logout';
-    const postLogoutRedirectUri = encodeURIComponent(window.location.origin + '/home');
-    
-    let logoutUrl = `${keycloakLogoutUrl}?post_logout_redirect_uri=${postLogoutRedirectUri}`;
-    
-    if (idToken) {
-      logoutUrl += `&id_token_hint=${encodeURIComponent(idToken)}`;
-    }
-    
-    console.log('Logging out with URL:', logoutUrl);
-    window.location.href = logoutUrl;
+    window.location.href = this.keycloakApi.buildLogoutUrl(idToken || undefined);
   }
 
-  // Alternative logout method that just clears local state without Keycloak logout
   localLogout(): void {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('id_token');
-    localStorage.removeItem('user');
-    
+    this.tokenService.clearTokens();
+    this.userService.clearUser();
     this.isLoggedInSubject.next(false);
-    this.currentUserSubject.next(null);
-    
-    // Just redirect to home without going through Keycloak
     window.location.href = '/home';
   }
 
@@ -316,6 +109,6 @@ export class AuthService {
   }
 
   getCurrentUser(): User | null {
-    return this.currentUserSubject.value;
+    return this.userService.getCurrentUser();
   }
 }
