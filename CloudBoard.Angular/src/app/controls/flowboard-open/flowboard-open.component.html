@@ -31,94 +31,11 @@
     </div>
 </div>
 
-<!-- Edit CloudBoard Modal -->
-<p-dialog 
-    header="Edit CloudBoard" 
-    [(visible)]="showEditDialog" 
-    [modal]="true" 
-    [closable]="true"
-    [draggable]="false"
-    [resizable]="false"
-    styleClass="w-96">
-
-    @if (editingBoard) {
-    <div class="flex flex-col gap-4">
-        <!-- Board Name Section -->
-        <div class="flex flex-col gap-2">
-            <label for="boardName" class="font-semibold text-sm">Board Name</label>
-            <input 
-                id="boardName" 
-                type="text" 
-                pInputText 
-                [(ngModel)]="editingBoard.name" 
-                placeholder="Enter board name"
-                class="w-full" />
-        </div>
-
-        <!-- Board Description Section -->
-        <div class="flex flex-col gap-2">
-            <label for="boardDescription" class="font-semibold text-sm">Description</label>
-            <textarea 
-                id="boardDescription" 
-                pInputTextarea 
-                [(ngModel)]="editingBoard.description"
-                placeholder="Enter board description (optional)" 
-                rows="3"
-                class="w-full"></textarea>
-        </div>
-
-        <!-- Sharing Section -->
-        <div class="flex flex-col gap-2">
-            <label class="font-semibold text-sm">Share with Users</label>
-            <div class="flex gap-2">
-                <input 
-                    type="email" 
-                    pInputText 
-                    [(ngModel)]="shareEmail" 
-                    placeholder="Enter email address"
-                    class="flex-1" />
-                <p-button 
-                    icon="pi pi-plus" 
-                    (click)="addShareUser()"
-                    [disabled]="!shareEmail || !isValidEmail(shareEmail)" 
-                    size="small">
-                </p-button>
-            </div>
-
-            <!-- Shared Users List -->
-            @if (sharedUsers.length > 0) {
-            <div class="flex flex-col gap-1 mt-2">
-                <span class="text-sm text-gray-600">Shared with:</span>
-                @for (user of sharedUsers; track user) {
-                <div class="flex items-center justify-between bg-gray-100 px-3 py-2 rounded">
-                    <span class="text-sm">{{user}}</span>
-                    <i class="pi pi-times cursor-pointer text-red-600 hover:text-red-800"
-                       (click)="removeShareUser(user)"></i>
-                </div>
-                }
-            </div>
-            }
-        </div>
-    </div>
-    } @else {
-    <div class="flex items-center justify-center p-4">
-        <p-progressSpinner strokeWidth="4" animationDuration="1s"></p-progressSpinner>
-    </div>
-    }
-
-    <ng-template pTemplate="footer">
-        <p-button 
-            label="Cancel" 
-            icon="pi pi-times" 
-            (click)="cancelEdit()" 
-            severity="secondary">
-        </p-button>
-        <p-button 
-            label="Save" 
-            icon="pi pi-check" 
-            (click)="saveEdit()" 
-            [loading]="isSaving"
-            [disabled]="!editingBoard || !editingBoard.name?.trim()">
-        </p-button>
-    </ng-template>
-</p-dialog>
+<!-- Use the new CloudBoard Edit Component -->
+<cloudboard-edit
+    [(visible)]="showEditDialog"
+    [cloudBoard]="editingBoard"
+    (boardUpdated)="onBoardUpdated($event)"
+    (editCancelled)="onEditCancelled()"
+    (visibleChange)="onEditDialogClosed()">
+</cloudboard-edit>
