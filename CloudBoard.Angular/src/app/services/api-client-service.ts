@@ -25,11 +25,11 @@ export class ApiClientService {
 
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
-        this.baseUrl = baseUrl ?? "https://localhost:58936";
+        this.baseUrl = baseUrl ?? "https://localhost:59900";
     }
 
     /**
-     * @return OK
+     * @return Created
      */
     createCloudBoard(body: CloudBoardDto): Observable<CloudBoardDto> {
         let url_ = this.baseUrl + "/api/cloudboard";
@@ -68,11 +68,11 @@ export class ApiClientService {
             (response as any).error instanceof Blob ? (response as any).error : undefined;
 
         let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
+        if (status === 201) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CloudBoardDto;
-            return _observableOf(result200);
+            let result201: any = null;
+            result201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as CloudBoardDto;
+            return _observableOf(result201);
             }));
         } else if (status !== 200 && status !== 204) {
             return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {

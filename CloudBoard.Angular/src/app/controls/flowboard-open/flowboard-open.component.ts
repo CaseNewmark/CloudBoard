@@ -63,6 +63,7 @@ export class FlowboardOpenComponent {
           next: (success: boolean) => {
             if (success) {
               this.availableBoards = this.availableBoards.filter(board => board.id !== boardId);
+              this.changeDetectorRef.detectChanges();
             }
           },
           error: (error) => {
