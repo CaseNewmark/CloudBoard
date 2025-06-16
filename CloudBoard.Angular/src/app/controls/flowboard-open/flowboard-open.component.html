@@ -1,0 +1,27 @@
+<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-row items-start gap-10">
+    <div>
+        <div class="flex justify-center items-center gap-3.5 spa mb-4">
+            <i class="pi pi-folder" style="font-size: 2rem;"></i>
+            <h3 class="text-lg font-semibold mb-2">Create a new CloudBoard...</h3>
+        </div>
+    </div>
+    <div class="self-center">
+        <span class="text-gray-600 mb-2">OR</span>
+    </div>
+    <div>
+        <div class="flex items-center gap-3.5 spa mb-4">
+            <i class="pi pi-folder text-gray-500" style="font-size: 2rem;"></i>
+            <h3 class="text-lg font-semibold text-gray-500">Open a Cloudboard...</h3>
+        </div>
+        <div class="flex flex-col w-sm h-72 border-gray-500 border-1 rounded-sm p-2 gap-2">
+            @for (board of this.availableBoards; track board.id) {
+            <p-button text severity="secondary" (click)="onOpen(board.id!)"
+                styleClass="w-full justify-stretch! gap-2 items-center">
+                <i class="pi pi-file"></i>
+                <span class="grow text-left truncate">{{board.name}}</span>
+                <i class="pi pi-trash" (click)="onDelete(board.id!, $event); $event.stopPropagation()"></i>
+            </p-button>
+            }
+        </div>
+    </div>
+</div>
