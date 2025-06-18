@@ -10,11 +10,11 @@ Welcome to CloudBoard! This guide will help you get started with using the appli
 
 1. Open your web browser and navigate to the CloudBoard application URL
 2. The application will load and display the main navigation
-3. Click on "FlowBoard" in the navigation to access the main canvas view
+3. Click on "Cloudboard" in the navigation to access the main canvas view
 
 ### Creating a New CloudBoard
 
-1. From the FlowBoard view, use the toolbar to create a new CloudBoard
+1. From the Cloudboard view, use the toolbar to create a new CloudBoard
 2. Enter a name for your CloudBoard when prompted
 3. A new empty canvas will be created and displayed
 

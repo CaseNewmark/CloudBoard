@@ -39,8 +39,8 @@ export class AuthCallbackComponent implements OnInit {
         
         // Check if authentication was successful
         if (this.authService.isLoggedIn()) {
-          console.log('Authentication successful, redirecting to flowboards...');
-          await this.router.navigate(['/flowboard']);
+          console.log('Authentication successful, redirecting to Cloudboards...');
+          await this.router.navigate(['/cloudboard']);
         } else {
           throw new Error('Authentication failed - user not logged in after callback');
         }

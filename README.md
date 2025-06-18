@@ -105,7 +105,7 @@ To use these debugging configurations, open the project in VS Code, go to the "R
 The application follows a layered architecture:
 
 - **Frontend**: Angular 19+ SPA with components for:
-  - FlowBoard: Main canvas for node manipulation
+  - Cloudboard: Main canvas for node manipulation
   - Node Components: Specialized components for each node type
   - Services: API communication and state management
 
