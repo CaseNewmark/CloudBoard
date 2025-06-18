@@ -90,6 +90,45 @@ export class CloudboardService {
     );
   }
 
+  public updateCloudBoard(cloudBoard: CloudBoard): Observable<CloudBoard> {
+    if (!this.authService.isLoggedIn()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Authentication Required',
+        detail: 'Please sign in to update this cloudboard'
+      });
+      this.router.navigate(['/home']);
+      return throwError(() => new Error('Authentication required'));
+    }
+
+    const dto = mapCloudBoardToCloudBoardDto(cloudBoard);
+    return this.apiClient.updateCloudBoard(cloudBoard.id!, dto).pipe(
+      map((newDto: CloudBoardDto) => mapCloudBoardDtoToCloudBoard(newDto)),
+      tap((updatedCloudboard: CloudBoard) => this.messageService.add({
+        severity: 'success',
+        summary: 'Board Updated',
+        detail: `CloudBoard "${updatedCloudboard.name}" updated successfully`
+      })),
+      catchError(this.handleAuthError)
+    );
+  }
+
+  public getSharedUsers(cloudBoardId: string): Observable<string[]> {
+    // TODO: Implement API call to get shared users
+    return new Observable<string[]>(observer => observer.complete());
+    // return this.apiClient.getSharedUsers(cloudBoardId).pipe(
+    //   catchError(this.handleAuthError)
+    // );
+  }
+
+  public updateSharing(cloudBoardId: string, sharedUsers: string[]): Observable<boolean> {
+    // TODO: Implement API call to update sharing
+    return new Observable<boolean>(observer => observer.complete());
+    // return this.apiClient.updateSharing(cloudBoardId, sharedUsers).pipe(
+    //   catchError(this.handleAuthError)
+    // );
+  }
+
   private isUserAuthenticated(detail: string): boolean {
     if (!this.authService.isLoggedIn()) { 
       this.messageService.add({

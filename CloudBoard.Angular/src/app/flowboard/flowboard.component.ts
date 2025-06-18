@@ -3,6 +3,7 @@ import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FFlowModule, FCanvasComponent, FZoomDirective, FCreateConnectionEvent, FFlowComponent, FSelectionChangeEvent, FDraggableDirective, FTriggerEvent, FEventTrigger } from '@foblex/flow';
 import { ToolbarComponent } from '../controls/toolbar/toolbar.component';
+import { FlowboardOpenComponent } from '../controls/flowboard-open/flowboard-open.component';
 import { PropertiesPanelComponent } from '../controls/properties-panel/properties-panel.component';
 import { SimpleNoteComponent } from '../nodes/simple-note/simple-note.component';
 import { DoubleClickDirective } from '../helpers/double-click.directive';
@@ -29,6 +30,7 @@ import { ToastModule } from 'primeng/toast';
   imports: [
     FFlowModule,
     FZoomDirective,
+    FlowboardOpenComponent,
     ToolbarComponent,
     PropertiesPanelComponent,
     ContextMenuModule,

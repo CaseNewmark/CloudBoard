@@ -16,7 +16,7 @@ public static class CloudBoardEndpoints
         app.MapPost("/api/cloudboard", async ([FromBody] CloudBoardDto document, ICloudBoardService cloudBoardService, HttpContext context) =>
         {
             // Extract user information from JWT token
-            var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+            var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                         ?? context.User.FindFirst("sub")?.Value;
 
             if (string.IsNullOrEmpty(userId))
@@ -32,7 +32,7 @@ public static class CloudBoardEndpoints
             return TypedResults.Created($"/api/cloudboard/{newDocument.Id}", newDocument);
         })
         .WithName("CreateCloudBoard")
-        .Produces<CloudBoardDto>()
+        .Produces<CloudBoardDto>(201)
         .RequireAuthorization();
 
         app.MapGet("/api/cloudboard", async (ICloudBoardService cloudBoardService, HttpContext context) =>

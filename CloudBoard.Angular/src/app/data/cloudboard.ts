@@ -95,6 +95,12 @@ export interface Connection {
 export interface CloudBoard {
   id: string;
   name: string;
+  description?: string; // Add this field
   nodes: Node[];
   connections: Connection[];
+  // Add sharing-related fields if needed
+  sharedWith?: string[];
+  createdBy?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

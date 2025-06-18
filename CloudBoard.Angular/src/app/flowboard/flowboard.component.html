@@ -1,16 +1,16 @@
-<div class="toolbar-container">
-    <toolbar></toolbar>
-</div>
 @if (!currentCloudBoard) {
 <div class="grow h-full flex justify-center items-center">
     @if (isLoading) {
         <p-progressSpinner></p-progressSpinner>
     } @else {
-        <i>No Cloudboard loaded yet..</i>
+        <flowboard-open></flowboard-open>
     }
 </div>
 }
 @else {
+<div class="toolbar-container">
+    <toolbar></toolbar>
+</div>
 <div class="grow h-full flex flex-row overflow-hidden">
     <p-contextmenu #flowcontextmenu [model]="flowContextMenuItems" />
     <p-contextmenu #nodecontextmenu [model]="nodeContextMenuItems" />

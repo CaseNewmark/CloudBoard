@@ -1,0 +1,41 @@
+<div class="bg-amber-50 p-6 rounded-lg shadow-sm border border-gray-200 flex flex-row items-start gap-10">
+    <button
+        class="self-center w-full h-64 p-4 flex flex-col items-center justify-center gap-3.5 spa hover:bg-amber-100 hover:border-amber-300"
+        text severity="secondary" (click)="onCreate()">
+        <div class="flex flex-col items-center gap-3.5 spa mb-4">
+            <i class="pi pi-plus text-gray-500" style="font-size: 2rem;"></i>
+            <h3 class="text-lg font-semibold text-gray-500">Create a new CloudBoard...</h3>
+        </div>
+    </button>
+    <div class="self-center">
+        <span class="text-gray-600 mb-2">OR</span>
+    </div>
+    <div class="flex flex-col gap-2 w-full">
+        <div class="flex items-center gap-3.5 spa mb-4 self-center">
+            <i class="pi pi-folder text-gray-500" style="font-size: 2rem;"></i>
+            <h3 class="text-lg font-semibold text-gray-500">Open a Cloudboard...</h3>
+        </div>
+        <div class="flex flex-col w-sm h-72 bg-white border-gray-300 border-1 rounded-sm p-2 gap-2 overflow-auto">
+            @for (board of this.availableBoards; track board.id) {
+            <p-button text severity="secondary" (click)="onOpen(board.id!)"
+                styleClass="w-full justify-stretch! gap-2 items-center flex">
+                <i class="pi pi-file"></i>
+                <span class="grow text-left truncate">{{board.name}}</span>
+                <i class="pi pi-pencil z-10"
+                    (click)="onEdit(board, $event); $event.stopPropagation()" title="Edit board"></i>
+                <i class="pi pi-trash z-10" 
+                    (click)="onDelete(board.id!, $event); $event.stopPropagation()" title="Delete board"></i>
+            </p-button>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Use the new CloudBoard Edit Component -->
+<cloudboard-edit
+    [(visible)]="showEditDialog"
+    [cloudBoard]="editingBoard"
+    (boardUpdated)="onBoardUpdated($event)"
+    (editCancelled)="onEditCancelled()"
+    (visibleChange)="onEditDialogClosed()">
+</cloudboard-edit>
