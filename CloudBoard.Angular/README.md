@@ -1,59 +1,197 @@
-# CloudBoardAngular
+# CloudBoard - Developer Documentation
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.9.
+CloudBoard is a centralized platform for project management, workflow visualization, and timeline tracking built with Angular 19. It provides interactive flowchart capabilities for creating and managing visual workflows.
 
-## Development server
+## Table of Contents
 
-To start a local development server, run:
+- [Getting Started](#getting-started)
+- [Architecture Overview](#architecture-overview)
+- [Development Workflow](#development-workflow)
+- [Component Structure](#component-structure)
+- [API Integration](#api-integration)
+- [Authentication](#authentication)
+- [Testing](#testing)
+- [Deployment](#deployment)
 
-```bash
-ng serve
+## Getting Started
+
+For installation and setup instructions, please refer to the [main CloudBoard documentation](../README.md#development-setup) in the repository root.
+
+Once the application is running, the Angular frontend will be available at `http://localhost:4200/`.
+
+## Architecture Overview
+
+### Core Technologies
+
+- **Angular 19**: Frontend framework with standalone components
+- **PrimeNG**: UI component library for consistent design
+- **Tailwind CSS**: Utility-first CSS framework for styling
+- **@foblex/flow**: Library for creating interactive flowcharts and diagrams
+- **RxJS**: Reactive programming with observables
+
+### Project Structure
+
+```
+src/
+├── app/
+│   ├── cloudboard/          # Main cloudboard component and logic
+│   ├── controls/            # Reusable UI controls and components
+│   ├── data/               # Data models and interfaces
+│   ├── guards/             # Route guards for authentication
+│   ├── helpers/            # Utility functions and directives
+│   ├── home/               # Landing page component
+│   ├── nodes/              # Different node types for flowcharts
+│   ├── projects/           # Project management components
+│   ├── services/           # API services and business logic
+│   └── timeline/           # Timeline visualization components
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Development Workflow
 
-## Code scaffolding
+### Component Development
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+CloudBoard uses Angular standalone components. When creating new components:
 
-```bash
-ng generate component component-name
+    ```bash
+    ng generate component components/my-component --standalone
+    ```
+
+### Node Types
+
+The application supports multiple node types for flowcharts:
+- **SimpleNote**: Basic text notes
+- **CardNode**: Card-style information display
+- **LinkCollection**: Collection of related links
+- **ImageNode**: Image display with metadata
+- **CodeBlock**: Syntax-highlighted code snippets
+
+To add a new node type:
+1. Create the component in `src/app/nodes/`
+2. Add the node type to the `NodeType` enum in `data/cloudboard.ts`
+3. Update the switch statement in `cloudboard.component.html`
+4. Add default properties in `node.service.ts`
+
+### Service Architecture
+
+Services are organized by domain:
+- **CloudboardService**: CRUD operations for cloudboards
+- **NodeService**: Node management and operations
+- **ConnectorService**: Connection point management
+- **ConnectionService**: Managing connections between nodes
+- **AuthService**: Authentication and user management
+- **FlowControlService**: UI controls for the flow editor
+
+## Component Structure
+
+### CloudBoard Component
+
+The main component (`CloudboardComponent`) handles:
+- Loading and displaying cloudboards
+- Node creation, deletion, and positioning
+- Connection management between nodes
+- Context menus and user interactions
+- Auto-save functionality
+
+### Key Features
+
+- **Drag & Drop**: Nodes can be repositioned with real-time updates
+- **Context Menus**: Right-click menus for adding nodes and managing existing ones
+- **Properties Panel**: Side panel for editing node properties
+- **Keyboard shortcuts**: Delete key for removing selected items
+- **Auto-save**: Automatic saving of changes every 5 minutes
+
+## API Integration
+
+The application communicates with a backend API for data persistence. All API calls are handled through dedicated services using Angular's HttpClient.
+
+### Service Methods
+
+```typescript
+// Example service usage
+this.cloudboardService.loadCloudBoardById(id).subscribe(cloudboard => {
+  // Handle loaded cloudboard
+});
+
+this.nodeService.createNode(cloudboardId, nodeData).subscribe(newNode => {
+  // Handle created node
+});
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Authentication
 
-```bash
-ng generate --help
-```
+CloudBoard uses OAuth-based authentication with:
+- Route guards to protect authenticated routes
+- JWT token management
+- Automatic token refresh
+- Login/logout flow with callback handling
 
-## Building
+### Protected Routes
 
-To build the project run:
+- `/cloudboard` - Main cloudboard editor
+- `/projects` - Project management
+- `/timeline` - Timeline visualization
 
-```bash
-ng build
-```
+## Testing
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+### Unit Tests
 
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
+Run unit tests with:
 ```bash
 ng test
 ```
 
-## Running end-to-end tests
+### End-to-End Tests
 
-For end-to-end (e2e) testing, run:
-
+Run e2e tests with:
 ```bash
 ng e2e
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+### Test Structure
 
-## Additional Resources
+- Component tests in `*.spec.ts` files
+- Service tests for API integration
+- Guard tests for authentication logic
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Deployment
+
+### Production Build
+
+Create a production build:
+```bash
+ng build --configuration=production
+```
+
+### Environment Configuration
+
+Configure environment-specific settings in:
+- `src/environments/environment.ts` (development)
+- `src/environments/environment.prod.ts` (production)
+
+### Build Optimization
+
+The production build includes:
+- Tree shaking for smaller bundle sizes
+- Ahead-of-time (AOT) compilation
+- Minification and compression
+- Source map generation for debugging
+
+## Contributing
+
+1. Follow Angular style guide conventions
+2. Write unit tests for new components and services
+3. Use consistent naming: "cloudboard" (lowercase) throughout
+4. Implement proper error handling in services
+5. Add TypeScript interfaces for all data models
+6. Use reactive patterns with RxJS observables
+
+## Troubleshooting
+
+### Common Issues
+
+- **Module not found**: Ensure all imports use correct paths
+- **Authentication errors**: Check token expiration and refresh logic
+- **API connection issues**: Verify backend service availability
+- **Build errors**: Clear node_modules and reinstall dependencies
+
+For more detailed information about specific components or services, refer to the inline documentation in the source code.

@@ -38,7 +38,7 @@ The Angular application follows a component-based architecture with reactive sta
 
 #### Key Frontend Components
 
-- **FlowboardComponent**: Main canvas component for node manipulation
+- **CloudboardComponent**: Main canvas component for node manipulation
 - **Node Components**: 
   - SimpleNoteComponent
   - CardNodeComponent

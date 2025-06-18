@@ -14,7 +14,7 @@ The root component that provides the application shell, including:
 - Confirmation dialogs
 - Routing outlet for main content
 
-### FlowBoard Component
+### Cloudboard Component
 
 The central component that provides the interactive canvas where users can create, connect, and manipulate nodes.
 
@@ -100,10 +100,10 @@ Specialized components for each node type:
 ## Component Interaction Flow
 
 1. **User Interaction**:
-   - User interacts with the FlowBoard component (clicks, drags, etc.)
+   - User interacts with the Cloudboard component (clicks, drags, etc.)
    
 2. **Event Handling**:
-   - FlowBoard component captures the events and delegates to appropriate handlers
+   - Cloudboard component captures the events and delegates to appropriate handlers
    - For example, a node drag event updates the node position
 
 3. **Service Calls**:

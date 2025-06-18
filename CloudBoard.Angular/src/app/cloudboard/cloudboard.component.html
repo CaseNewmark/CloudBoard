@@ -1,0 +1,100 @@
+@if (!currentCloudBoard) {
+<div class="grow h-full flex justify-center items-center">
+    @if (isLoading) {
+        <p-progressSpinner></p-progressSpinner>
+    } @else {
+        <cloudboard-open></cloudboard-open>
+    }
+</div>
+}
+@else {
+<div class="toolbar-container">
+    <toolbar></toolbar>
+</div>
+<div class="grow h-full flex flex-row overflow-hidden">
+    <p-contextmenu #flowcontextmenu [model]="flowContextMenuItems" />
+    <p-contextmenu #nodecontextmenu [model]="nodeContextMenuItems" />
+    <f-flow class="grow" 
+        fDraggable
+        (fCreateConnection)="onConnectionAdded($event)"
+        (contextmenu)="showFlowContextMenu($event)">
+        <f-canvas fZoom>
+            <!-- Render all connections from the cloudboard data -->
+            <f-connection-for-create fType="segment" fBehavior="floating"></f-connection-for-create>
+            @for (connection of currentCloudBoard.connections; track $index) {
+            <f-connection fType="segment" [fOutputId]="connection.fromConnectorId" [fInputId]="connection.toConnectorId">
+            </f-connection>
+            }
+
+            <!-- Render all nodes from the cloudboard data -->
+            @for (node of currentCloudBoard.nodes; track node.id) {
+            <div fNode [fNodeId]="node.id"
+                fDragHandle [fNodePosition]="node.position"
+                (fNodePositionChange)="onNodePositionChanged($event, node)"
+                (dblclick)="onNodeDoubleClicked($event, node)"
+                (contextmenu)="showNodeContextMenu($event, node)">
+                @switch (node.type) {
+                    @case ('Note') {
+                        <simple-note [node]="node"></simple-note>
+                    }
+                    @case ('Card') {
+                        <card-node [node]="node"></card-node>
+                    }
+                    @case ('LinkCollection') {
+                        <link-collection [node]="node"></link-collection>
+                    }
+                    @case ('ImageNode') {
+                        <image-node [node]="node"></image-node>
+                    }
+                    @case ('CodeBlock') {
+                        <code-block [node]="node"></code-block>
+                    }
+                    @default {
+                        <simple-note [node]="node"></simple-note>
+                    }
+                }
+
+                <div class="connector-bars">
+                    @for (position of getConnectorPositions(); track position) {
+                        <div class="connector-bar" [class]="position.toLowerCase()"
+                            (mouseenter)="onNodeMouseEnter($event, node, position)"
+                            (mouseleave)="onNodeMouseLeave($event, node, position)">
+                            @for (connector of getConnectorsForNodeByPosition(node, position); track $index) {
+                                @switch (connector.type.toString().toLowerCase()) {
+                                    @case ('in') {
+                                    <div fNodeInput 
+                                        [fInputId]="connector.id"
+                                        (mousedown)="onConnectorMouseDown($event, connector)"
+                                        class="connector"
+                                        [class]="connector.position.toLowerCase()"></div>
+                                    }
+                                    @case ('out') {
+                                    <div fNodeOutput
+                                        [fOutputId]="connector.id"
+                                        (mousedown)="onConnectorMouseDown($event, connector)"
+                                        class="connector"
+                                        [class]="connector.position.toLowerCase()"></div>
+                                    }
+                                    @case ('inout') {
+                                        <div fNodeInput 
+                                            [fInputId]="connector.id" 
+                                            fNodeOutput [fOutputId]="connector.id"
+                                            (mousedown)="onConnectorMouseDown($event, connector)"
+                                            class="connector"
+                                            [class]="connector.position.toLowerCase()"></div>
+                                    }
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+            }
+        </f-canvas>
+    </f-flow>
+    <properties-panel 
+        [(visible)]="propertiesPanelVisible" 
+        [(nodeProperties)]="propertiesPanelNodeProperties">
+    </properties-panel>
+</div>
+}

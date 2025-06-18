@@ -24,7 +24,6 @@
   <Target Name="RestoreNpm" BeforeTargets="Build" Condition=" '$(DesignTimeBuild)' != 'true' ">
     <ItemGroup>
       <PackageJsons Include="..\CloudBoard.Angular\package.json" />
-      <GeneratorLocation Include="..\generator" />
     </ItemGroup>
 
     <!-- Install npm packages if node_modules is missing -->
