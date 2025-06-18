@@ -21,4 +21,17 @@
     <PackageReference Include="Aspire.Hosting.PostgreSql" Version="9.2.1" />
   </ItemGroup>
 
+  <Target Name="RestoreNpm" BeforeTargets="Build" Condition=" '$(DesignTimeBuild)' != 'true' ">
+    <ItemGroup>
+      <PackageJsons Include="..\CloudBoard.Angular\package.json" />
+      <GeneratorLocation Include="..\generator" />
+    </ItemGroup>
+
+    <!-- Install npm packages if node_modules is missing -->
+    <Message Importance="Normal" Text="Installing npm packages for %(PackageJsons.RelativeDir)" Condition="!Exists('%(PackageJsons.RootDir)%(PackageJsons.Directory)/node_modules')" />
+    <Exec Command="npm install" WorkingDirectory="%(PackageJsons.RootDir)%(PackageJsons.Directory)" Condition="!Exists('%(PackageJsons.RootDir)%(PackageJsons.Directory)/node_modules')" />
+    <Message Importance="Normal" Text="Generating OpenAPI client code" />
+    <Exec Command="call generate.bat" WorkingDirectory="../generator" />
+  </Target>
+
 </Project>

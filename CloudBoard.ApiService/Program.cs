@@ -1,3 +1,4 @@
+using System.Reflection;
 using AutoMapper;
 using CloudBoard.ApiService.Data;
 using CloudBoard.ApiService.Endpoints;
@@ -7,8 +8,16 @@ using CloudBoard.ApiService.Services.Contracts;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add service defaults & Aspire client integrations.
-builder.AddServiceDefaults();
+// do not instantiate database related services if running in the Insider project
+if (Assembly.GetEntryAssembly()?.GetName().Name != "GetDocument.Insider")
+{
+    // Add service defaults & Aspire client integrations.
+    builder.AddServiceDefaults();
+
+    // Database Setup
+    builder.AddNpgsqlDbContext<CloudBoardDbContext>(connectionName: "cloudboard");
+    builder.Services.AddHostedService<DatabaseMigrationHostedService>();
+}
 
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
@@ -55,10 +64,6 @@ builder.Services.AddScoped<IConnectionRepository, ConnectionRepository>();
 
 // Add SignalR hub service
 builder.Services.AddScoped<ICloudBoardHubService, CloudBoardHubService>();
-
-// Database Setup
-builder.AddNpgsqlDbContext<CloudBoardDbContext>(connectionName: "cloudboard");
-builder.Services.AddHostedService<DatabaseMigrationHostedService>();
 
 var app = builder.Build();
 
