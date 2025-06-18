@@ -1,1 +1,1 @@
-dotnet run https://localhost:7583/openapi/v1.json ..\CloudBoard.Angular\src\app\services\api-client-service.ts
+dotnet run --input ../OpenApi/cloudboard-api.json --output ..\CloudBoard.Angular\src\app\services\api-client-service.ts
