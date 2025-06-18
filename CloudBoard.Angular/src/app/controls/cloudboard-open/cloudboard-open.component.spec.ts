@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FlowboardOpenComponent } from './flowboard-open.component';
+import { CloudboardOpenComponent } from './cloudboard-open.component';
 
-describe('FlowboardOpenComponent', () => {
-  let component: FlowboardOpenComponent;
-  let fixture: ComponentFixture<FlowboardOpenComponent>;
+describe('CloudboardOpenComponent', () => {
+  let component: CloudboardOpenComponent;
+  let fixture: ComponentFixture<CloudboardOpenComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FlowboardOpenComponent]
+      imports: [CloudboardOpenComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(FlowboardOpenComponent);
+    fixture = TestBed.createComponent(CloudboardOpenComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

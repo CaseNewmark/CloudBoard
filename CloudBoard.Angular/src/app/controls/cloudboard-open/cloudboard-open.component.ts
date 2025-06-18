@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
 import { CloudboardEditComponent } from '../cloudboard-edit/cloudboard-edit.component';
 
 @Component({
-  selector: 'flowboard-open',
+  selector: 'cloudboard-open',
   imports: [
     ButtonModule,
     CommonModule,
@@ -19,10 +19,10 @@ import { CloudboardEditComponent } from '../cloudboard-edit/cloudboard-edit.comp
     ProgressSpinnerModule,
     CloudboardEditComponent
   ],
-  templateUrl: './flowboard-open.component.html',
-  styleUrl: './flowboard-open.component.css'
+  templateUrl: './cloudboard-open.component.html',
+  styleUrl: './cloudboard-open.component.css'
 })
-export class FlowboardOpenComponent {
+export class CloudboardOpenComponent {
   cloudboardService: CloudboardService = inject(CloudboardService);
   flowControlService: FlowControlService = inject(FlowControlService);
   confirmationService: ConfirmationService = inject(ConfirmationService);
@@ -50,12 +50,12 @@ export class FlowboardOpenComponent {
     };
 
     this.cloudboardService.createCloudBoard(createCloudboardDocument).subscribe(
-      cloudboard => this.router.navigate(['/flowboard', cloudboard.id]),
+      cloudboard => this.router.navigate(['/cloudboard', cloudboard.id]),
     );
   }
 
   onOpen(boardId: string): void {
-    this.router.navigate(['/flowboard', boardId]);
+    this.router.navigate(['/cloudboard', boardId]);
   }
 
   onEdit(board: CloudBoard, event: Event): void {

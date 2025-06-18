@@ -3,7 +3,7 @@ import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FFlowModule, FCanvasComponent, FZoomDirective, FCreateConnectionEvent, FFlowComponent, FSelectionChangeEvent, FDraggableDirective, FTriggerEvent, FEventTrigger } from '@foblex/flow';
 import { ToolbarComponent } from '../controls/toolbar/toolbar.component';
-import { FlowboardOpenComponent } from '../controls/flowboard-open/flowboard-open.component';
+import { CloudboardOpenComponent } from '../controls/cloudboard-open/cloudboard-open.component';
 import { PropertiesPanelComponent } from '../controls/properties-panel/properties-panel.component';
 import { SimpleNoteComponent } from '../nodes/simple-note/simple-note.component';
 import { DoubleClickDirective } from '../helpers/double-click.directive';
@@ -22,15 +22,14 @@ import { ImageNodeComponent } from '../nodes/image-node/image-node.component';
 import { CodeBlockComponent } from '../nodes/code-block/code-block.component';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ContextMenuService } from '../services/context-menu.service';
-import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 
 @Component({
-  selector: 'app-flowboard',
+  selector: 'app-cloudboard',
   imports: [
     FFlowModule,
     FZoomDirective,
-    FlowboardOpenComponent,
+    CloudboardOpenComponent,
     ToolbarComponent,
     PropertiesPanelComponent,
     ContextMenuModule,
@@ -43,13 +42,12 @@ import { ToastModule } from 'primeng/toast';
     ProgressSpinnerModule,
     ToastModule],
   providers: [
-    MessageService
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './flowboard.component.html',
-  styleUrl: './flowboard.component.css',
+  templateUrl: './cloudboard.component.html',
+  styleUrl: './cloudboard.component.css',
 })
-export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
+export class CloudboardComponent implements OnInit, AfterViewInit, OnDestroy {
   protected fFlow = viewChild(FFlowComponent);
   protected fCanvas = viewChild(FCanvasComponent);
   protected fDraggable = viewChild(FDraggableDirective);
@@ -62,7 +60,6 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private nodeService = inject(NodeService);
   private connectorService = inject(ConnectorService);
   private connectionService = inject(ConnectionService);
-  private messageService = inject(MessageService);
   private contextMenuService = inject(ContextMenuService);
   private subscriptions: Subscription[] = [];
   private positionUpdateTimer: any;
@@ -107,7 +104,7 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
           this.fZoom()?.zoomOut();
           break;
         case ZoomAction.Reset:
-          this.fCanvas()?.resetScaleAndCenter();
+          this.fCanvas()?.fitToScreen();
           break;
       }
     });
@@ -367,8 +364,9 @@ export class FlowboardComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
         this.currentCloudBoard = cloudboard;
         this.changeDetectorRef.detectChanges();
-        this.fCanvas()?.resetScaleAndCenter(false);
 
+        this.fCanvas()?.fitToScreen();
+        
         this.setupAutoSave();
       },
       error: () => this.isLoading = false

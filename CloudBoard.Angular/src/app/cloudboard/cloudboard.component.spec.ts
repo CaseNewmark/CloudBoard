@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FlowboardComponent } from './flowboard.component';
+import { CloudboardComponent } from './cloudboard.component';
 
-describe('FlowboardComponent', () => {
-  let component: FlowboardComponent;
-  let fixture: ComponentFixture<FlowboardComponent>;
+describe('CloudboardComponent', () => {
+  let component: CloudboardComponent;
+  let fixture: ComponentFixture<CloudboardComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [FlowboardComponent]
+      imports: [CloudboardComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(FlowboardComponent);
+    fixture = TestBed.createComponent(CloudboardComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
