@@ -5,7 +5,7 @@ import { FFlowModule } from '@foblex/flow';
 import { TextareaModule } from 'primeng/textarea';
 
 import { BaseNodeComponent } from '../base-node.component';
-import { Node, NoteProperties } from '../../data/cloudboard';
+import { Node, NoteProperties } from '../../models/cloudboard';
 
 @Component({
   selector: 'simple-note',

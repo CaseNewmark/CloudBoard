@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { NodePosition, Connector, NodeType, NodeProperties, Node } from '../data/cloudboard';
+import { NodePosition, Connector, NodeType, NodeProperties, Node } from '../models/cloudboard';
 import { firstValueFrom, map, Observable, tap } from 'rxjs';
-import { ApiClientService, NodeDto } from './api-client-service';
-import { mapNodeDtoToNode, mapNodeToNodeDto } from '../data/mapper';
+import { ApiClientService, NodeDto } from '../../services/api-client-service';
+import { mapNodeDtoToNode, mapNodeToNodeDto } from '../models/mapper';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConnectionService } from './connection.service';
 

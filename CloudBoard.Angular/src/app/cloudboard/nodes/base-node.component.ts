@@ -1,5 +1,5 @@
 import { Component, input, inject } from '@angular/core';
-import { Node } from '../data/cloudboard';
+import { Node } from '../models/cloudboard';
 import { NodeService } from '../services/node.service';
 
 @Component({

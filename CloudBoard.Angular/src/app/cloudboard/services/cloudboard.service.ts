@@ -1,10 +1,10 @@
 import { inject, Injectable } from '@angular/core';
-import { CloudBoard } from '../data/cloudboard';
+import { CloudBoard } from '../models/cloudboard';
 import { Observable, ReplaySubject, map, tap, catchError, throwError } from 'rxjs';
-import { ApiClientService, CloudBoardDto } from './api-client-service';
-import { mapCloudBoardDtoToCloudBoard, mapCloudBoardToCloudBoardDto } from '../data/mapper';
+import { ApiClientService, CloudBoardDto } from '../../services/api-client-service';
+import { mapCloudBoardDtoToCloudBoard, mapCloudBoardToCloudBoardDto } from '../models/mapper';
 import { MessageService } from 'primeng/api';
-import { AuthService } from './auth.service';
+import { AuthService } from '../../authentication/services/auth.service';
 import { Router } from '@angular/router';
 
 @Injectable({

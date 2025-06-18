@@ -3,7 +3,7 @@ import { CardModule } from 'primeng/card';
 import { FormsModule } from '@angular/forms';
 import { FFlowModule } from '@foblex/flow';
 import { BaseNodeComponent } from '../base-node.component';
-import { CodeBlockProperties } from '../../data/cloudboard';
+import { CodeBlockProperties } from '../../models/cloudboard';
 import { NgClass, NgIf } from '@angular/common';
 
 @Component({

@@ -3,10 +3,10 @@ import { CloudboardComponent } from './cloudboard/cloudboard.component'; // Adju
 import { ProjectsComponent } from './projects/projects.component';
 import { TimelineComponent } from './timeline/timeline.component';
 import { HomeComponent } from './home/home.component';
-import { LoginComponent } from './login/login.component';
-import { AuthCallbackComponent } from './auth-callback/auth-callback.component';
-import { AuthGuard } from './guards/auth.guard';
-import { LogoutSuccessComponent } from './logout-success/logout-success.component';
+import { LoginComponent } from './authentication/login/login.component';
+import { AuthCallbackComponent } from './authentication/auth-callback/auth-callback.component';
+import { AuthGuard } from './authentication/guards/auth.guard';
+import { LogoutSuccessComponent } from './authentication/logout-success/logout-success.component';
 
 export const routes: Routes = [
   { path: 'home', component: HomeComponent },

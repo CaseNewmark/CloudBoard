@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FFlowModule } from '@foblex/flow';
 import { ImageModule } from 'primeng/image';
 import { BaseNodeComponent } from '../base-node.component';
-import { ImageNodeProperties } from '../../data/cloudboard';
+import { ImageNodeProperties } from '../../models/cloudboard';
 
 @Component({
   selector: 'image-node',

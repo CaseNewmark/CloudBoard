@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { FlowControlService } from '../../services/flow-control.service';
+import { FlowControlService } from '../services/flow-control.service';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ButtonModule } from 'primeng/button';
 

@@ -5,7 +5,7 @@ import { FFlowModule } from '@foblex/flow';
 import { NgFor } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { BaseNodeComponent } from '../base-node.component';
-import { LinkCollectionProperties, LinkProperties } from '../../data/cloudboard';
+import { LinkCollectionProperties, LinkProperties } from '../../models/cloudboard';
 
 @Component({
   selector: 'link-collection',

@@ -1,5 +1,5 @@
 import { map } from "rxjs";
-import { CloudBoardDto, ConnectionDto, ConnectorDto, NodeDto, NodePositionDto } from "../services/api-client-service";
+import { CloudBoardDto, ConnectionDto, ConnectorDto, NodeDto, NodePositionDto } from "../../services/api-client-service";
 import { CloudBoard, Connection, Connector, ConnectorPosition, ConnectorType, Node, NodePosition, NodeType } from "./cloudboard";
 
 // mapping DTOs to domain objects

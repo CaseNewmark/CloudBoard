@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { Node, NodePosition, NodeType } from '../data/cloudboard';
+import { Node, NodePosition, NodeType } from '../models/cloudboard';
 
 export type AddNodeCallback = (nodeType: NodeType, position: NodePosition) => void;
 export type DeleteNodeCallback = (node: Node) => void;

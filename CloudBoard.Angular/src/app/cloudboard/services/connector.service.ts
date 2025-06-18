@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { Connector, ConnectorPosition, ConnectorType } from '../data/cloudboard';
+import { Connector, ConnectorPosition, ConnectorType } from '../models/cloudboard';
 import { map, Observable } from 'rxjs';
-import { mapConnectorDtoToConnector, mapConnectorToConnectorDto } from '../data/mapper';
-import { ApiClientService, ConnectorDto } from './api-client-service';
+import { mapConnectorDtoToConnector, mapConnectorToConnectorDto } from '../models/mapper';
+import { ApiClientService, ConnectorDto } from '../../services/api-client-service';
 
 @Injectable({
   providedIn: 'root'

@@ -6,8 +6,8 @@ import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { CloudBoard } from '../../data/cloudboard';
-import { CloudboardService } from '../../services/cloudboard.service';
+import { CloudBoard } from '../models/cloudboard';
+import { CloudboardService } from '../services/cloudboard.service';
 import { MessageService } from 'primeng/api';
 
 @Component({

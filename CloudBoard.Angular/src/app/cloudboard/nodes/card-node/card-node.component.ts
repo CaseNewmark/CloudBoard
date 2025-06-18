@@ -5,7 +5,7 @@ import { FFlowModule } from '@foblex/flow';
 import { ButtonModule } from 'primeng/button';
 import { ImageModule } from 'primeng/image';
 import { BaseNodeComponent } from '../base-node.component';
-import { CardProperties } from '../../data/cloudboard';
+import { CardProperties } from '../../models/cloudboard';
 
 @Component({
   selector: 'card-node',
