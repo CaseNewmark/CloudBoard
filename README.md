@@ -23,9 +23,18 @@ The application uses a modern architecture:
 The application consists of several components:
 
 - **CloudBoard.Angular**: The frontend Angular application providing the user interface
+  - 📖 [Angular Frontend Developer Documentation](CloudBoard.Angular/README.md)
 - **CloudBoard.ApiService**: The backend API service handling data operations
+  - 📖 [API Developer Documentation](CloudBoard.ApiService/README.md)
 - **CloudBoard.AppHost**: The Aspire application host for orchestrating the services
 - **CloudBoard.ServiceDefaults**: Common service configurations
+
+## Documentation
+
+For detailed development information, refer to the component-specific documentation:
+
+- **[Angular Frontend Documentation](CloudBoard.Angular/README.md)**: Component architecture, development workflow, authentication, and UI patterns
+- **[API Service Documentation](CloudBoard.ApiService/README.md)**: API endpoints, authentication, database schema, SignalR real-time features, and deployment
 
 ## Development Setup
 
@@ -108,12 +117,14 @@ The application follows a layered architecture:
   - Cloudboard: Main canvas for node manipulation
   - Node Components: Specialized components for each node type
   - Services: API communication and state management
+  - *For detailed frontend architecture, see [Angular Documentation](CloudBoard.Angular/README.md#architecture-overview)*
 
 - **Backend API**: .NET 8 minimal APIs providing:
   - CloudBoard management
   - Node operations
   - Connector and connection handling
   - PostgreSQL database persistence
+  - *For detailed API architecture, see [API Documentation](CloudBoard.ApiService/README.md#architecture-overview)*
 
 - **Database**: PostgreSQL storing:
   - CloudBoard documents

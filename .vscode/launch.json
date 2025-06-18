@@ -20,7 +20,7 @@
     ],
     "compounds": [
         {
-          "name": "DebugAll",
+          "name": "Debug All",
           "configurations": ["Launch Angular", "Launch AppHost"],
           "stopAll": true
         }
