@@ -34,9 +34,9 @@ Once the application is running, the Angular frontend will be available at `http
 ```
 src/
 ├── app/
-│   ├── cloudboard/          # Main cloudboard component and logic
-│   ├── controls/            # Reusable UI controls and components
-│   ├── data/               # Data models and interfaces
+│   ├── authentication/     # Everything around auth
+│   ├── cloudboard/         # Main cloudboard component and logic
+│   ├────── models/         # Data models and interfaces
 │   ├── guards/             # Route guards for authentication
 │   ├── helpers/            # Utility functions and directives
 │   ├── home/               # Landing page component
