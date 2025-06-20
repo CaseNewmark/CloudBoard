@@ -10,6 +10,7 @@
 @else {
 <div class="toolbar-container">
     <toolbar></toolbar>
+    <span>Zoom Level: {{currentZoomLevel}}</span>
 </div>
 <div class="grow h-full flex flex-row overflow-hidden">
     <p-contextmenu #flowcontextmenu [model]="flowContextMenuItems" />
@@ -19,7 +20,9 @@
         fDraggable
         (fCreateConnection)="onConnectionAdded($event)"
         (contextmenu)="showFlowContextMenu($event)">
-        <f-canvas fZoom>
+        <f-canvas 
+            (fCanvasChange)="onCanvasChanged($event)"
+            fZoom>
             <!-- Render all connections from the cloudboard data -->
             <f-connection-for-create fType="segment" fBehavior="floating"></f-connection-for-create>
             @for (connection of currentCloudBoard.connections; track $index) {
