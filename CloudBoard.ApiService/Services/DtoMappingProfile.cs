@@ -49,6 +49,51 @@ public class DtoMappingProfile : Profile
             
         CreateMap<CloudBoardDto, Data.CloudBoard>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => string.IsNullOrEmpty(src.Id) ? Guid.Empty : Guid.Parse(src.Id)));
+
+        // Map SortingApplication to SortingApplicationDto and vice versa
+        CreateMap<SortingApplication, SortingApplicationDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()));
+            
+        CreateMap<SortingApplicationDto, SortingApplication>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => string.IsNullOrEmpty(src.Id) ? Guid.Empty : Guid.Parse(src.Id)))
+            .ForMember(dest => dest.ProcessSteps, opt => opt.Ignore()); // Handle separately to avoid circular references
+
+        // Map ProcessStep to ProcessStepDto and vice versa
+        CreateMap<ProcessStep, ProcessStepDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()))
+            .ForMember(dest => dest.StepType, opt => opt.MapFrom(src => src.StepType.ToString()));
+            
+        CreateMap<ProcessStepDto, ProcessStep>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => string.IsNullOrEmpty(src.Id) ? Guid.Empty : Guid.Parse(src.Id)))
+            .ForMember(dest => dest.StepType, opt => opt.MapFrom(src => Enum.Parse<ProcessStepType>(src.StepType, true)))
+            .ForMember(dest => dest.SortingApplicationId, opt => opt.Ignore())
+            .ForMember(dest => dest.SortingApplication, opt => opt.Ignore())
+            .ForMember(dest => dest.MarketSegmentId, opt => opt.Ignore())
+            .ForMember(dest => dest.TargetMaterials, opt => opt.Ignore()); // Handle separately
+
+        // Map MarketSegment to MarketSegmentDto and vice versa
+        CreateMap<MarketSegment, MarketSegmentDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()))
+            .ForMember(dest => dest.BusinessUnit, opt => opt.MapFrom(src => src.BusinessUnit.ToString()));
+            
+        CreateMap<MarketSegmentDto, MarketSegment>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => string.IsNullOrEmpty(src.Id) ? Guid.Empty : Guid.Parse(src.Id)))
+            .ForMember(dest => dest.BusinessUnit, opt => opt.MapFrom(src => Enum.Parse<BusinessUnit>(src.BusinessUnit, true)))
+            .ForMember(dest => dest.ProcessSteps, opt => opt.Ignore())
+            .ForMember(dest => dest.TargetMaterials, opt => opt.Ignore());
+
+        // Map TargetMaterial to TargetMaterialDto and vice versa
+        CreateMap<TargetMaterial, TargetMaterialDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()))
+            .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category.ToString()))
+            .ForMember(dest => dest.Form, opt => opt.MapFrom(src => src.Form.ToString()));
+            
+        CreateMap<TargetMaterialDto, TargetMaterial>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => string.IsNullOrEmpty(src.Id) ? Guid.Empty : Guid.Parse(src.Id)))
+            .ForMember(dest => dest.Category, opt => opt.MapFrom(src => Enum.Parse<MaterialCategory>(src.Category, true)))
+            .ForMember(dest => dest.Form, opt => opt.MapFrom(src => Enum.Parse<MaterialForm>(src.Form, true)))
+            .ForMember(dest => dest.ProcessSteps, opt => opt.Ignore())
+            .ForMember(dest => dest.MarketSegments, opt => opt.Ignore());
     }
 }
 

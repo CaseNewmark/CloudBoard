@@ -7,6 +7,7 @@ import { LoginComponent } from './authentication/login/login.component';
 import { AuthCallbackComponent } from './authentication/auth-callback/auth-callback.component';
 import { AuthGuard } from './authentication/guards/auth.guard';
 import { LogoutSuccessComponent } from './authentication/logout-success/logout-success.component';
+import { SortingApplicationManagerComponent } from './sorting/components/sorting-application-manager.component'; 
 
 export const routes: Routes = [
   { path: 'home', component: HomeComponent },
@@ -16,6 +17,7 @@ export const routes: Routes = [
   { path: 'cloudboard/:id', component: CloudboardComponent, canActivate: [AuthGuard] },
   { path: 'projects', component: ProjectsComponent, canActivate: [AuthGuard] },
   { path: 'timeline', component: TimelineComponent, canActivate: [AuthGuard] },
+  { path: 'sorting-applications', component: SortingApplicationManagerComponent, canActivate: [AuthGuard] },
   { path: 'logout-success', component: LogoutSuccessComponent },
   { path: '', redirectTo: 'home', pathMatch: 'full' }
 ];

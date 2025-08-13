@@ -1,0 +1,85 @@
+### Test Sorting Applications API
+
+### Get all sorting applications
+GET https://localhost:7071/api/sorting-applications
+Content-Type: application/json
+
+### Get specific sorting application
+GET https://localhost:7071/api/sorting-applications/{{sortingApplicationId}}
+Content-Type: application/json
+
+### Create new sorting application
+POST https://localhost:7071/api/sorting-applications
+Content-Type: application/json
+
+{
+  "name": "Test Facility",
+  "description": "Test sorting facility for integration testing",
+  "businessUnit": "WasteManagement",
+  "throughputTonsPerHour": 20.5,
+  "operatingHours": 16,
+  "country": "Germany",
+  "city": "Berlin",
+  "installationDate": "2024-01-15",
+  "processSteps": [
+    {
+      "stepOrder": 1,
+      "stepType": "PreSorting",
+      "description": "Initial material separation",
+      "efficiencyPercentage": 85.0,
+      "marketSegment": {
+        "segmentName": "Municipal Recycling",
+        "country": "Germany",
+        "region": "Europe",
+        "description": "Municipal solid waste recycling",
+        "marketSize": 150.0
+      },
+      "targetMaterials": [
+        {
+          "materialName": "PET Bottles",
+          "category": "Plastics",
+          "form": "Bottles",
+          "density": 1.38,
+          "color": "Clear",
+          "sizeRange": "200-2000ml"
+        }
+      ]
+    }
+  ]
+}
+
+### Update sorting application
+PUT https://localhost:7071/api/sorting-applications/{{sortingApplicationId}}
+Content-Type: application/json
+
+{
+  "id": "{{sortingApplicationId}}",
+  "name": "Updated Test Facility",
+  "description": "Updated description",
+  "businessUnit": "WasteManagement",
+  "throughputTonsPerHour": 25.0,
+  "operatingHours": 18,
+  "country": "Germany",
+  "city": "Berlin",
+  "installationDate": "2024-01-15",
+  "processSteps": []
+}
+
+### Delete sorting application
+DELETE https://localhost:7071/api/sorting-applications/{{sortingApplicationId}}
+
+### Get all market segments
+GET https://localhost:7071/api/market-segments
+Content-Type: application/json
+
+### Get market segments by country
+GET https://localhost:7071/api/market-segments/country/Germany
+Content-Type: application/json
+
+### Get all target materials
+GET https://localhost:7071/api/target-materials
+Content-Type: application/json
+
+### Get target materials by category
+GET https://localhost:7071/api/target-materials/category/Plastics
+Content-Type: application/json

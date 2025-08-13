@@ -1,0 +1,41 @@
+﻿Business unit;WR (Waste Recycling);;;;;;;;;;Metal Recycling (MR);;;
+Customer Segment Code;W-1;W-2;W-3;W-4;W-5;W-6;W-7;W-8;W-9;W-10;M-1;M-2;M-3;M-4
+Customer Segment;Mixed Light Packaging;Single Stream;MSW;Upgrading Paper;Upgrading plastics;C&I;C&D;Upgrading wood;Upgrading textile;WR Others;Post-Shredder;Metal Smelter;E-Waste;MR Others
+;;;;;;;;;;;;;;
+Sub-Segment;EPR;EPR;Collection;Offtake implication;Offtake implication;;;Offtake implication;Offtake implication;;;Offtake implication;;
+;EPR;EPR;Separate Collection;Deinking ;Closed-loop mechanical recycling;;;Wood based panel;Closed-loop mechanical recycling;Composting;;Aluminium primary;;ICW
+;Non-EPR;Non-EPR;Non-Separate Collection;Pulper;Open-loop mechanical recycling;;;Biomass/pellet;Open-loop mechanical recycling;Organic Cleaning (Separate Collection);;Aluminium secondary;;IBA
+;;;;;Chemical Recycling;;;;Chemical Recycling;Bulky waste;;;;Battery Sorting
+;;;;;;;;;;add-more later;;;;add-more later
+;;;;;;;;;;…...;;;;….....
+;;;;;;;;;;…...;;;;….....
+;;;;;;;;;;WR-undefined;;;;MR Others - undefined
+;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;
+Target material;;;;;;;;;;;;;;
+;TETRA;PE-RIGID;TETRA;Cardboard coated;PET bottle;PE-RIGID;Wood;Wood A;Cotton;;Wires;Aluminum;Stainless Steal;Non-ferrous metals
+;Alu Cans;PE Film;Alu Cans;Cardboard brown;PET tray;PE Film;PE;Wood B;Polyester;;PCB;Copper;Wires;Ferrous metals
+;PE-RIGID;PP-RIGID;PE-HD;Cardboard grey;HDPE;PP-RIGID;PP;MDF;Polycotton;;ABS;Stainless Steel;PCB;Plastics
+;PE Film;PP-Film;PE Film;Cardboard white;PP;PP-Film;PVC;Chipboard;Polyamid;;PS;PCB's;ABS;
+;PP-RIGID;PET Bottles;PP-RIGID;Egg carton;PS;PS;PS;Plywood;Viscose;;PC-ABS;Zinc;PS;
+;PP-Film;PET Trays;PP-Film;Envelops;Engineered plastics (ABS, PMMA, etc.);PE-X;Gypsum;OSB;Acryl;;PA;Ferrous metals;PC-ABS;
+;PAPER;PS;PAPER;Dyed Paper;Flexible PE;PVC;Paper;;Wool;;PE;;PA;
+;PET;;PET;White-Office Paper;Flexible PP;ABS;Glass;;Others;;PP;;PE;
+;PET Bottles;;PET Bottles;Magazines;PO mix;PAPER and CARDBOARD;EPS;;;;PVC;;PP;
+;PET Trays;;PETTrays;Newspaper;Others;Wood;XPS;;;;Wood;;PVC;
+;PS;;PS;Pizza delivery boxes;;Black Objects;PU;;;;PMMA;;Wood;
+;PAPER and CARDBOARD;;Paper;Receipts;;;Asbestos;;;;POM;;PMMA;
+;Black objects;;Black objects;Hygenic Paper;;;Brick;;;;PC;;POM;
+;ABS;;ABS;Advertisment Paper;;;Limestone;;;;TPE/TPU;;PC;
+;PLA;;PLA;Wrapping Paper;;;Concrete;;;;EPDM;;MBT;
+;Biopolymers;;Biopolymers;Books;;;Tar;;;;Rubber;;PPO/PPE;
+;PE-X;;Organics;Paper Kitchenwear;;;Bitumes;;;;PU;;PBT;
+;PE-Silicon Cartridges;;Wood;Low quality Paper;;;Talcum;;;;PVB Film;;ASA;
+;PVC;;Nappies;Wood;;;Sandstone;;;;;;SAN;
+;;;PE-X;Film covered Advertisment Papers;;;Soil;;;;;;;
+;Colors;Colors;PE-Silicon Cartridges;Polymers;;;Aerated concrete;;;;;;;
+;;;;Metals;;;Tiles;;;;;;;
+;;;;Shiny Objects;;;Rockwool;;;;;;;
+;;;;TETRA;;;Stones;;;;;;;
+;;;;;;;Metals;;;;;;;
+;;;;;;;PE-Silicon Cartridges;;;;;;;

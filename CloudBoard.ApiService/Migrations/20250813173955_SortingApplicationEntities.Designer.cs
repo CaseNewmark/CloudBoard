@@ -4,6 +4,7 @@ using System.Text.Json;
 using CloudBoard.ApiService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CloudBoard.ApiService.Migrations
 {
     [DbContext(typeof(CloudBoardDbContext))]
-    partial class CloudBoardDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250813173955_SortingApplicationEntities")]
+    partial class SortingApplicationEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

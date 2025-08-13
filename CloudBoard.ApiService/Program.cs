@@ -58,9 +58,17 @@ builder.Services.AddScoped<ICloudBoardRepository, CloudBoardRepository>();
 builder.Services.AddScoped<INodeService, NodeService>();
 builder.Services.AddScoped<INodeRepository, NodeRepository>();
 builder.Services.AddScoped<IConnectorService, ConnectorService>();
+
+// Sorting Application Services
+builder.Services.AddScoped<ISortingApplicationService, SortingApplicationService>();
+builder.Services.AddScoped<ISortingApplicationRepository, SortingApplicationRepository>();
+builder.Services.AddScoped<IMarketSegmentRepository, MarketSegmentRepository>();
+builder.Services.AddScoped<ITargetMaterialRepository, TargetMaterialRepository>();
+builder.Services.AddScoped<SortingApplicationSeederService>();
 builder.Services.AddScoped<IConnectorRepository, ConnectorRepository>();
 builder.Services.AddScoped<IConnectionService, ConnectionService>();
 builder.Services.AddScoped<IConnectionRepository, ConnectionRepository>();
+builder.Services.AddScoped<ISortingApplicationService, SortingApplicationService>();
 
 // Add SignalR hub service
 builder.Services.AddScoped<ICloudBoardHubService, CloudBoardHubService>();
@@ -85,6 +93,7 @@ app.MapCloudBoardEndpoints();
 app.MapNodeEndpoints();
 app.MapConnectorEndpoints();
 app.MapConnectionEndpoints();
+app.MapSortingApplicationEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
