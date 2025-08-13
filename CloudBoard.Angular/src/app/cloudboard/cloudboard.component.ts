@@ -70,6 +70,7 @@ export class CloudboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public currentCloudBoard: CloudBoard | undefined;
   public isLoading = false;
+  public canvasVisible = signal(true);
 
   // Properties for the PropertiesPanel
   public propertiesPanelVisible = signal(false);
@@ -359,17 +360,35 @@ export class CloudboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private loadCloudBoardById(cloudboardId: string): void {
     this.isLoading = true;
+    this.canvasVisible.set(false); // Hide canvas during loading
     this.cloudboardService.loadCloudBoardById(cloudboardId).subscribe({
       next: (cloudboard) => {
         this.isLoading = false;
         this.currentCloudBoard = cloudboard;
         this.changeDetectorRef.detectChanges();
 
+        // First fitToScreen call
         this.fCanvas()?.fitToScreen();
-        
+
+        setTimeout(() => {
+          // Second fitToScreen call
+          this.fCanvas()?.fitToScreen();
+          
+          // Wait a bit more for the second fitToScreen to complete, then fade in
+          setTimeout(() => {
+            console.log(this.fZoom()?.getZoomValue());
+            this.fZoom()?.zoomOut();
+            this.canvasVisible.set(true);
+            this.changeDetectorRef.detectChanges();
+          }, 100); // Small delay to ensure fitToScreen is complete
+        }, 500); // Wait for the canvas to render
+
         this.setupAutoSave();
       },
-      error: () => this.isLoading = false
+      error: () => {
+        this.isLoading = false;
+        this.canvasVisible.set(true); // Show canvas even on error
+      }
     });
   }
 }

@@ -14,7 +14,8 @@
 <div class="grow h-full flex flex-row overflow-hidden">
     <p-contextmenu #flowcontextmenu [model]="flowContextMenuItems" />
     <p-contextmenu #nodecontextmenu [model]="nodeContextMenuItems" />
-    <f-flow class="grow" 
+    <f-flow class="grow canvas-container" 
+        [class.canvas-hidden]="!canvasVisible()"
         fDraggable
         (fCreateConnection)="onConnectionAdded($event)"
         (contextmenu)="showFlowContextMenu($event)">
