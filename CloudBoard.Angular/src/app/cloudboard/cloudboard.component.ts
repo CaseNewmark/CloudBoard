@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, HostListener, inject, signal, viewChild } from '@angular/core';
 import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FFlowModule, FCanvasComponent, FZoomDirective, FCreateConnectionEvent, FFlowComponent, FSelectionChangeEvent, FDraggableDirective, FTriggerEvent, FEventTrigger } from '@foblex/flow';
+import { FFlowModule, FCanvasComponent, FZoomDirective, FCreateConnectionEvent, FFlowComponent, FSelectionChangeEvent, FDraggableDirective, FTriggerEvent, FEventTrigger, FCanvasChangeEvent } from '@foblex/flow';
 import { ToolbarComponent } from './toolbar/toolbar.component';
 import { CloudboardOpenComponent } from './cloudboard-open/cloudboard-open.component';
 import { PropertiesPanelComponent } from './properties-panel/properties-panel.component';
@@ -70,6 +70,8 @@ export class CloudboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public currentCloudBoard: CloudBoard | undefined;
   public isLoading = false;
+
+  public currentZoomLevel: Number = 1; // Default zoom level
   public canvasVisible = signal(true);
 
   // Properties for the PropertiesPanel
@@ -267,16 +269,28 @@ export class CloudboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
       if (selection) {     
         // add connections adjacent to nodes
-        const selectedNodes = this.currentCloudBoard.nodes.filter(node => selection.fNodeIds.includes(node.id));
+        const selectedNodes = this.currentCloudBoard.nodes
+          .filter(node => selection.fNodeIds.includes(node.id));
+        // Get connections that are connected to the selected nodes
         let connectionsToDelete = this.currentCloudBoard.connections.filter(connection =>
-          selectedNodes.some(node => node.connectors.some(conn => conn.id === connection.fromConnectorId || conn.id === connection.toConnectorId))
-        ).map(conn => conn.id).concat(selection.fConnectionIds);
+          selectedNodes
+            .some(node => node.connectors
+              .some(conn => conn.id === connection.fromConnectorId || conn.id === connection.toConnectorId)))
+              .map(conn => conn.id)
+            // and also include connections from the selection
+            .concat(selection.fConnectionIds);
         connectionsToDelete = [...connectionsToDelete.values()];
-        this.nodeService.deleteNodesAndConnections(selection.fNodeIds, connectionsToDelete).then(success => {
+        this.nodeService.deleteNodesAndConnections(selection.fNodeIds, connectionsToDelete)
+          .then(success => {
             // Remove selected nodes and connections from the currentCloudBoard
             if (this.currentCloudBoard && success.length > 0 && success.every(s => s)) {
-              this.currentCloudBoard.nodes = this.currentCloudBoard.nodes.filter(node => !selection.fNodeIds.includes(node.id));
-              this.currentCloudBoard.connections = this.currentCloudBoard.connections.filter(conn => !connectionsToDelete.includes(conn.id));
+              this.currentCloudBoard.nodes = this.currentCloudBoard.nodes
+                .filter(node => !selection.fNodeIds
+                  .includes(node.id));
+              this.currentCloudBoard.connections = this.currentCloudBoard.connections
+                .filter(conn => !connectionsToDelete
+                  .includes(conn.id));
+
               this.changeDetectorRef.detectChanges();
             }
         });
@@ -297,6 +311,18 @@ export class CloudboardComponent implements OnInit, AfterViewInit, OnDestroy {
         // Call API to update the node
         this.nodeService.updateNode(node.id, node).subscribe();
       }, 300); // 300ms debounce
+    }
+  }
+
+  protected onCanvasChanged(event: FCanvasChangeEvent): void {
+    if (event && this.fCanvas()) {
+      this.currentZoomLevel = event.scale;
+      if (event.scale > 1) {
+        this.fCanvas()?.setScale(1);
+      }
+      if (event.scale < 0.1) {
+        this.fCanvas()?.setScale(0.1);
+      }
     }
   }
 
