@@ -4,22 +4,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CloudBoard.ApiService.Services;
 
-public class ConnectionRepository : IConnectionRepository
+public class ConnectionRepository : Repository<Connection, Guid>, IConnectionRepository
 {
-    private readonly CloudBoardDbContext _dbContext;
-    private readonly ILogger<ConnectionRepository> _logger;
-
-    public ConnectionRepository(CloudBoardDbContext dbContext, ILogger<ConnectionRepository> logger)
+    public ConnectionRepository(
+        CloudBoardDbContext dbContext, 
+        ILogger<ConnectionRepository> logger) : base(dbContext, logger)
     {
-        _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<Connection?> GetConnectionByIdAsync(Guid connectionId)
     {
         try
         {
-            return await _dbContext.Connections.FindAsync(connectionId);
+            return await _dbSet.FindAsync(connectionId);
         }
         catch (Exception ex)
         {
@@ -32,7 +29,7 @@ public class ConnectionRepository : IConnectionRepository
     {
         try
         {
-            return await _dbContext.Connections
+            return await _dbSet
                 .Where(c => c.CloudBoardDocumentId == cloudBoardDocumentId)
                 .ToListAsync();
         }
@@ -47,7 +44,7 @@ public class ConnectionRepository : IConnectionRepository
     {
         try
         {
-            return await _dbContext.Connections
+            return await _dbSet
                 .Where(c => c.FromConnectorId == connectorId || c.ToConnectorId == connectorId)
                 .ToListAsync();
         }
@@ -62,8 +59,8 @@ public class ConnectionRepository : IConnectionRepository
     {
         try
         {
-            _dbContext.Connections.Add(connection);
-            await _dbContext.SaveChangesAsync();
+            _dbSet.Add(connection);
+            await _context.SaveChangesAsync();
             return connection;
         }
         catch (Exception ex)
@@ -78,7 +75,7 @@ public class ConnectionRepository : IConnectionRepository
     {
         try
         {
-            var existingConnection = await _dbContext.Connections.FindAsync(connection.Id);
+            var existingConnection = await _dbSet.FindAsync(connection.Id);
             if (existingConnection == null)
             {
                 _logger.LogWarning("Connection with ID {ConnectionId} not found for update", connection.Id);
@@ -90,7 +87,7 @@ public class ConnectionRepository : IConnectionRepository
             existingConnection.ToConnectorId = connection.ToConnectorId;
             existingConnection.CloudBoardDocumentId = connection.CloudBoardDocumentId;
 
-            await _dbContext.SaveChangesAsync();
+            await _context.SaveChangesAsync();
             return existingConnection;
         }
         catch (Exception ex)
@@ -104,15 +101,15 @@ public class ConnectionRepository : IConnectionRepository
     {
         try
         {
-            var connection = await _dbContext.Connections.FindAsync(connectionId);
+            var connection = await _dbSet.FindAsync(connectionId);
             if (connection == null)
             {
                 _logger.LogWarning("Connection with ID {ConnectionId} not found for deletion", connectionId);
                 return false;
             }
 
-            _dbContext.Connections.Remove(connection);
-            await _dbContext.SaveChangesAsync();
+            _dbSet.Remove(connection);
+            await _context.SaveChangesAsync();
             return true;
         }
         catch (Exception ex)
