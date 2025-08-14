@@ -2,8 +2,9 @@ using CloudBoard.ApiService.Data;
 
 namespace CloudBoard.ApiService.Services.Contracts;
 
-public interface IConnectionRepository
+public interface IConnectionRepository : IRepository<Connection, Guid>
 {
+    // Specific methods for Connection operations beyond the generic ones
     Task<Connection?> GetConnectionByIdAsync(Guid connectionId);
     Task<IEnumerable<Connection>> GetConnectionsByCloudBoardDocumentIdAsync(Guid cloudBoardDocumentId);
     Task<IEnumerable<Connection>> GetConnectionsByConnectorIdAsync(Guid connectorId);

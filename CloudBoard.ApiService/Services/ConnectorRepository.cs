@@ -4,24 +4,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CloudBoard.ApiService.Services;
 
-public class ConnectorRepository : IConnectorRepository
+public class ConnectorRepository : Repository<Connector, Guid>, IConnectorRepository
 {
-    private readonly CloudBoardDbContext _dbContext;
-    private readonly ILogger<ConnectorRepository> _logger;
-
     public ConnectorRepository(
         CloudBoardDbContext dbContext,
-        ILogger<ConnectorRepository> logger)
+        ILogger<ConnectorRepository> logger) : base(dbContext, logger)
     {
-        _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<Connector?> GetConnectorByIdAsync(Guid connectorId)
     {
         try
         {
-            return await _dbContext.Connectors
+            return await _dbSet
                 .Include(c => c.Node)
                 .FirstOrDefaultAsync(c => c.Id == connectorId);
         }
@@ -36,7 +31,7 @@ public class ConnectorRepository : IConnectorRepository
     {
         try
         {
-            return await _dbContext.Connectors
+            return await _dbSet
                 .Where(c => c.NodeId == nodeId)
                 .ToListAsync();
         }
@@ -51,11 +46,11 @@ public class ConnectorRepository : IConnectorRepository
     {
         try
         {
-            _dbContext.Connectors.Add(connector);
-            await _dbContext.SaveChangesAsync();
+            _dbSet.Add(connector);
+            await _context.SaveChangesAsync();
             
             // Reload to get any database-generated values and related entities
-            await _dbContext.Entry(connector)
+            await _context.Entry(connector)
                 .Reference(c => c.Node)
                 .LoadAsync();
                 
@@ -73,7 +68,7 @@ public class ConnectorRepository : IConnectorRepository
     {
         try
         {
-            var existingConnector = await _dbContext.Connectors
+            var existingConnector = await _dbSet
                 .FirstOrDefaultAsync(c => c.Id == connector.Id);
 
             if (existingConnector == null)
@@ -93,7 +88,7 @@ public class ConnectorRepository : IConnectorRepository
                 existingConnector.NodeId = connector.NodeId;
             }
 
-            await _dbContext.SaveChangesAsync();
+            await _context.SaveChangesAsync();
             return existingConnector;
         }
         catch (Exception ex)
@@ -107,7 +102,7 @@ public class ConnectorRepository : IConnectorRepository
     {
         try
         {
-            var connector = await _dbContext.Connectors
+            var connector = await _dbSet
                 .FirstOrDefaultAsync(c => c.Id == connectorId);
 
             if (connector == null)
@@ -116,8 +111,8 @@ public class ConnectorRepository : IConnectorRepository
                 return false;
             }
             
-            _dbContext.Connectors.Remove(connector);
-            await _dbContext.SaveChangesAsync();
+            _dbSet.Remove(connector);
+            await _context.SaveChangesAsync();
             
             return true;
         }

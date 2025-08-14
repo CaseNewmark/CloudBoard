@@ -4,24 +4,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CloudBoard.ApiService.Services;
 
-public class NodeRepository : INodeRepository
+public class NodeRepository : Repository<Node, Guid>, INodeRepository
 {
-    private readonly CloudBoardDbContext _dbContext;
-    private readonly ILogger<NodeRepository> _logger;
-
     public NodeRepository(
         CloudBoardDbContext dbContext,
-        ILogger<NodeRepository> logger)
+        ILogger<NodeRepository> logger) : base(dbContext, logger)
     {
-        _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    // Maintain existing specific methods for backward compatibility
     public async Task<Node?> GetNodeByIdAsync(Guid nodeId)
     {
         try
         {
-            return await _dbContext.Nodes
+            return await _dbSet
                 .Include(n => n.Connectors)
                 .FirstOrDefaultAsync(n => n.Id == nodeId);
         }
@@ -36,15 +32,15 @@ public class NodeRepository : INodeRepository
     {
         try
         {
-            _dbContext.Nodes.Add(node);
-            await _dbContext.SaveChangesAsync();
+            _dbSet.Add(node);
+            await _context.SaveChangesAsync();
             
             // Reload to get any database-generated values and related entities
-            await _dbContext.Entry(node)
+            await _context.Entry(node)
                 .Reference(n => n.CloudBoardDocument)
                 .LoadAsync();
                 
-            await _dbContext.Entry(node)
+            await _context.Entry(node)
                 .Collection(n => n.Connectors)
                 .LoadAsync();
                 
@@ -52,8 +48,7 @@ public class NodeRepository : INodeRepository
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error adding node {NodeName} to document {DocumentId}", 
-                node.Name, node.CloudBoardDocumentId);
+            _logger.LogError(ex, "Error adding node with name {NodeName}", node.Name);
             throw;
         }
     }
@@ -62,33 +57,54 @@ public class NodeRepository : INodeRepository
     {
         try
         {
-            var existingNode = await _dbContext.Nodes
-                .Include(n => n.Connectors)
-                .FirstOrDefaultAsync(n => n.Id == node.Id);
-
+            var existingNode = await GetNodeByIdAsync(node.Id);
             if (existingNode == null)
             {
-                _logger.LogWarning("Node with ID {NodeId} not found for update", node.Id);
+                _logger.LogWarning("Attempted to update non-existent node with ID {NodeId}", node.Id);
                 return null;
             }
 
-            // Dispose existing properties to prevent memory leaks
-            existingNode.Properties?.Dispose();
+            // Update the node properties
+            _context.Entry(existingNode).CurrentValues.SetValues(node);
+            
+            // Handle position updates
+            existingNode.Position.X = node.Position.X;
+            existingNode.Position.Y = node.Position.Y;
 
-            // Update node properties
-            existingNode.Name = node.Name;
-            existingNode.Position = node.Position;
-            existingNode.Type = node.Type;
-            existingNode.Properties = node.Properties;
+            // Handle connectors - this is a complex operation
+            // Remove connectors that are no longer present
+            var existingConnectorIds = existingNode.Connectors.Select(c => c.Id).ToList();
+            var newConnectorIds = node.Connectors.Select(c => c.Id).ToList();
+            var connectorsToRemove = existingNode.Connectors
+                .Where(c => !newConnectorIds.Contains(c.Id))
+                .ToList();
 
-            // Update connectors
-            existingNode.Connectors.Clear();
-            foreach (var connector in node.Connectors)
+            foreach (var connectorToRemove in connectorsToRemove)
             {
-                existingNode.Connectors.Add(connector);
+                existingNode.Connectors.Remove(connectorToRemove);
+                _context.Connectors.Remove(connectorToRemove);
             }
 
-            await _dbContext.SaveChangesAsync();
+            // Add or update connectors
+            foreach (var updatedConnector in node.Connectors)
+            {
+                var existingConnector = existingNode.Connectors
+                    .FirstOrDefault(c => c.Id == updatedConnector.Id);
+
+                if (existingConnector == null)
+                {
+                    // New connector
+                    updatedConnector.NodeId = existingNode.Id;
+                    existingNode.Connectors.Add(updatedConnector);
+                }
+                else
+                {
+                    // Update existing connector
+                    _context.Entry(existingConnector).CurrentValues.SetValues(updatedConnector);
+                }
+            }
+
+            await _context.SaveChangesAsync();
             return existingNode;
         }
         catch (Exception ex)
@@ -102,26 +118,40 @@ public class NodeRepository : INodeRepository
     {
         try
         {
-            var node = await _dbContext.Nodes
-                .FirstOrDefaultAsync(n => n.Id == nodeId);
-
+            var node = await GetNodeByIdAsync(nodeId);
             if (node == null)
             {
-                _logger.LogWarning("Node with ID {NodeId} not found for deletion", nodeId);
+                _logger.LogWarning("Attempted to delete non-existent node with ID {NodeId}", nodeId);
                 return false;
             }
 
-            // Dispose properties to prevent memory leaks
-            node.Properties?.Dispose();
+            // Remove the node (cascading deletes should handle connectors and connections)
+            _context.Nodes.Remove(node);
+            await _context.SaveChangesAsync();
             
-            _dbContext.Nodes.Remove(node);
-            await _dbContext.SaveChangesAsync();
-            
+            _logger.LogInformation("Successfully deleted node with ID {NodeId}", nodeId);
             return true;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting node with ID {NodeId}", nodeId);
+            throw;
+        }
+    }
+
+    // Additional specific method for getting nodes by CloudBoard ID
+    public async Task<IEnumerable<Node>> GetNodesByCloudBoardIdAsync(Guid cloudBoardId)
+    {
+        try
+        {
+            return await _dbSet
+                .Where(n => n.CloudBoardDocumentId == cloudBoardId)
+                .Include(n => n.Connectors)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving nodes for CloudBoard with ID {CloudBoardId}", cloudBoardId);
             throw;
         }
     }
