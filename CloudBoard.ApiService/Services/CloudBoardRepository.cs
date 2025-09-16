@@ -4,36 +4,59 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CloudBoard.ApiService.Services;
 
-public class CloudBoardRepository : ICloudBoardRepository
+public class CloudBoardRepository : Repository<Data.CloudBoard, Guid>, ICloudBoardRepository
 {
-    private readonly CloudBoardDbContext _dbContext;
-
-    public CloudBoardRepository(CloudBoardDbContext dbContext)
+    public CloudBoardRepository(CloudBoardDbContext dbContext, ILogger<CloudBoardRepository> logger) 
+        : base(dbContext, logger)
     {
-        _dbContext = dbContext;
     }
 
+    // Maintain existing specific methods for backward compatibility
     public async Task<Data.CloudBoard> CreateDocumentAsync(Data.CloudBoard document)
     {
-        _dbContext.CloudBoardDocuments.Add(document);
-        await _dbContext.SaveChangesAsync();
-        return document;
+        try
+        {
+            _dbSet.Add(document);
+            await _context.SaveChangesAsync();
+            return document;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating CloudBoard document with name {Name}", document.Name);
+            throw;
+        }
     }
     
     public async Task<Data.CloudBoard?> GetDocumentByIdAsync(Guid id)
     {
-        return await _dbContext.CloudBoardDocuments
-            .Include(d => d.Nodes)
-                .ThenInclude(n => n.Connectors)
-            .Include(d => d.Connections)
-            .FirstOrDefaultAsync(d => d.Id == id);
+        try
+        {
+            return await _dbSet
+                .Include(d => d.Nodes)
+                    .ThenInclude(n => n.Connectors)
+                .Include(d => d.Connections)
+                .FirstOrDefaultAsync(d => d.Id == id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving CloudBoard document with ID {Id}", id);
+            throw;
+        }
     }
 
     public async Task<IEnumerable<Data.CloudBoard>> GetAllDocumentsByUserAsync(string userId)
     {
-        return await _dbContext.CloudBoardDocuments
-            .Where(d => d.CreatedBy == userId)
-            .ToListAsync();
+        try
+        {
+            return await _dbSet
+                .Where(d => d.CreatedBy == userId)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving all CloudBoard documents for user {UserId}", userId);
+            throw;
+        }
     }
 
     public async Task UpdateDocumentAsync(Data.CloudBoard document)
@@ -41,7 +64,7 @@ public class CloudBoardRepository : ICloudBoardRepository
         try
         {
             // First, get the existing document with all related entities
-            var existingDocument = await _dbContext.CloudBoardDocuments
+            var existingDocument = await _context.CloudBoardDocuments
                 .Include(d => d.Nodes)
                     .ThenInclude(n => n.Connectors)
                 .Include(d => d.Connections)
@@ -53,7 +76,7 @@ public class CloudBoardRepository : ICloudBoardRepository
             }
 
             // Update basic document properties
-            _dbContext.Entry(existingDocument).CurrentValues.SetValues(document);
+            _context.Entry(existingDocument).CurrentValues.SetValues(document);
 
             // Handle nodes
             // 1. Remove nodes that no longer exist in the updated document
@@ -61,7 +84,7 @@ public class CloudBoardRepository : ICloudBoardRepository
             {
                 if (!document.Nodes.Any(n => n.Id == existingNode.Id))
                 {
-                    _dbContext.Nodes.Remove(existingNode);
+                    _context.Nodes.Remove(existingNode);
                 }
             }
 
@@ -79,7 +102,7 @@ public class CloudBoardRepository : ICloudBoardRepository
                 else
                 {
                     // Update existing node
-                    _dbContext.Entry(existingNode).CurrentValues.SetValues(updatedNode);
+                    _context.Entry(existingNode).CurrentValues.SetValues(updatedNode);
 
                     existingNode.CloudBoardDocumentId = existingDocument.Id; 
                     existingNode.Position.Y = updatedNode.Position.Y;
@@ -91,7 +114,7 @@ public class CloudBoardRepository : ICloudBoardRepository
                     {
                         if (!updatedNode.Connectors.Any(c => c.Id == existingConnector.Id))
                         {
-                            _dbContext.Connectors.Remove(existingConnector);
+                            _context.Connectors.Remove(existingConnector);
                         }
                     }
 
@@ -108,7 +131,7 @@ public class CloudBoardRepository : ICloudBoardRepository
                         else
                         {
                             // Update existing connector
-                            _dbContext.Entry(existingConnector).CurrentValues.SetValues(updatedConnector);
+                            _context.Entry(existingConnector).CurrentValues.SetValues(updatedConnector);
                             existingConnector.NodeId = existingNode.Id; // Ensure foreign key is set
                         }
                     }
@@ -121,7 +144,7 @@ public class CloudBoardRepository : ICloudBoardRepository
             {
                 if (!document.Connections.Any(c => c.Id == existingConnection.Id))
                 {
-                    _dbContext.Connections.Remove(existingConnection);
+                    _context.Connections.Remove(existingConnection);
                 }
             }
 
@@ -138,13 +161,13 @@ public class CloudBoardRepository : ICloudBoardRepository
                 else
                 {
                     // Update existing connection
-                    _dbContext.Entry(existingConnection).CurrentValues.SetValues(updatedConnection);
+                    _context.Entry(existingConnection).CurrentValues.SetValues(updatedConnection);
                     existingConnection.CloudBoardDocumentId = existingDocument.Id; // Ensure foreign key is set
                 }
             }
 
             // Save all changes
-            await _dbContext.SaveChangesAsync();
+            await _context.SaveChangesAsync();
         }
         catch (DbUpdateConcurrencyException ex)
         {
@@ -154,16 +177,25 @@ public class CloudBoardRepository : ICloudBoardRepository
         catch (Exception ex)
         {
             // Handle other exceptions
+            _logger.LogError(ex, "Error updating CloudBoard document with ID {Id}", document.Id);
             throw new InvalidOperationException("An error occurred while updating the document.", ex);
         }
     }
 
     public async Task<bool> DeleteDocumentAsync(Guid id)
     {
-        var document = await _dbContext.CloudBoardDocuments.FindAsync(id);
-        if (document == null) return false;
-        _dbContext.CloudBoardDocuments.Remove(document);
-        await _dbContext.SaveChangesAsync();
-        return true;
+        try
+        {
+            var document = await _context.CloudBoardDocuments.FindAsync(id);
+            if (document == null) return false;
+            _context.CloudBoardDocuments.Remove(document);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting CloudBoard document with ID {Id}", id);
+            throw;
+        }
     }
 }
