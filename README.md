@@ -20,7 +20,7 @@ CloudBoard provides an interactive canvas where users can:
 
 The application uses a modern architecture:
 - Angular 19+ frontend with PrimeNG components and Foblex Flow for the visual canvas
-- .NET 9 backend with minimal APIs and Aspire for service orchestration
+- .NET 10 backend with minimal APIs and Aspire for service orchestration
 - PostgreSQL database for persistence
 - Docker containers for development dependencies
 
@@ -47,10 +47,13 @@ For detailed development information, refer to the component-specific documentat
 
 ### Prerequisites
 
-- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-- [Node.js](https://nodejs.org/) (v18+)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- [Node.js](https://nodejs.org/) (v22+)
 - [Angular CLI](https://angular.io/cli) (`npm install -g @angular/cli`)
 - [Docker](https://www.docker.com/products/docker-desktop/) for PostgreSQL database
+- A free AutoMapper Community license key (see note below)
+
+> **AutoMapper license:** AutoMapper 15+ requires a license key at startup. Sign up for the free, self-service Community license at [automapper.io](https://automapper.io) (covers individuals and organizations under $5M revenue) and set it as the `AUTOMAPPER_LICENSE_KEY` environment variable before running `CloudBoard.ApiService` or the AppHost — AutoMapper picks it up automatically, no code changes needed.
 
 ### Getting Started
 
@@ -139,7 +142,7 @@ The application follows a layered architecture:
   - Services: API communication and state management
   - *For detailed frontend architecture, see [Angular Documentation](CloudBoard.Angular/README.md#architecture-overview)*
 
-- **Backend API**: .NET 8 minimal APIs providing:
+- **Backend API**: .NET 10 minimal APIs providing:
   - CloudBoard management
   - Node operations
   - Connector and connection handling

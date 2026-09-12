@@ -20,11 +20,11 @@ var apiService = builder.AddProject<Projects.CloudBoard_ApiService>("apiservice"
 //    .WithHttpsHealthCheck("/health");
 ;
 
-builder.AddNpmApp("angular", "../CloudBoard.Angular")
+builder.AddJavaScriptApp("angular", "../CloudBoard.Angular", "start")
        // .WithReference(keycloak)
        // .WithReference(apiService)
        // .WaitFor(apiService)
        .WithExternalHttpEndpoints()
-       .PublishAsDockerFile();
+       .PublishAsStaticWebsite();
 
 builder.Build().Run();
