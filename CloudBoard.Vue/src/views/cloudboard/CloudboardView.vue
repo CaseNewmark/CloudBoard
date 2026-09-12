@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Component, onMounted, onUnmounted, provide, ref, watch } from 'vue';
+import { type Component, markRaw, onMounted, onUnmounted, provide, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { ConnectionLineType, ConnectionMode, type Edge, type Node as FlowNode, useVueFlow, VueFlow } from '@vue-flow/core';
 import '@vue-flow/core/dist/style.css';
@@ -13,7 +13,7 @@ import CloudboardToolbar from './Toolbar.vue';
 import PropertiesPanel from './PropertiesPanel.vue';
 import CloudboardNode from './CloudboardNode.vue';
 
-import { type CloudBoard, type Connection, type Node, type NodePosition, NodeType } from '@/models/cloudboard';
+import { type CloudBoard, type Connection, type ConnectorPosition, type Node, type NodePosition, NodeType } from '@/models/cloudboard';
 import * as cloudboardService from '@/services/cloudboardService';
 import * as nodeService from '@/services/nodeService';
 import * as connectionService from '@/services/connectionService';
@@ -41,12 +41,13 @@ const nodeContextMenuItems = ref<MenuItem[]>([]);
 const connectionDrag = useConnectionDrag(currentCloudBoard);
 provide(connectionDragInjectionKey, connectionDrag);
 
+const rawCloudboardNode = markRaw(CloudboardNode);
 const nodeTypes: Record<string, Component> = {
-  [NodeType.Note]: CloudboardNode,
-  [NodeType.Card]: CloudboardNode,
-  [NodeType.LinkCollection]: CloudboardNode,
-  [NodeType.ImageNode]: CloudboardNode,
-  [NodeType.CodeBlock]: CloudboardNode,
+  [NodeType.Note]: rawCloudboardNode,
+  [NodeType.Card]: rawCloudboardNode,
+  [NodeType.LinkCollection]: rawCloudboardNode,
+  [NodeType.ImageNode]: rawCloudboardNode,
+  [NodeType.CodeBlock]: rawCloudboardNode,
 };
 
 const {
@@ -70,6 +71,7 @@ const {
   zoomIn,
   zoomOut,
   screenToFlowCoordinate,
+  updateNodeInternals,
 } = useVueFlow();
 
 function connectorNodeId(connectorId: string): string | undefined {
@@ -203,6 +205,42 @@ onConnect(() => {
 onConnectEnd(() => {
   connectionDrag.cancelConnectionDrag();
 });
+
+// Vue Flow's Handle captures the pointer once a connection drag starts, which
+// suppresses native mouseenter/mouseleave on the plain .connector-bar divs
+// elsewhere on the canvas. Hit-testing the pointer position manually on every
+// move sidesteps that, and works the same whether or not a drag is active -
+// this is how the source side discovers its own hover too.
+let hoveredBarKey: string | undefined;
+
+function handleGlobalPointerMove(event: PointerEvent): void {
+  const bar = (document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null)?.closest(
+    '.connector-bar',
+  ) as HTMLElement | null;
+  const nodeId = bar?.dataset.nodeId;
+  const position = bar?.dataset.position as ConnectorPosition | undefined;
+  const key = nodeId && position ? `${nodeId}::${position}` : undefined;
+
+  if (key === hoveredBarKey) return;
+
+  if (hoveredBarKey) {
+    connectionDrag.onConnectorBarMouseLeave();
+    updateNodeInternals([hoveredBarKey.split('::')[0]]);
+  }
+
+  hoveredBarKey = key;
+
+  if (nodeId && position) {
+    const node = currentCloudBoard.value?.nodes.find((n) => n.id === nodeId);
+    if (node) {
+      connectionDrag.onConnectorBarMouseEnter(node, position);
+      updateNodeInternals([nodeId]);
+    }
+  }
+}
+
+onMounted(() => window.addEventListener('pointermove', handleGlobalPointerMove));
+onUnmounted(() => window.removeEventListener('pointermove', handleGlobalPointerMove));
 
 let positionUpdateTimer: ReturnType<typeof setTimeout> | undefined;
 

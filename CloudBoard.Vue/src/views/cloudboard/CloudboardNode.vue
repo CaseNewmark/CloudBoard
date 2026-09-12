@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue';
-import { Handle, Position, useVueFlow } from '@vue-flow/core';
+import { Handle, Position } from '@vue-flow/core';
 import type { NodeProps } from '@vue-flow/core';
 import { type Connector, ConnectorPosition, ConnectorType, type Node, NodeType } from '@/models/cloudboard';
 import { type ConnectionDrag, connectionDragInjectionKey } from '@/composables/useConnectionDrag';
@@ -12,7 +12,6 @@ import CodeBlock from './nodes/CodeBlock.vue';
 
 const props = defineProps<NodeProps<{ node: Node }>>();
 
-const { updateNodeInternals } = useVueFlow();
 const connectionDrag = inject(connectionDragInjectionKey) as ConnectionDrag;
 
 const node = computed(() => props.data.node);
@@ -42,19 +41,10 @@ function connectorsFor(position: ConnectorPosition): Connector[] {
 function handleType(connector: Connector): 'source' | 'target' {
   return connector.type === ConnectorType.In ? 'target' : 'source';
 }
-
-function onBarMouseEnter(position: ConnectorPosition): void {
-  connectionDrag.onConnectorBarMouseEnter(node.value, position);
-  updateNodeInternals([props.id]);
-}
-
-function onBarMouseLeave(): void {
-  connectionDrag.onConnectorBarMouseLeave();
-  updateNodeInternals([props.id]);
-}
 </script>
 
 <template>
+  <div class="cloudboard-node-content">
   <component :is="contentComponent" :node="node" />
 
   <div class="connector-bars">
@@ -63,8 +53,8 @@ function onBarMouseLeave(): void {
       :key="position"
       class="connector-bar"
       :class="position.toLowerCase()"
-      @mouseenter="onBarMouseEnter(position)"
-      @mouseleave="onBarMouseLeave"
+      :data-node-id="props.id"
+      :data-position="position"
     >
       <Handle
         v-for="connector in connectorsFor(position)"
@@ -77,9 +67,15 @@ function onBarMouseLeave(): void {
       />
     </div>
   </div>
+  </div>
 </template>
 
 <style scoped>
+.cloudboard-node-content {
+  position: relative;
+  height: 100%;
+}
+
 .connector-bars {
   position: absolute;
   top: 0;
