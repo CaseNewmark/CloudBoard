@@ -20,7 +20,16 @@ var apiService = builder.AddProject<Projects.CloudBoard_ApiService>("apiservice"
 //    .WithHttpsHealthCheck("/health");
 ;
 
-builder.AddJavaScriptApp("angular", "../CloudBoard.Angular", "start")
+// CloudBoard.Angular is being replaced by CloudBoard.Vue (see below) and is disabled
+// here rather than removed, in case the Angular app is still needed for reference.
+// builder.AddJavaScriptApp("angular", "../CloudBoard.Angular", "start")
+//        // .WithReference(keycloak)
+//        // .WithReference(apiService)
+//        // .WaitFor(apiService)
+//        .WithExternalHttpEndpoints()
+//        .PublishAsStaticWebsite();
+
+builder.AddJavaScriptApp("vue", "../CloudBoard.Vue", "dev")
        // .WithReference(keycloak)
        // .WithReference(apiService)
        // .WaitFor(apiService)

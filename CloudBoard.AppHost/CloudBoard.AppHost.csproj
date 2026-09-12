@@ -21,6 +21,7 @@
   <Target Name="RestoreNpm" BeforeTargets="Build" Condition=" '$(DesignTimeBuild)' != 'true' ">
     <ItemGroup>
       <PackageJsons Include="..\CloudBoard.Angular\package.json" />
+      <PackageJsons Include="..\CloudBoard.Vue\package.json" />
     </ItemGroup>
 
     <!-- Install npm packages if node_modules is missing -->

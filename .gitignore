@@ -35,6 +35,9 @@ packages/
 node_modules/
 bower_components/
 
+# Frontend build output
+dist/
+
 # Generated Files
 *.dll
 *.exe

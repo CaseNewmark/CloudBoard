@@ -1,0 +1,41 @@
+@import 'primeicons/primeicons.css';
+@import 'tailwindcss';
+@plugin 'tailwindcss-primeui';
+
+body {
+    background-color: #F3F4F6;
+}
+
+/* PrimeVue's Image preview overlay is teleported to <body>, so these can't be scoped to ImageNode.vue. */
+.p-image-preview-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+}
+
+.p-image-preview {
+    max-width: 90%;
+    max-height: 90%;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+.p-image-preview-indicator {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
