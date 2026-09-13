@@ -1,19 +1,19 @@
-<p-card styleClass="card-node">
+<p-card class="card-node">
     @if (hasImage) {
-    <ng-template pTemplate="header">
-        <p-image 
+    <ng-template #header>
+        <p-image
             class="pointer-events-none"
-            [src]="imageUrl" 
-            [alt]="node()?.name" 
-            imageClass="w-full h-auto" 
+            [src]="imageUrl"
+            [alt]="node()?.name"
+            imageClass="w-full h-auto"
             [preview]="false" ></p-image>
     </ng-template>
     }
-    <ng-template pTemplate="title">
+    <ng-template #title>
         <div class="card-title">{{ title }}</div>
     </ng-template>
     @if (subtitle) {
-    <ng-template pTemplate="subtitle">
+    <ng-template #subtitle>
         <div class="card-subtitle">{{ subtitle }}</div>
     </ng-template>
     }

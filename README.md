@@ -19,16 +19,22 @@ CloudBoard provides an interactive canvas where users can:
 - Manage multiple projects
 
 The application uses a modern architecture:
-- Angular 19+ frontend with PrimeNG components and Foblex Flow for the visual canvas
-- .NET 9 backend with minimal APIs and Aspire for service orchestration
+- Vue 3 + TypeScript frontend with PrimeVue components and Vue Flow for the visual canvas
+- .NET 10 backend with minimal APIs and Aspire for service orchestration
 - PostgreSQL database for persistence
 - Docker containers for development dependencies
+
+> **Frontend migration in progress:** the active frontend is now **CloudBoard.Vue**.
+> **CloudBoard.Angular** is kept in the repository for reference but is disabled in
+> `CloudBoard.AppHost/Program.cs` and no longer runs as part of the app.
 
 ## Components
 
 The application consists of several components:
 
-- **CloudBoard.Angular**: The frontend Angular application providing the user interface
+- **CloudBoard.Vue**: The frontend Vue application providing the user interface
+  - 📖 [Vue Frontend Developer Documentation](CloudBoard.Vue/README.md)
+- **CloudBoard.Angular**: The previous Angular frontend, kept for reference only (disabled)
   - 📖 [Angular Frontend Developer Documentation](CloudBoard.Angular/README.md)
 - **CloudBoard.ApiService**: The backend API service handling data operations
   - 📖 [API Developer Documentation](CloudBoard.ApiService/README.md)
@@ -39,7 +45,8 @@ The application consists of several components:
 
 For detailed development information, refer to the component-specific documentation:
 
-- **[Angular Frontend Documentation](CloudBoard.Angular/README.md)**: Component architecture, development workflow, authentication, and UI patterns
+- **[Vue Frontend Documentation](CloudBoard.Vue/README.md)**: Component architecture, development workflow, authentication, and UI patterns
+- **[Angular Frontend Documentation](CloudBoard.Angular/README.md)**: The previous frontend, kept for reference only
 - **[API Service Documentation](CloudBoard.ApiService/README.md)**: API endpoints, authentication, database schema, SignalR real-time features, and deployment
 - **[Coding Guidelines](CODING_GUIDELINES.md)**: Development standards, conventions, and best practices for all project components
 
@@ -47,10 +54,12 @@ For detailed development information, refer to the component-specific documentat
 
 ### Prerequisites
 
-- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-- [Node.js](https://nodejs.org/) (v18+)
-- [Angular CLI](https://angular.io/cli) (`npm install -g @angular/cli`)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- [Node.js](https://nodejs.org/) (v22.12+)
 - [Docker](https://www.docker.com/products/docker-desktop/) for PostgreSQL database
+- A free AutoMapper Community license key (see note below)
+
+> **AutoMapper license:** AutoMapper 15+ requires a license key at startup. Sign up for the free, self-service Community license at [automapper.io](https://automapper.io) (covers individuals and organizations under $5M revenue) and set it as the `AUTOMAPPER_LICENSE_KEY` environment variable before running `CloudBoard.ApiService` or the AppHost — AutoMapper picks it up automatically, no code changes needed.
 
 ### Getting Started
 
@@ -64,12 +73,12 @@ For detailed development information, refer to the component-specific documentat
    
   Open the project in Visual Studio Code and press **F5** to start debugging with the "Debug All" configuration. This will:
     - Start all backend services through .NET Aspire
-    - Launch Chrome with the Angular frontend
+    - Launch Chrome with the Vue frontend
     - Set up debugging for both frontend and backend
     
     ⚠️ **Important:** The first startup can take **5+ minutes** as it needs to:
     - Download and start Docker containers (PostgreSQL, Keycloak, PgAdmin)
-    - Build the Angular application
+    - Build the Vue application
     - Restore NuGet packages and initialize the database
     - Wait for all services to become healthy
 
@@ -84,11 +93,11 @@ For detailed development information, refer to the component-specific documentat
     - Keycloak identity service in Docker
     - [API Service](CloudBoard.ApiService/README.md) (.NET backend)
     - PgAdmin (optional management interface for PostgreSQL)
-    - [Angular frontend application](CloudBoard.Angular/README.md) (automatically built and served through Aspire)
+    - [Vue frontend application](CloudBoard.Vue/README.md) (automatically built and served through Aspire)
 
-3. Navigate to `http://localhost:4200` to access the application
+3. Navigate to the URL shown for the `vue` resource in the Aspire dashboard (or `http://localhost:5173` when running `npm run dev` standalone) to access the application
 
-> **Note:** The Angular frontend is automatically built and served by the .NET Aspire host, so there's no need to separately start the Angular application with `ng serve`.
+> **Note:** The Vue frontend is automatically built and served by the .NET Aspire host, so there's no need to separately start it with `npm run dev`.
 
 ### Visual Studio Code Setup
 
@@ -107,6 +116,13 @@ The repository includes a `.vscode/launch.json` file for easy debugging in Visua
         {
             "type": "chrome",
             "request": "launch",
+            "name": "Launch Vue",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}\\CloudBoard.Vue"
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
             "name": "Launch Angular",
             "url": "http://localhost:4200",
             "webRoot": "${workspaceFolder}\\CloudBoard.Angular"
@@ -114,18 +130,19 @@ The repository includes a `.vscode/launch.json` file for easy debugging in Visua
     ],
     "compounds": [
         {
-          "name": "DebugAll",
-          "configurations": ["Launch Angular", "Launch AppHost"],
+          "name": "Debug All",
+          "configurations": ["Launch Vue", "Launch AppHost"],
           "stopAll": true
         }
     ]
 }
 ```
 
-This configuration provides three debug options:
+This configuration provides four debug options:
 - **Launch AppHost**: Starts the .NET Aspire host which orchestrates all backend services
-- **Launch Angular**: Opens Chrome and connects to the Angular application for frontend debugging
-- **DebugAll**: Compound debug configuration that launches both the backend and frontend together
+- **Launch Vue**: Opens Chrome and connects to the Vue application for frontend debugging
+- **Launch Angular**: Opens Chrome and connects to the (disabled, reference-only) Angular application
+- **Debug All**: Compound debug configuration that launches both the backend and the Vue frontend together
 
 To use these debugging configurations, open the project in VS Code, go to the "Run and Debug" sidebar, and select the desired configuration from the dropdown menu.
 
@@ -133,13 +150,13 @@ To use these debugging configurations, open the project in VS Code, go to the "R
 
 The application follows a layered architecture:
 
-- **Frontend**: Angular 19+ SPA with components for:
+- **Frontend**: Vue 3 + TypeScript SPA with components for:
   - Cloudboard: Main canvas for node manipulation
   - Node Components: Specialized components for each node type
   - Services: API communication and state management
-  - *For detailed frontend architecture, see [Angular Documentation](CloudBoard.Angular/README.md#architecture-overview)*
+  - *For detailed frontend architecture, see [Vue Documentation](CloudBoard.Vue/README.md#architecture-overview)*
 
-- **Backend API**: .NET 8 minimal APIs providing:
+- **Backend API**: .NET 10 minimal APIs providing:
   - CloudBoard management
   - Node operations
   - Connector and connection handling
