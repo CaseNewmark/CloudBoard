@@ -31,7 +31,7 @@ The frontend is built with Angular 19+ and provides:
 
 ### Backend (.NET)
 
-The backend is built with .NET 8 and provides:
+The backend is built with .NET 10 and provides:
 
 - RESTful API endpoints for all CRUD operations
 - PostgreSQL database integration for persistence
@@ -63,7 +63,7 @@ The core data model consists of:
 CloudBoard uses a modern technical stack:
 
 - **Frontend**: Angular 19+, PrimeNG, Foblex Flow for canvas
-- **Backend**: .NET 8 Minimal APIs, Entity Framework Core
+- **Backend**: .NET 10 Minimal APIs, Entity Framework Core
 - **Database**: PostgreSQL
 - **Development**: .NET Aspire for local orchestration
 

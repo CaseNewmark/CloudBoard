@@ -9,9 +9,9 @@ import { BlurOnEnterDirective } from '../../helpers/blur-on-enter.directive';
 import { TextareaModule } from 'primeng/textarea';
 import { ColorPickerModule } from 'primeng/colorpicker';
 import { NodeService } from '../services/node.service';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
-import { InputSwitchModule } from 'primeng/inputswitch';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 @Component({
   selector: 'properties-panel',
@@ -23,9 +23,9 @@ import { InputSwitchModule } from 'primeng/inputswitch';
     InplaceModule,
     NgClass,
     ColorPickerModule,
-    DropdownModule,
+    SelectModule,
     CheckboxModule,
-    InputSwitchModule,
+    ToggleSwitchModule,
     BlurOnEnterDirective
   ],
   templateUrl: './properties-panel.component.html',

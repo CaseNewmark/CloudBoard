@@ -13,6 +13,13 @@
         {
             "type": "chrome",
             "request": "launch",
+            "name": "Launch Vue",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}\\CloudBoard.Vue"
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
             "name": "Launch Angular",
             "url": "http://localhost:4200",
             "webRoot": "${workspaceFolder}\\CloudBoard.Angular"
@@ -21,7 +28,7 @@
     "compounds": [
         {
           "name": "Debug All",
-          "configurations": ["Launch Angular", "Launch AppHost"],
+          "configurations": ["Launch Vue", "Launch AppHost"],
           "stopAll": true
         }
       ]

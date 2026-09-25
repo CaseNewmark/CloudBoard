@@ -6,8 +6,8 @@ This guide provides instructions for deploying the CloudBoard application in var
 
 Before deploying CloudBoard, ensure you have the following:
 
-- .NET 8 SDK or higher
-- Node.js 18+ and npm
+- .NET 10 SDK or higher
+- Node.js 22+ and npm
 - PostgreSQL 15 or higher
 - Docker (optional, for containerized deployment)
 - SSL certificate for production deployments
@@ -128,7 +128,7 @@ For local development with .NET Aspire:
    ```pwsh
    cd CloudBoard.ApiService
    dotnet publish -c Release
-   az webapp deployment source config-zip --resource-group your-resource-group --name cloudboard-api --src bin/Release/net8.0/publish.zip
+   az webapp deployment source config-zip --resource-group your-resource-group --name cloudboard-api --src bin/Release/net10.0/publish.zip
    ```
 
 5. Deploy the frontend:

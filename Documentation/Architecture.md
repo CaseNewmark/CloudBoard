@@ -7,7 +7,7 @@ CloudBoard follows a modern client-server architecture with a clear separation o
 ```
 ┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
 │                 │      │                 │      │                 │
-│  Angular SPA    │◄────►│  .NET 8 API     │◄────►│  PostgreSQL     │
+│  Angular SPA    │◄────►│  .NET 10 API    │◄────►│  PostgreSQL     │
 │  (Frontend)     │      │  (Backend)      │      │  (Database)     │
 │                 │      │                 │      │                 │
 └─────────────────┘      └─────────────────┘      └─────────────────┘
