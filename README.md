@@ -24,18 +24,12 @@ The application uses a modern architecture:
 - PostgreSQL database for persistence
 - Docker containers for development dependencies
 
-> **Frontend migration in progress:** the active frontend is now **CloudBoard.Vue**.
-> **CloudBoard.Angular** is kept in the repository for reference but is disabled in
-> `CloudBoard.AppHost/Program.cs` and no longer runs as part of the app.
-
 ## Components
 
 The application consists of several components:
 
 - **CloudBoard.Vue**: The frontend Vue application providing the user interface
   - 📖 [Vue Frontend Developer Documentation](CloudBoard.Vue/README.md)
-- **CloudBoard.Angular**: The previous Angular frontend, kept for reference only (disabled)
-  - 📖 [Angular Frontend Developer Documentation](CloudBoard.Angular/README.md)
 - **CloudBoard.ApiService**: The backend API service handling data operations
   - 📖 [API Developer Documentation](CloudBoard.ApiService/README.md)
 - **CloudBoard.AppHost**: The Aspire application host for orchestrating the services
@@ -46,7 +40,6 @@ The application consists of several components:
 For detailed development information, refer to the component-specific documentation:
 
 - **[Vue Frontend Documentation](CloudBoard.Vue/README.md)**: Component architecture, development workflow, authentication, and UI patterns
-- **[Angular Frontend Documentation](CloudBoard.Angular/README.md)**: The previous frontend, kept for reference only
 - **[API Service Documentation](CloudBoard.ApiService/README.md)**: API endpoints, authentication, database schema, SignalR real-time features, and deployment
 - **[Coding Guidelines](CODING_GUIDELINES.md)**: Development standards, conventions, and best practices for all project components
 
@@ -119,13 +112,6 @@ The repository includes a `.vscode/launch.json` file for easy debugging in Visua
             "name": "Launch Vue",
             "url": "http://localhost:5173",
             "webRoot": "${workspaceFolder}\\CloudBoard.Vue"
-        },
-        {
-            "type": "chrome",
-            "request": "launch",
-            "name": "Launch Angular",
-            "url": "http://localhost:4200",
-            "webRoot": "${workspaceFolder}\\CloudBoard.Angular"
         }
     ],
     "compounds": [
@@ -138,10 +124,9 @@ The repository includes a `.vscode/launch.json` file for easy debugging in Visua
 }
 ```
 
-This configuration provides four debug options:
+This configuration provides three debug options:
 - **Launch AppHost**: Starts the .NET Aspire host which orchestrates all backend services
 - **Launch Vue**: Opens Chrome and connects to the Vue application for frontend debugging
-- **Launch Angular**: Opens Chrome and connects to the (disabled, reference-only) Angular application
 - **Debug All**: Compound debug configuration that launches both the backend and the Vue frontend together
 
 To use these debugging configurations, open the project in VS Code, go to the "Run and Debug" sidebar, and select the desired configuration from the dropdown menu.

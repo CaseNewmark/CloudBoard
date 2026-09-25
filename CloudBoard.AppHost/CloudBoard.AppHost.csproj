@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>126a505a-512b-48a0-99bc-84d02a86d7e7</UserSecretsId>
+    <!-- PublishAsStaticWebsite() is still evaluation-only in Aspire.Hosting.JavaScript 13.4.3. -->
+    <NoWarn>$(NoWarn);ASPIREJAVASCRIPT001</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,15 +22,12 @@
 
   <Target Name="RestoreNpm" BeforeTargets="Build" Condition=" '$(DesignTimeBuild)' != 'true' ">
     <ItemGroup>
-      <PackageJsons Include="..\CloudBoard.Angular\package.json" />
       <PackageJsons Include="..\CloudBoard.Vue\package.json" />
     </ItemGroup>
 
     <!-- Install npm packages if node_modules is missing -->
     <Message Importance="Normal" Text="Installing npm packages for %(PackageJsons.RelativeDir)" Condition="!Exists('%(PackageJsons.RootDir)%(PackageJsons.Directory)/node_modules')" />
     <Exec Command="npm install" WorkingDirectory="%(PackageJsons.RootDir)%(PackageJsons.Directory)" Condition="!Exists('%(PackageJsons.RootDir)%(PackageJsons.Directory)/node_modules')" />
-    <Message Importance="Normal" Text="Generating OpenAPI client code" />
-    <Exec Command="call generate.bat" WorkingDirectory="../generator" />
   </Target>
 
 </Project>

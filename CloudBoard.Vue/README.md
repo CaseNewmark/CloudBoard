@@ -1,8 +1,6 @@
 # CloudBoard.Vue - Developer Documentation
 
-CloudBoard.Vue is the current CloudBoard frontend: a Vue 3 + TypeScript rewrite of `CloudBoard.Angular`, providing the same interactive flowchart canvas, node types, and Keycloak-backed authentication.
-
-`CloudBoard.Angular` is kept in the repository for reference but is no longer wired into the Aspire AppHost (see `CloudBoard.AppHost/Program.cs`) — this app is the one that runs.
+CloudBoard.Vue is the CloudBoard frontend: a Vue 3 + TypeScript rewrite of the original Angular app, providing the same interactive flowchart canvas, node types, and Keycloak-backed authentication. The Angular frontend it replaced has since been removed from the repository.
 
 ## Getting Started
 
@@ -15,7 +13,7 @@ npm install
 npm run dev
 ```
 
-The dev server proxies `/api` to `CloudBoard.ApiService` using the same Aspire-injected `services__apiservice__*` environment variables that `CloudBoard.Angular`'s `proxy.conf.js` reads (see `vite.config.ts`) — when launched outside of Aspire, no proxy target is configured and API calls will simply fail until pointed at a running backend.
+The dev server proxies `/api` to `CloudBoard.ApiService` using the Aspire-injected `services__apiservice__*` environment variables (see `vite.config.ts`) — when launched outside of Aspire, no proxy target is configured and API calls will simply fail until pointed at a running backend.
 
 ## Architecture Overview
 
@@ -24,9 +22,9 @@ The dev server proxies `/api` to `CloudBoard.ApiService` using the same Aspire-i
 - **Vue 3** (Composition API, `<script setup>`) with **Vite**
 - **Pinia** for the small amount of genuinely shared state (auth session, toolbar zoom events)
 - **Vue Router** for routing and the auth guard
-- **PrimeVue** (Aura theme) — the Vue sibling of PrimeNG, same component set used by CloudBoard.Angular
+- **PrimeVue** (Aura theme) — the Vue sibling of PrimeNG, which the original Angular app used
 - **Tailwind CSS** (v4, via `@tailwindcss/vite`) for utility styling
-- **@vue-flow/core** (Vue Flow) — replaces `@foblex/flow` for the canvas. Vue Flow's Handle-based connection model is used in `connectionMode: 'loose'` to reproduce Angular's free-floating, multi-connector-per-side connection UX (see `composables/useConnectionDrag.ts` and `views/cloudboard/CloudboardNode.vue`) — **this is the area most worth a manual pass**, since the interaction couldn't be exercised against a live backend while porting it.
+- **@vue-flow/core** (Vue Flow) — the Angular app used `@foblex/flow` for the canvas; Vue Flow's Handle-based connection model runs in `connectionMode: 'loose'` to reproduce that app's free-floating, multi-connector-per-side connection UX (see `composables/useConnectionDrag.ts` and `views/cloudboard/CloudboardNode.vue`)
 
 ### Project Structure
 
@@ -38,9 +36,9 @@ src/
 ├── directives/       # v-blur-on-enter
 ├── models/           # Domain types (cloudboard.ts) and DTO<->domain mapping (mapper.ts)
 ├── router/           # Routes + auth guard
-├── services/         # apiClient.ts (hand-written fetch client, mirrors the NSwag-generated
-│                      # Angular client) plus one module per API area (cloudboardService,
-│                      # nodeService, connectorService, connectionService), keycloakApi, token
+├── services/         # apiClient.ts (hand-written fetch client) plus one module per API
+│                      # area (cloudboardService, nodeService, connectorService,
+│                      # connectionService), keycloakApi, token
 ├── stores/           # Pinia: auth (session/user), flowControl (toolbar zoom bus)
 └── views/
     ├── cloudboard/    # CloudboardView (canvas page), Toolbar, PropertiesPanel,
@@ -67,21 +65,19 @@ To add a new node type:
 
 ## API Client
 
-`src/services/apiClient.ts` is hand-written (fetch + Promises) rather than generated,
-since the repo's OpenAPI generator (`generator/`) is hard-coded to NSwag's Angular
-template. If the API contract changes, update this file by hand to match, or extend
-`generator/Program.cs` to also emit a `Fetch`-template client and port the shape across.
+`src/services/apiClient.ts` is hand-written (fetch + Promises) rather than generated. If
+the API contract changes, update this file by hand to match the shapes in
+`OpenApi/cloudboard-api.json`.
 
 ## Authentication
 
-Same Keycloak Authorization Code flow as CloudBoard.Angular: `stores/auth.ts` owns
-session state and wires itself into `apiClient.ts` via `setAuthHook` so API requests
-carry a bearer token and retry once on a 401 (attempting a token refresh first).
+Keycloak Authorization Code flow: `stores/auth.ts` owns session state and wires itself
+into `apiClient.ts` via `setAuthHook` so API requests carry a bearer token and retry once
+on a 401 (attempting a token refresh first).
 
 ## Testing
 
-No test runner is set up yet — CloudBoard.Angular's Karma/Jasmine setup doesn't carry
-over. If you add tests, Vitest is the natural fit for a Vite project.
+No test runner is set up yet. Vitest is the natural fit for a Vite project.
 
 ## Deployment
 
@@ -91,4 +87,4 @@ npm run preview # serve the production build locally
 ```
 
 The Aspire AppHost publishes this app as a static website (`PublishAsStaticWebsite()` in
-`CloudBoard.AppHost/Program.cs`), the same as CloudBoard.Angular was.
+`CloudBoard.AppHost/Program.cs`).
