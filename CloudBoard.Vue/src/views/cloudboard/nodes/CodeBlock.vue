@@ -1,8 +1,28 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import Card from 'primevue/card';
+import hljs from 'highlight.js/lib/core';
+import csharp from 'highlight.js/lib/languages/csharp';
+import css from 'highlight.js/lib/languages/css';
+import java from 'highlight.js/lib/languages/java';
+import javascript from 'highlight.js/lib/languages/javascript';
+import json from 'highlight.js/lib/languages/json';
+import python from 'highlight.js/lib/languages/python';
+import typescript from 'highlight.js/lib/languages/typescript';
+import xml from 'highlight.js/lib/languages/xml';
+import 'highlight.js/styles/vs2015.css';
 import type { Node } from '@/models/cloudboard';
 import { useNodeProperty } from '@/composables/useNodeProperty';
+
+// Only the languages offered in the properties panel, to keep the bundle small.
+hljs.registerLanguage('csharp', csharp);
+hljs.registerLanguage('css', css);
+hljs.registerLanguage('html', xml);
+hljs.registerLanguage('java', java);
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('python', python);
+hljs.registerLanguage('typescript', typescript);
 
 const props = defineProps<{ node: Node }>();
 const { getProperty } = useNodeProperty(() => props.node);
@@ -11,24 +31,27 @@ const code = computed(() => getProperty<string>('code', '// Your code here'));
 const language = computed(() => getProperty<string>('language', 'javascript'));
 const showLineNumbers = computed(() => getProperty<boolean>('showLineNumbers', true));
 
-// Basic implementation for JS/TS syntax highlighting, ported as-is from CloudBoard.Angular.
+const lineCount = computed(() => (code.value ? code.value.split('\n').length : 1));
+
+// highlight.js HTML-escapes the source, so the result is safe to render with v-html.
 const highlightedCode = computed(() => {
   if (!code.value) return '';
 
-  let highlighted = code.value;
-
-  if (language.value === 'javascript' || language.value === 'typescript') {
-    highlighted = highlighted.replace(
-      /\b(const|let|var|function|return|if|else|for|while|class|export|import|from|as|interface|type|extends|implements|new|this|super|switch|case|break|default|try|catch|finally|throw|async|await|static|public|private|protected)\b/g,
-      '<span class="keyword">$1</span>',
-    );
-    highlighted = highlighted.replace(/(['"`])(.*?)\1/g, '<span class="string">$1$2$1</span>');
-    highlighted = highlighted.replace(/\/\/(.*)/g, '<span class="comment">//$1</span>');
-    highlighted = highlighted.replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
+  const lang = hljs.getLanguage(language.value) ? language.value : 'plaintext';
+  if (lang === 'plaintext') {
+    return escapeHtml(code.value);
   }
-
-  return highlighted;
+  return hljs.highlight(code.value, { language: lang, ignoreIllegals: true }).value;
 });
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 </script>
 
 <template>
@@ -37,7 +60,13 @@ const highlightedCode = computed(() => {
       <div class="code-header">
         <span class="language-badge">{{ language }}</span>
       </div>
-      <pre :class="{ 'with-line-numbers': showLineNumbers }"><code v-html="highlightedCode"></code></pre>
+      <div class="code-body">
+        <pre v-if="showLineNumbers" class="line-numbers" aria-hidden="true"><span
+          v-for="line in lineCount"
+          :key="line"
+        >{{ line }}</span></pre>
+        <pre class="code"><code v-html="highlightedCode"></code></pre>
+      </div>
     </div>
   </Card>
 </template>
@@ -74,73 +103,36 @@ const highlightedCode = computed(() => {
   font-family: 'Consolas', 'Monaco', monospace;
 }
 
+.code-block-node .code-body {
+  display: flex;
+  background-color: #1e1e1e;
+}
+
 .code-block-node pre {
   margin: 0;
   padding: 12px;
-  white-space: pre-wrap;
-  word-wrap: break-word;
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 13px;
   line-height: 1.5;
-  color: #e0e0e0;
-  background-color: #1e1e1e;
+}
+
+.code-block-node pre.code {
+  flex: 1;
+  min-width: 0;
+  white-space: pre;
+  color: #dcdcdc;
   overflow-x: auto;
 }
 
-.code-block-node pre.with-line-numbers {
-  counter-reset: line;
-  padding-left: 3.5em;
-  position: relative;
-}
-
-.code-block-node pre.with-line-numbers::before {
-  content: '';
-  display: block;
-  position: absolute;
-  left: 3em;
-  top: 0;
-  bottom: 0;
-  border-left: 1px solid #3e3e3e;
-  height: 100%;
-}
-
-.code-block-node pre.with-line-numbers code {
-  display: block;
-  position: relative;
-  padding-left: 0.5em;
-}
-
-.code-block-node pre.with-line-numbers code::before {
-  counter-increment: line;
-  content: counter(line);
-  display: inline-block;
-  width: 3em;
-  padding-right: 1em;
-  margin-left: -3.5em;
+.code-block-node pre.line-numbers {
+  padding-right: 8px;
   text-align: right;
   color: #6d6d6d;
-  border-right: none;
+  border-right: 1px solid #3e3e3e;
+  user-select: none;
 }
 
-.code-block-node .keyword {
-  color: #569cd6;
-}
-.code-block-node .string {
-  color: #ce9178;
-}
-.code-block-node .comment {
-  color: #6a9955;
-}
-.code-block-node .number {
-  color: #b5cea8;
-}
-.code-block-node .function {
-  color: #dcdcaa;
-}
-.code-block-node .class {
-  color: #4ec9b0;
-}
-.code-block-node .variable {
-  color: #9cdcfe;
+.code-block-node pre.line-numbers span {
+  display: block;
 }
 </style>

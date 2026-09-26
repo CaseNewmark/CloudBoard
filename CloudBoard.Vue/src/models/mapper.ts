@@ -16,6 +16,9 @@ export function mapCloudBoardDtoToCloudBoard(dto: CloudBoardDto): CloudBoard {
   return {
     id: dto.id!,
     name: dto.name!,
+    description: dto.description ?? undefined,
+    createdBy: dto.createdBy,
+    createdAt: dto.createdAt ? new Date(dto.createdAt) : undefined,
     nodes: dto.nodes?.map((nodeDto) => mapNodeDtoToNode(nodeDto)) || [],
     connections: dto.connections?.map((connectionDto) => mapConnectionDtoToConnection(connectionDto)) || [],
   };
@@ -106,6 +109,7 @@ export function mapCloudBoardToCloudBoardDto(cloudBoard: CloudBoard): CloudBoard
   return {
     id: cloudBoard.id,
     name: cloudBoard.name,
+    description: cloudBoard.description || null,
     nodes: cloudBoard.nodes.map((node) => mapNodeToNodeDto(node)),
     connections: cloudBoard.connections.map((connection) => mapConnectionToConnectionDto(connection)),
   };

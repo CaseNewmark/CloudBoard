@@ -21,6 +21,7 @@ public class CloudBoardDbContext : DbContext
         modelBuilder.Entity<CloudBoard>(entity =>
         {
             entity.Property(s => s.Name).IsRequired().HasMaxLength(100);
+            entity.Property(s => s.Description).HasMaxLength(1000);
             entity.HasMany(s => s.Nodes)
                 .WithOne(n => n.CloudBoardDocument)
                 .HasForeignKey(n => n.CloudBoardDocumentId)

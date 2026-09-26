@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onBeforeUnmount, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -11,6 +12,33 @@ import * as nodeService from '@/services/nodeService';
 
 const visible = defineModel<boolean>('visible', { default: false });
 const nodeProperties = defineModel<Node | undefined>('nodeProperties', { default: undefined });
+
+const PROPERTY_SAVE_DELAY_MS = 500;
+let pendingSave: { node: Node; timer: ReturnType<typeof setTimeout> } | null = null;
+
+// Persist any pending edit for the previous node before switching or unmounting,
+// so a quick click elsewhere doesn't drop the last keystrokes.
+watch(
+  () => nodeProperties.value?.id,
+  () => flushPendingSave(),
+);
+onBeforeUnmount(flushPendingSave);
+
+function saveNode(node: Node): void {
+  cancelPendingSave();
+  void nodeService.updateNode(node.id, node);
+}
+
+function cancelPendingSave(): void {
+  if (!pendingSave) return;
+  clearTimeout(pendingSave.timer);
+  pendingSave = null;
+}
+
+function flushPendingSave(): void {
+  if (!pendingSave) return;
+  saveNode(pendingSave.node);
+}
 
 const nodeTypes = Object.values(NodeType);
 const nodeTypeLabels: Record<NodeType, string> = {
@@ -50,7 +78,7 @@ function changeNodeType(newType: NodeType): void {
   node.position = position;
   node.connectors = connectors;
 
-  void nodeService.updateNode(id, node);
+  saveNode(node);
 }
 
 function addLink(): void {
@@ -61,7 +89,7 @@ function addLink(): void {
   links.push({ title: 'New Link', url: 'https://example.com', iconClass: 'pi pi-external-link' });
   node.properties['links'] = links;
 
-  void nodeService.updateNode(node.id, node);
+  saveNode(node);
 }
 
 function removeLink(index: number): void {
@@ -72,7 +100,7 @@ function removeLink(index: number): void {
   links.splice(index, 1);
   node.properties['links'] = links;
 
-  void nodeService.updateNode(node.id, node);
+  saveNode(node);
 }
 
 function updateNodeName(name: string): void {
@@ -80,13 +108,15 @@ function updateNodeName(name: string): void {
   if (!node || !name) return;
 
   node.name = name;
-  void nodeService.updateNode(node.id, node);
+  saveNode(node);
 }
 
 function updateProperty(): void {
   const node = nodeProperties.value;
   if (!node) return;
-  void nodeService.updateNode(node.id, node);
+
+  cancelPendingSave();
+  pendingSave = { node, timer: setTimeout(() => saveNode(node), PROPERTY_SAVE_DELAY_MS) };
 }
 </script>
 
