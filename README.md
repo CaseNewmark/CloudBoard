@@ -92,6 +92,14 @@ For detailed development information, refer to the component-specific documentat
 
 > **Note:** The Vue frontend is automatically built and served by the .NET Aspire host, so there's no need to separately start it with `npm run dev`.
 
+### First Login
+
+The `cloudboard` Keycloak realm is imported from `CloudBoard.AppHost/Realms/cloudboard.json` and ships without users. Create one in the Keycloak admin console (`http://localhost:8080`, username `admin`; the password is the generated `keycloak-password` parameter, visible in the Aspire dashboard and stored in the AppHost's user secrets): **cloudboard realm → Users → Add user**, then set a non-temporary password under **Credentials**.
+
+The frontend must run on `http://localhost:5173`, the only redirect origin the realm's `cloudboard-client` accepts.
+
+> **Realm changes and existing data:** Keycloak only imports a realm that doesn't exist yet, and the AppHost keeps Keycloak data in a Docker volume. After pulling changes to `cloudboard.json`, remove the Keycloak volume (`docker volume ls | grep keycloak`, then `docker volume rm <name>`) with the AppHost stopped, so the updated realm is imported on the next start. This also deletes any users you created.
+
 ### Visual Studio Code Setup
 
 The repository includes a `.vscode/launch.json` file for easy debugging in Visual Studio Code:

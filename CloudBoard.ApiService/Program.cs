@@ -42,9 +42,9 @@ builder.Services.AddSignalR();
 // Add CORS for SignalR
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngularApp", policy =>
+    options.AddPolicy("AllowVueApp", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
+        policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); // Required for SignalR
@@ -71,7 +71,7 @@ var app = builder.Build();
 app.UseExceptionHandler();
 
 // Use CORS
-app.UseCors("AllowAngularApp");
+app.UseCors("AllowVueApp");
 
 // Use authentication and authorization
 app.UseAuthentication();

@@ -18,6 +18,9 @@ export default defineConfig({
     },
   },
   server: {
+    // Keycloak's cloudboard-client only allows redirects to this origin.
+    port: Number(process.env['PORT']) || 5173,
+    strictPort: true,
     proxy: apiServiceTarget
       ? {
           '/api': {
