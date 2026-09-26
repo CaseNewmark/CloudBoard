@@ -1,1 +1,0 @@
-dotnet run --input ../OpenApi/cloudboard-api.json --output ..\CloudBoard.Angular\src\app\services\api-client-service.ts

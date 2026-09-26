@@ -16,13 +16,6 @@
             "name": "Launch Vue",
             "url": "http://localhost:5173",
             "webRoot": "${workspaceFolder}\\CloudBoard.Vue"
-        },
-        {
-            "type": "chrome",
-            "request": "launch",
-            "name": "Launch Angular",
-            "url": "http://localhost:4200",
-            "webRoot": "${workspaceFolder}\\CloudBoard.Angular"
         }
     ],
     "compounds": [

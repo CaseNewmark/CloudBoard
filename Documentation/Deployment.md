@@ -29,7 +29,7 @@ For local development with .NET Aspire:
    ```
 
 3. Access the application:
-   - Frontend: http://localhost:4200
+   - Frontend: http://localhost:5173
    - API: http://localhost:5080/api
    - Aspire Dashboard: http://localhost:15152
 
@@ -51,11 +51,11 @@ For local development with .NET Aspire:
 
 #### Frontend Deployment
 
-1. Build the Angular application:
+1. Build the Vue application:
    ```pwsh
-   cd CloudBoard.Angular
+   cd CloudBoard.Vue
    npm install
-   ng build --prod
+   npm run build
    ```
 
 2. Deploy the contents of the `dist` folder to a web server
@@ -66,7 +66,7 @@ For local development with .NET Aspire:
 1. Build the Docker images:
    ```pwsh
    docker build -t cloudboard-api -f CloudBoard.ApiService/Dockerfile .
-   docker build -t cloudboard-angular -f CloudBoard.Angular/Dockerfile .
+   docker build -t cloudboard-vue -f CloudBoard.Vue/Dockerfile .
    ```
 
 2. Create a Docker Compose file:
@@ -90,7 +90,7 @@ For local development with .NET Aspire:
          ConnectionStrings__cloudboard: "Host=db;Database=cloudboard;Username=your_user;Password=your_password"
      
      web:
-       image: cloudboard-angular
+       image: cloudboard-vue
        ports:
          - "80:80"
        depends_on:
@@ -133,10 +133,10 @@ For local development with .NET Aspire:
 
 5. Deploy the frontend:
    ```pwsh
-   cd CloudBoard.Angular
+   cd CloudBoard.Vue
    npm install
-   ng build --prod
-   az webapp deployment source config-zip --resource-group your-resource-group --name cloudboard-frontend --src dist/cloudboard-angular.zip
+   npm run build
+   az webapp deployment source config-zip --resource-group your-resource-group --name cloudboard-frontend --src dist/cloudboard-vue.zip
    ```
 
 ## Environment Configuration
@@ -160,18 +160,9 @@ Key settings in `appsettings.json`:
 }
 ```
 
-### Angular Configuration
+### Vue Configuration
 
-The Angular app is configured to connect to the API service through a proxy in development (`proxy.conf.js`) and through environment files for production builds.
-
-For production, update `environment.prod.ts`:
-
-```typescript
-export const environment = {
-  production: true,
-  apiUrl: 'https://your-api-domain.com/api'
-};
-```
+The Vue app is configured to connect to the API service through a dev-server proxy (`vite.config.ts`) that reads the API service's address from Aspire-injected environment variables. For a production build outside of Aspire, point the app at the API by setting the appropriate environment variable before running `npm run build` (see `CloudBoard.Vue/README.md`), or by serving the app behind a reverse proxy that forwards `/api` to the backend.
 
 ## Health Monitoring
 
