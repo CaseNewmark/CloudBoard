@@ -83,3 +83,7 @@ _ReSharper*/
 *.bak
 *.tmp
 .azure
+
+# Deployment secrets
+deploy/.env
+deploy/compose.override.yml

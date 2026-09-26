@@ -1,0 +1,94 @@
+# Production-style deployment for a single host. See Documentation/Deployment.md.
+#   cd deploy && cp .env.example .env   # then edit .env
+#   docker compose up -d --build
+name: cloudboard
+
+services:
+  postgres:
+    # Same major version the Aspire AppHost uses in development.
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cloudboard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deploy/.env}
+      POSTGRES_DB: cloudboard
+    volumes:
+      # Postgres 18+ keeps its data in a versioned directory under /var/lib/postgresql.
+      - postgres-data:/var/lib/postgresql
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cloudboard -d cloudboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  keycloak:
+    # Same version the Aspire AppHost uses in development.
+    image: quay.io/keycloak/keycloak:26.6
+    restart: unless-stopped
+    # --import-realm only creates the cloudboard realm if it doesn't exist yet.
+    command: ["start", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: cloudboard
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      # Public URL (through Caddy). Internally Keycloak serves at /, which is what the API uses.
+      KC_HOSTNAME: ${PUBLIC_URL:?Set PUBLIC_URL in deploy/.env}/keycloak
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Set KEYCLOAK_ADMIN_PASSWORD in deploy/.env}
+      # Substituted into the realm's redirect URIs and web origins on import.
+      CLOUDBOARD_APP_URL: ${PUBLIC_URL}
+    volumes:
+      - ../CloudBoard.AppHost/Realms:/opt/keycloak/data/import:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # The image has no curl; ask the management port directly.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"UP\"' <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  api:
+    build:
+      context: ..
+      dockerfile: CloudBoard.ApiService/Dockerfile
+    restart: unless-stopped
+    environment:
+      ConnectionStrings__cloudboard: Host=postgres;Database=cloudboard;Username=cloudboard;Password=${POSTGRES_PASSWORD}
+      services__keycloak__http__0: http://keycloak:8080
+      AUTOMAPPER_LICENSE_KEY: ${AUTOMAPPER_LICENSE_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+
+  web:
+    build: ../CloudBoard.Vue
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      PUBLIC_URL: ${PUBLIC_URL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+      - keycloak
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:

@@ -606,10 +606,10 @@
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "http://localhost:5173/*"
+        "${CLOUDBOARD_APP_URL:http://localhost:5173}/*"
       ],
       "webOrigins": [
-        "http://localhost:5173"
+        "${CLOUDBOARD_APP_URL:http://localhost:5173}"
       ],
       "notBefore": 0,
       "bearerOnly": false,
@@ -625,7 +625,7 @@
         "realm_client": "false",
         "oidc.ciba.grant.enabled": "false",
         "backchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "http://localhost:5173/*",
+        "post.logout.redirect.uris": "${CLOUDBOARD_APP_URL:http://localhost:5173}/*",
         "oauth2.device.authorization.grant.enabled": "false",
         "backchannel.logout.revoke.offline.tokens": "false"
       },

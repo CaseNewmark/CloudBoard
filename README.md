@@ -42,6 +42,7 @@ For detailed development information, refer to the component-specific documentat
 - **[Vue Frontend Documentation](CloudBoard.Vue/README.md)**: Component architecture, development workflow, authentication, and UI patterns
 - **[API Service Documentation](CloudBoard.ApiService/README.md)**: API endpoints, authentication, database schema, SignalR real-time features, and deployment
 - **[Coding Guidelines](CODING_GUIDELINES.md)**: Development standards, conventions, and best practices for all project components
+- **[Deployment Guide](Documentation/Deployment.md)**: Hosting CloudBoard on a single server with Docker Compose and automatic HTTPS
 
 ## Development Setup
 
