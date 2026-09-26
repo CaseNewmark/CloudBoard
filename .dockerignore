@@ -1,0 +1,10 @@
+# Build context for CloudBoard.ApiService/Dockerfile (repo root)
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+.git/
+.vs/
+.vscode/
+.idea/
+deploy/

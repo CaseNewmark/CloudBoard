@@ -4,7 +4,12 @@ export interface TokenResponse {
   id_token?: string;
 }
 
-const baseUrl = 'http://localhost:8080/realms/cloudboard';
+// The dev server talks to the local Keycloak (the AppHost pins it to port 8080).
+// Production builds expect Keycloak behind the same origin under /keycloak, as set up
+// by deploy/Caddyfile. VITE_KEYCLOAK_URL overrides both at build time.
+const keycloakUrl =
+  import.meta.env.VITE_KEYCLOAK_URL ?? (import.meta.env.DEV ? 'http://localhost:8080' : `${window.location.origin}/keycloak`);
+const baseUrl = `${keycloakUrl.replace(/\/+$/, '')}/realms/cloudboard`;
 const clientId = 'cloudboard-client';
 
 export async function exchangeCodeForTokens(code: string): Promise<TokenResponse> {

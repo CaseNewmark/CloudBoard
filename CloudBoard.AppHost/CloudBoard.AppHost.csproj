@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>126a505a-512b-48a0-99bc-84d02a86d7e7</UserSecretsId>
-    <!-- PublishAsStaticWebsite() is still evaluation-only in Aspire.Hosting.JavaScript 13.4.3. -->
+    <!-- PublishAsStaticWebsite() is still evaluation-only in Aspire.Hosting.JavaScript 13.5.3. -->
     <NoWarn>$(NoWarn);ASPIREJAVASCRIPT001</NoWarn>
   </PropertyGroup>
 
@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.Keycloak" Version="13.5.3-preview.1.26425.3" />
-    <PackageReference Include="Aspire.Hosting.JavaScript" Version="13.4.3" />
+    <PackageReference Include="Aspire.Hosting.JavaScript" Version="13.5.3" />
     <PackageReference Include="Aspire.Hosting.PostgreSql" Version="13.5.3" />
   </ItemGroup>
 
