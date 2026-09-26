@@ -6,11 +6,18 @@ import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import type { CloudBoard } from '@/models/cloudboard';
 import * as cloudboardService from '@/services/cloudboardService';
+import { useAuthStore } from '@/stores/auth';
 import CloudboardEdit from './CloudboardEdit.vue';
 
 const router = useRouter();
 const confirm = useConfirm();
 const toast = useToast();
+const authStore = useAuthStore();
+
+/** Boards shared with the user can be opened and edited, but only the owner can rename, share or delete them. */
+function isOwner(board: CloudBoard): boolean {
+  return !board.createdBy || board.createdBy === authStore.currentUser?.id;
+}
 
 const availableBoards = ref<CloudBoard[]>([]);
 const showEditDialog = ref(false);
@@ -116,15 +123,17 @@ function onDelete(boardId: string, event: Event): void {
           @click="onOpen(board.id)"
           class="w-full justify-stretch! gap-2 items-center flex"
         >
-          <i class="pi pi-file"></i>
+          <i class="pi" :class="isOwner(board) ? 'pi-file' : 'pi-users'" :title="isOwner(board) ? undefined : 'Shared with you'"></i>
           <span class="grow flex flex-col text-left min-w-0">
             <span class="truncate">{{ board.name }}</span>
             <span v-if="board.description" class="truncate text-xs text-gray-500" :title="board.description">
               {{ board.description }}
             </span>
           </span>
-          <i class="pi pi-pencil z-10" @click="onEdit(board, $event)" title="Edit board"></i>
-          <i class="pi pi-trash z-10" @click="onDelete(board.id, $event)" title="Delete board"></i>
+          <template v-if="isOwner(board)">
+            <i class="pi pi-pencil z-10" @click="onEdit(board, $event)" title="Edit board"></i>
+            <i class="pi pi-trash z-10" @click="onDelete(board.id, $event)" title="Delete board"></i>
+          </template>
         </Button>
       </div>
     </div>

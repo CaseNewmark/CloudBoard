@@ -14,4 +14,5 @@ public class CloudBoard
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public List<Node> Nodes { get; set; } = new List<Node>();
     public List<Connection> Connections { get; set; } = new List<Connection>();
+    public List<CloudBoardMember> Members { get; set; } = new List<CloudBoardMember>();
 }

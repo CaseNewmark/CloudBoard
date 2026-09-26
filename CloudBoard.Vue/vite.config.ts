@@ -28,6 +28,12 @@ export default defineConfig({
             changeOrigin: true,
             secure: process.env['NODE_ENV'] !== 'development',
           },
+          '/hubs': {
+            target: apiServiceTarget,
+            changeOrigin: true,
+            secure: process.env['NODE_ENV'] !== 'development',
+            ws: true,
+          },
         }
       : undefined,
   },

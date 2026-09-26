@@ -9,4 +9,5 @@ public interface IConnectorService
     Task<ConnectorDto> CreateConnectorAsync(string nodeId, ConnectorDto connectorDto);
     Task<ConnectorDto?> UpdateConnectorAsync(ConnectorDto connectorDto);
     Task<bool> DeleteConnectorAsync(string connectorId);
+    Task<Guid?> GetNodeIdAsync(Guid connectorId);
 }

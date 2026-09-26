@@ -30,10 +30,12 @@ export async function updateCloudBoard(cloudBoard: CloudBoard): Promise<CloudBoa
 
 // Sharing isn't implemented on the backend yet - kept as stubs matching the
 // Angular service so the edit dialog has something to call.
-export async function getSharedUsers(_cloudBoardId: string): Promise<string[]> {
-  return [];
+export async function getSharedUsers(cloudBoardId: string): Promise<string[]> {
+  const members = await apiClient.getCloudBoardMembers(cloudBoardId);
+  return members.emails;
 }
 
-export async function updateSharing(_cloudBoardId: string, _sharedUsers: string[]): Promise<void> {
-  // no-op until the backend supports it
+export async function updateSharing(cloudBoardId: string, sharedUsers: string[]): Promise<string[]> {
+  const members = await apiClient.updateCloudBoardMembers(cloudBoardId, { emails: sharedUsers });
+  return members.emails;
 }

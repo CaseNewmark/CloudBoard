@@ -81,12 +81,8 @@ public class NodeRepository : INodeRepository
             existingNode.Type = node.Type;
             existingNode.Properties = node.Properties;
 
-            // Update connectors
-            existingNode.Connectors.Clear();
-            foreach (var connector in node.Connectors)
-            {
-                existingNode.Connectors.Add(connector);
-            }
+            // Connectors are managed through their own endpoints. Syncing them from the
+            // payload would let a caller attach connectors that belong to other nodes.
 
             await _dbContext.SaveChangesAsync();
             return existingNode;

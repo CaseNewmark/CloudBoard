@@ -94,7 +94,7 @@ For detailed development information, refer to the component-specific documentat
 
 ### First Login
 
-The `cloudboard` Keycloak realm is imported from `CloudBoard.AppHost/Realms/cloudboard.json` and ships without users. Create one in the Keycloak admin console (`http://localhost:8080`, username `admin`; the password is the generated `keycloak-password` parameter, visible in the Aspire dashboard and stored in the AppHost's user secrets): **cloudboard realm → Users → Add user**, then set a non-temporary password under **Credentials**.
+The `cloudboard` Keycloak realm is imported from `CloudBoard.AppHost/Realms/cloudboard.json` and ships without users. Create one in the Keycloak admin console (`http://localhost:8080`, username `admin`; the password is the generated `keycloak-password` parameter, visible in the Aspire dashboard and stored in the AppHost's user secrets): **cloudboard realm → Users → Add user**, then set a non-temporary password under **Credentials**. Give the user an email and turn on **Email verified**: boards are shared by email, and only verified emails are honoured.
 
 The frontend must run on `http://localhost:5173`, the only redirect origin the realm's `cloudboard-client` accepts.
 

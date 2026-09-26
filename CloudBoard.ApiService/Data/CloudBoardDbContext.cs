@@ -13,6 +13,7 @@ public class CloudBoardDbContext : DbContext
     public DbSet<Node> Nodes { get; set; }
     public DbSet<Connection> Connections { get; set; }
     public DbSet<Connector> Connectors { get; set; }
+    public DbSet<CloudBoardMember> CloudBoardMembers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,6 +31,17 @@ public class CloudBoardDbContext : DbContext
             entity.HasMany(s => s.Connections)
                 .WithOne(c => c.CloudBoardDocument)
                 .HasForeignKey(c => c.CloudBoardDocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CloudBoardMember>(entity =>
+        {
+            entity.HasKey(m => new { m.CloudBoardDocumentId, m.Email });
+            entity.Property(m => m.Email).IsRequired().HasMaxLength(320);
+            entity.HasIndex(m => m.Email);
+            entity.HasOne(m => m.CloudBoardDocument)
+                .WithMany(b => b.Members)
+                .HasForeignKey(m => m.CloudBoardDocumentId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
         

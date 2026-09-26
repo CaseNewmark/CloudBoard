@@ -59,36 +59,41 @@ CloudBoard.ApiService/
 
 ## API Endpoints
 
-The API uses minimal APIs pattern with the following endpoint groups:
+The API uses the minimal APIs pattern. Every endpoint requires authentication, and every board, node, connector and connection endpoint checks that the caller can access the board it belongs to (see [Access Control](#access-control)).
 
-### CloudBoard Endpoints (`/api/cloudboards`)
+### CloudBoard Endpoints
 
-- `GET /api/cloudboards` - List all cloudboards for authenticated user
-- `GET /api/cloudboards/{id}` - Get specific cloudboard by ID
-- `POST /api/cloudboards` - Create new cloudboard
-- `PUT /api/cloudboards/{id}` - Update existing cloudboard
-- `DELETE /api/cloudboards/{id}` - Delete cloudboard
+- `GET /api/cloudboard` - Boards the user owns plus boards shared with them
+- `GET /api/cloudboard/{id}` - Get a board with its nodes and connections (owner or member)
+- `POST /api/cloudboard` - Create a board (the caller becomes its owner)
+- `PUT /api/cloudboard/{id}` - Update name/description (owner only)
+- `DELETE /api/cloudboard/{id}` - Delete a board (owner only)
+- `GET /api/cloudboard/{id}/members` - Emails the board is shared with (owner or member)
+- `PUT /api/cloudboard/{id}/members` - Replace the share list, body `{ "emails": [...] }` (owner only)
 
-### Node Endpoints (`/api/nodes`)
+### Node Endpoints
 
-- `GET /api/nodes/{cloudboardId}` - Get all nodes for a cloudboard
-- `POST /api/nodes` - Create new node
-- `PUT /api/nodes/{id}` - Update existing node
-- `DELETE /api/nodes/{id}` - Delete node
-- `DELETE /api/nodes/batch` - Delete multiple nodes and connections
+- `POST /api/cloudboard/{cloudboardId}/node` - Create a node
+- `GET /api/node/{id}` - Get a node
+- `PUT /api/node/{id}` - Update a node (connectors in the body are ignored; use the connector endpoints)
+- `DELETE /api/node/{id}` - Delete a node
 
-### Connector Endpoints (`/api/connectors`)
+### Connector Endpoints
 
-- `GET /api/connectors/{nodeId}` - Get connectors for a node
-- `POST /api/connectors` - Create new connector
-- `PUT /api/connectors/{id}` - Update connector
-- `DELETE /api/connectors/{id}` - Delete connector
+- `POST /api/node/{nodeId}/connector` - Create a connector on a node
+- `GET /api/node/{nodeId}/connectors` - Get a node's connectors
+- `GET /api/connector/{id}` - Get a connector
+- `PUT /api/connector/{id}` - Update a connector
+- `DELETE /api/connector/{id}` - Delete a connector
 
-### Connection Endpoints (`/api/connections`)
+### Connection Endpoints
 
-- `GET /api/connections/{cloudboardId}` - Get connections for a cloudboard
-- `POST /api/connections` - Create new connection
-- `DELETE /api/connections/{id}` - Delete connection
+- `POST /api/cloudboard/{cloudboardId}/connection` - Create a connection (both connectors must be on this board)
+- `GET /api/cloudboard/{cloudboardId}/connection` - Get a board's connections
+- `GET /api/connection/{id}` - Get a connection
+- `GET /api/connector/{connectorId}/connections` - Get connections attached to a connector
+- `PUT /api/connection/{id}` - Update a connection
+- `DELETE /api/connection/{id}` - Delete a connection
 
 ## Authentication & Authorization
 
@@ -108,45 +113,62 @@ builder.Services.AddAuthentication()
     );
 ```
 
-### Protected Endpoints
+### Access Control
 
-All API endpoints require authentication. JWT tokens must be included in the Authorization header:
+All endpoints require a JWT in the Authorization header:
 
 ```
 Authorization: Bearer <jwt-token>
 ```
 
-### User Context
+Access is decided per board by `IBoardAccessService` (`Auth/BoardAccessService.cs`):
 
-Services can access the current user through `IHttpContextAccessor` and claims-based identity.
+- **Owner** (`CreatedBy` matches the token's `sub`): full access, including rename, sharing and delete.
+- **Member** (the token's email is in the board's share list): can view and edit nodes, connectors and connections.
+- **Anyone else**: `403`. Unknown IDs return `404`.
+
+Sharing is keyed on email and only honours the token's email if Keycloak marks it as verified (`email_verified: true`), so an unverified address never grants access.
 
 ## Real-time Features
 
 ### SignalR Hub
 
-The API includes a SignalR hub (`CloudBoardHub`) for real-time collaboration:
+`CloudBoardHub` is mapped at `/hubs/cloudboard`. Clients join the board they have open and receive every change other users make to it. The hub handles only membership and presence: all changes go through the REST API, which validates them and then broadcasts through `IBoardNotifier`.
 
-- **Connection Management**: Users join/leave cloudboard rooms
-- **Live Updates**: Real-time synchronization of changes
-- **Collaborative Editing**: Multiple users can edit simultaneously
+Browsers can't set headers on WebSocket requests, so the client sends its token as the `access_token` query parameter; the API accepts it only for `/hubs` paths.
 
 ### Hub Methods
 
-```csharp
-// Join a cloudboard room for real-time updates
-await connection.InvokeAsync("JoinCloudBoard", cloudboardId);
+```ts
+// Join a board (checks access); returns the users currently viewing it
+const viewers = await connection.invoke('JoinCloudBoard', boardId);
 
-// Leave a cloudboard room
-await connection.InvokeAsync("LeaveCloudBoard", cloudboardId);
+// Leave the board
+await connection.invoke('LeaveCloudBoard', boardId);
 ```
+
+A connection is on at most one board at a time; joining another board leaves the previous one.
 
 ### Client Events
 
-- `NodeAdded` - When a new node is created
-- `NodeUpdated` - When a node is modified
-- `NodeDeleted` - When a node is removed
-- `ConnectionAdded` - When a new connection is created
-- `ConnectionDeleted` - When a connection is removed
+Every event is sent as `(boardId, payload)`:
+
+- `NodeCreated`, `NodeUpdated` - payload is the node (connector changes are sent as `NodeUpdated`)
+- `NodeDeleted` - payload is the node ID
+- `ConnectionCreated`, `ConnectionUpdated` - payload is the connection
+- `ConnectionDeleted` - payload is the connection ID
+- `BoardUpdated` - payload is `{ id, name, description }`
+- `BoardDeleted` - the owner deleted the board
+- `AccessRevoked` - sent to a viewer who was removed from the share list
+- `PresenceChanged` - payload is the list of `{ userId, name }` viewing the board
+
+### Avoiding Echoes
+
+REST requests carry the caller's hub connection ID in the `X-SignalR-Connection-Id` header, and the notifier broadcasts to everyone in the board's group except that connection, since it has already applied the change locally.
+
+### Limitations
+
+Presence is tracked in memory (`BoardPresenceTracker`), which assumes a single API instance. Running several instances needs a SignalR backplane (e.g. Redis) and a shared presence store. Concurrent edits to the same node are last-write-wins.
 
 ## Database
 
@@ -164,7 +186,7 @@ The API uses Entity Framework Core with PostgreSQL:
 - **Node**: Individual elements in the flowchart
 - **Connector**: Connection points on nodes
 - **Connection**: Links between connectors
-- **User**: User information and ownership
+- **CloudBoardMember**: A user a board is shared with (by email)
 
 ### Migration Commands
 

@@ -88,7 +88,7 @@ public class ConnectionRepository : IConnectionRepository
             // Update the properties
             existingConnection.FromConnectorId = connection.FromConnectorId;
             existingConnection.ToConnectorId = connection.ToConnectorId;
-            existingConnection.CloudBoardDocumentId = connection.CloudBoardDocumentId;
+            // The board a connection belongs to never changes.
 
             await _dbContext.SaveChangesAsync();
             return existingConnection;
