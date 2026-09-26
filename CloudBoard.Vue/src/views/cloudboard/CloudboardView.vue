@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import { type Component, markRaw, onMounted, onUnmounted, provide, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { type Component, computed, markRaw, onMounted, onUnmounted, provide, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { ConnectionLineType, ConnectionMode, type Edge, type Node as FlowNode, useVueFlow, VueFlow } from '@vue-flow/core';
 import '@vue-flow/core/dist/style.css';
 import ContextMenu from 'primevue/contextmenu';
 import ProgressSpinner from 'primevue/progressspinner';
 import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 import type { MenuItem } from 'primevue/menuitem';
 
 import CloudboardOpen from './CloudboardOpen.vue';
 import CloudboardToolbar from './Toolbar.vue';
 import PropertiesPanel from './PropertiesPanel.vue';
 import CloudboardNode from './CloudboardNode.vue';
+import PresenceAvatars from './PresenceAvatars.vue';
 
 import { type CloudBoard, type Connection, type ConnectorPosition, type Node, type NodePosition, NodeType } from '@/models/cloudboard';
 import * as cloudboardService from '@/services/cloudboardService';
@@ -20,9 +22,14 @@ import * as connectionService from '@/services/connectionService';
 import { getFlowContextMenuItems, getNodeContextMenuItems } from '@/services/contextMenu';
 import { useFlowControlStore, ZoomAction } from '@/stores/flowControl';
 import { connectionDragInjectionKey, useConnectionDrag } from '@/composables/useConnectionDrag';
+import { useBoardRealtime } from '@/composables/useBoardRealtime';
+import { useAuthStore } from '@/stores/auth';
 
 const route = useRoute();
+const router = useRouter();
 const confirm = useConfirm();
+const toast = useToast();
+const authStore = useAuthStore();
 const flowControlStore = useFlowControlStore();
 
 const currentCloudBoard = ref<CloudBoard>();
@@ -72,6 +79,7 @@ const {
   zoomOut,
   screenToFlowCoordinate,
   updateNodeInternals,
+  findNode,
 } = useVueFlow();
 
 function connectorNodeId(connectorId: string): string | undefined {
@@ -93,6 +101,122 @@ function toFlowEdge(connection: Connection): Edge {
   };
 }
 
+// --- live updates from other viewers -------------------------------------
+
+const realtime = useBoardRealtime({
+  onNodeCreated(node) {
+    const board = currentCloudBoard.value;
+    if (!board || board.nodes.some((n) => n.id === node.id)) return;
+    board.nodes.push(node);
+    addNodes([toFlowNode(node)]);
+  },
+
+  onNodeUpdated(updated) {
+    const board = currentCloudBoard.value;
+    if (!board) return;
+    const node = board.nodes.find((n) => n.id === updated.id);
+    if (!node) {
+      board.nodes.push(updated);
+      addNodes([toFlowNode(updated)]);
+      return;
+    }
+
+    // Mutate in place: the flow node's data and the properties panel hold this same object.
+    node.name = updated.name;
+    node.type = updated.type;
+    node.position = updated.position;
+    node.properties = updated.properties;
+    node.connectors = updated.connectors;
+
+    const flowNode = findNode(node.id);
+    if (flowNode) {
+      flowNode.type = updated.type;
+      flowNode.position = { ...updated.position };
+    }
+    updateNodeInternals([node.id]);
+  },
+
+  onNodeDeleted(nodeId) {
+    const board = currentCloudBoard.value;
+    const node = board?.nodes.find((n) => n.id === nodeId);
+    if (!board || !node) return;
+
+    const attached = board.connections.filter((conn) =>
+      node.connectors.some((c) => c.id === conn.fromConnectorId || c.id === conn.toConnectorId),
+    );
+    board.nodes = board.nodes.filter((n) => n.id !== nodeId);
+    board.connections = board.connections.filter((c) => !attached.includes(c));
+    removeEdges(attached.map((c) => c.id));
+    removeNodes([nodeId]);
+
+    if (propertiesPanelNodeProperties.value?.id === nodeId) {
+      propertiesPanelVisible.value = false;
+      propertiesPanelNodeProperties.value = undefined;
+    }
+  },
+
+  onConnectionCreated(connection) {
+    const board = currentCloudBoard.value;
+    if (!board || board.connections.some((c) => c.id === connection.id)) return;
+    board.connections.push(connection);
+    if (connectorNodeId(connection.fromConnectorId) && connectorNodeId(connection.toConnectorId)) {
+      addEdges([toFlowEdge(connection)]);
+    }
+  },
+
+  onConnectionUpdated(connection) {
+    const board = currentCloudBoard.value;
+    if (!board) return;
+    board.connections = [...board.connections.filter((c) => c.id !== connection.id), connection];
+    removeEdges([connection.id]);
+    addEdges([toFlowEdge(connection)]);
+  },
+
+  onConnectionDeleted(connectionId) {
+    const board = currentCloudBoard.value;
+    if (!board) return;
+    board.connections = board.connections.filter((c) => c.id !== connectionId);
+    removeEdges([connectionId]);
+  },
+
+  onBoardUpdated({ name, description }) {
+    if (!currentCloudBoard.value) return;
+    currentCloudBoard.value.name = name;
+    currentCloudBoard.value.description = description ?? undefined;
+  },
+
+  onBoardGone(reason) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Board closed',
+      detail: reason === 'deleted' ? 'This board was deleted by its owner.' : 'This board is no longer shared with you.',
+      life: 6000,
+    });
+    currentCloudBoard.value = undefined;
+    propertiesPanelVisible.value = false;
+    void router.push('/cloudboard');
+  },
+
+  onResync() {
+    const id = currentCloudBoard.value?.id;
+    if (id) void refreshCloudBoard(id);
+  },
+});
+
+const otherViewers = computed(() => realtime.presence.value.filter((u) => u.userId !== authStore.currentUser?.id));
+
+/** Reloads the board in place (keeping the viewport), e.g. after a reconnect may have missed events. */
+async function refreshCloudBoard(cloudboardId: string): Promise<void> {
+  try {
+    const cloudboard = await cloudboardService.loadCloudBoardById(cloudboardId);
+    currentCloudBoard.value = cloudboard;
+    setNodes(cloudboard.nodes.map(toFlowNode));
+    setEdges(cloudboard.connections.map(toFlowEdge));
+  } catch (error) {
+    console.error('Error refreshing cloudboard', error);
+  }
+}
+
 // --- loading -----------------------------------------------------------
 
 watch(
@@ -109,6 +233,8 @@ async function loadCloudBoardById(cloudboardId: string): Promise<void> {
   isLoading.value = true;
   canvasVisible.value = false;
   try {
+    // Join live updates before fetching, so no change made in between is missed.
+    await realtime.joinBoard(cloudboardId);
     const cloudboard = await cloudboardService.loadCloudBoardById(cloudboardId);
     currentCloudBoard.value = cloudboard;
     setNodes(cloudboard.nodes.map(toFlowNode));
@@ -344,6 +470,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
     <div class="toolbar-container">
       <CloudboardToolbar />
       <span>Zoom Level: {{ currentZoomLevel.toFixed(2) }}</span>
+      <PresenceAvatars :users="otherViewers" />
     </div>
     <div class="grow h-full flex flex-row overflow-hidden">
       <ContextMenu ref="flowContextMenu" :model="flowContextMenuItems" />

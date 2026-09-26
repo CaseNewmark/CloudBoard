@@ -1,4 +1,6 @@
+using CloudBoard.ApiService.Auth;
 using CloudBoard.ApiService.Dtos;
+using CloudBoard.ApiService.Hubs;
 using CloudBoard.ApiService.Services.Contracts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -11,39 +13,64 @@ public static class NodeEndpoints
 {
     public static void MapNodeEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/cloudboard/{cloudboardId:guid}/node", async (string cloudboardId, [FromBody] NodeDto nodeDto, INodeService nodeService) =>
+        app.MapPost("/api/cloudboard/{cloudboardId:guid}/node", async (Guid cloudboardId, [FromBody] NodeDto nodeDto, INodeService nodeService, IBoardAccessService boardAccess, IBoardNotifier notifier, HttpContext context) =>
         {
-            var newNode = await nodeService.CreateNodeAsync(cloudboardId, nodeDto);
+            var access = await boardAccess.ForBoardAsync(cloudboardId, context.User);
+            if (access.DenyUnlessCanEdit() is { } denied) return denied;
+
+            // Connectors are created through their own endpoint.
+            nodeDto.Connectors = new List<ConnectorDto>();
+            var newNode = await nodeService.CreateNodeAsync(cloudboardId.ToString(), nodeDto);
+            await notifier.NodeCreatedAsync(cloudboardId, newNode);
             return TypedResults.Created($"/api/cloudboard/{cloudboardId}/node/{newNode.Id}", newNode);
         })
         .WithName("CreateNode")
-        .Produces<NodeDto>();
+        .Produces<NodeDto>(201)
+        .RequireAuthorization();
 
-        app.MapGet("/api/node/{id:guid}", async (string nodeId, INodeService nodeService) =>
+        app.MapGet("/api/node/{nodeId:guid}", async (Guid nodeId, INodeService nodeService, IBoardAccessService boardAccess, HttpContext context) =>
         {
-            var node = await nodeService.GetNodeByIdAsync(nodeId);
-            return node is not null
-                ? TypedResults.Ok(node)
-                : Results.NotFound();
+            var access = await boardAccess.ForNodeAsync(nodeId, context.User);
+            if (access.DenyUnlessCanEdit() is { } denied) return denied;
+
+            var node = await nodeService.GetNodeByIdAsync(nodeId.ToString());
+            return node is not null ? TypedResults.Ok(node) : Results.NotFound();
         })
         .WithName("GetNodeById")
-        .Produces<NodeDto>();
+        .Produces<NodeDto>()
+        .RequireAuthorization();
 
-        app.MapPut("/api/node/{nodeId:guid}", async (string nodeId, [FromBody] NodeDto nodeDto, INodeService nodeService) =>
+        app.MapPut("/api/node/{nodeId:guid}", async (Guid nodeId, [FromBody] NodeDto nodeDto, INodeService nodeService, IBoardAccessService boardAccess, IBoardNotifier notifier, HttpContext context) =>
         {
+            var access = await boardAccess.ForNodeAsync(nodeId, context.User);
+            if (access.DenyUnlessCanEdit() is { } denied) return denied;
+
+            // The route decides which node is updated, never the body.
+            nodeDto.Id = nodeId.ToString();
             var updated = await nodeService.UpdateNodeAsync(nodeDto);
-            return updated is not null
-                ? TypedResults.Ok(updated)
-                : Results.NotFound();
+            if (updated is null) return Results.NotFound();
+
+            await notifier.NodeUpdatedAsync(access.BoardId!.Value, updated);
+            return TypedResults.Ok(updated);
         })
         .WithName("UpdateNode")
-        .Produces<NodeDto>();
+        .Produces<NodeDto>()
+        .RequireAuthorization();
 
-        app.MapDelete("/api/node/{nodeId:guid}", async (string nodeId, INodeService nodeService) =>
+        app.MapDelete("/api/node/{nodeId:guid}", async (Guid nodeId, INodeService nodeService, IBoardAccessService boardAccess, IBoardNotifier notifier, HttpContext context) =>
         {
-            var deleted = await nodeService.DeleteNodeAsync(nodeId);
+            var access = await boardAccess.ForNodeAsync(nodeId, context.User);
+            if (access.DenyUnlessCanEdit() is { } denied) return denied;
+
+            var deleted = await nodeService.DeleteNodeAsync(nodeId.ToString());
+            if (deleted)
+            {
+                await notifier.NodeDeletedAsync(access.BoardId!.Value, nodeId);
+            }
             return TypedResults.Ok(deleted);
         })
-        .WithName("DeleteNode");
+        .WithName("DeleteNode")
+        .Produces<bool>()
+        .RequireAuthorization();
     }
 }

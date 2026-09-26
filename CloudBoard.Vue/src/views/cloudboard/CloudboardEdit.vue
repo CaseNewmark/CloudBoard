@@ -134,6 +134,7 @@ async function saveShareSettings(boardId: string): Promise<void> {
 
       <div class="flex flex-col gap-2">
         <label class="font-semibold text-sm">Share with Users</label>
+        <span class="text-xs text-gray-500">People you share with can view and edit this board.</span>
         <div class="flex gap-2">
           <InputText
             type="email"

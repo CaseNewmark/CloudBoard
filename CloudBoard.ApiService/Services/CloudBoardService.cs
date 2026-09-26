@@ -36,11 +36,11 @@ public class CloudBoardService : ICloudBoardService
         }
     }
 
-    public async Task<IEnumerable<CloudBoardDto>> GetAllCloudBoardDocumentsByUserAsync(string userId)
+    public async Task<IEnumerable<CloudBoardDto>> GetAllCloudBoardDocumentsByUserAsync(string userId, string? verifiedEmail)
     {
         try
         {
-            var documents = await _cloudBoardRepository.GetAllDocumentsByUserAsync(userId);
+            var documents = await _cloudBoardRepository.GetAllDocumentsByUserAsync(userId, verifiedEmail);
             return _mapper.Map<IEnumerable<CloudBoardDto>>(documents);
         }
         catch (Exception ex)
@@ -49,6 +49,12 @@ public class CloudBoardService : ICloudBoardService
             throw;
         }
     }
+
+    public Task<IReadOnlyList<string>> GetMembersAsync(Guid documentId) =>
+        _cloudBoardRepository.GetMemberEmailsAsync(documentId);
+
+    public Task<IReadOnlyList<string>> SetMembersAsync(Guid documentId, IReadOnlyCollection<string> emails) =>
+        _cloudBoardRepository.ReplaceMembersAsync(documentId, emails);
 
     public async Task<CloudBoardDto> GetCloudBoardDocumentByIdAsync(string id)
     {

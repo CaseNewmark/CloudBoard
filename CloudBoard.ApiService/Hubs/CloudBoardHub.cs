@@ -1,192 +1,69 @@
+using CloudBoard.ApiService.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using System.Security.Claims;
 
 namespace CloudBoard.ApiService.Hubs;
 
+/// <summary>
+/// Clients join the board they have open and receive change notifications for it.
+/// All changes go through the REST API, which validates them and broadcasts via
+/// <see cref="IBoardNotifier"/>; the hub itself only handles membership and presence.
+/// </summary>
 [Authorize]
 public class CloudBoardHub : Hub
 {
-    private const string CLOUDBOARD_GROUP_PREFIX = "CloudBoard_";
+    private readonly IBoardAccessService _boardAccess;
+    private readonly BoardPresenceTracker _presence;
 
-    public override async Task OnConnectedAsync()
+    public CloudBoardHub(IBoardAccessService boardAccess, BoardPresenceTracker presence)
     {
-        var userId = GetUserId();
-        var userName = GetUserName();
-        
-        Console.WriteLine($"User {userName} ({userId}) connected to CloudBoard hub");
-        await base.OnConnectedAsync();
+        _boardAccess = boardAccess;
+        _presence = presence;
+    }
+
+    public static string GroupName(Guid boardId) => $"CloudBoard_{boardId}";
+
+    public async Task<IReadOnlyList<BoardPresenceUser>> JoinCloudBoard(Guid boardId)
+    {
+        var user = Context.User!;
+        var access = await _boardAccess.ForBoardAsync(boardId, user);
+        if (!access.CanEdit)
+        {
+            throw new HubException("You don't have access to this board.");
+        }
+
+        var previousBoardId = _presence.Join(new BoardConnection(
+            Context.ConnectionId, boardId, user.GetUserId()!, user.GetVerifiedEmail(), user.GetDisplayName()));
+
+        if (previousBoardId is { } previous && previous != boardId)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, GroupName(previous));
+            await BroadcastPresenceAsync(previous);
+        }
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(boardId));
+        await BroadcastPresenceAsync(boardId);
+        return _presence.GetUsers(boardId);
+    }
+
+    public async Task LeaveCloudBoard(Guid boardId)
+    {
+        if (_presence.Leave(Context.ConnectionId) is { } left)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, GroupName(left));
+            await BroadcastPresenceAsync(left);
+        }
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var userId = GetUserId();
-        var userName = GetUserName();
-        
-        Console.WriteLine($"User {userName} ({userId}) disconnected from CloudBoard hub");
+        if (_presence.Leave(Context.ConnectionId) is { } left)
+        {
+            await BroadcastPresenceAsync(left);
+        }
         await base.OnDisconnectedAsync(exception);
     }
 
-    // Join a specific CloudBoard room
-    public async Task JoinCloudBoard(string cloudBoardId)
-    {
-        var userId = GetUserId();
-        var userName = GetUserName();
-        var groupName = $"{CLOUDBOARD_GROUP_PREFIX}{cloudBoardId}";
-
-        await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
-        
-        // Notify others in the group that a user joined
-        await Clients.Group(groupName).SendAsync("UserJoined", new
-        {
-            UserId = userId,
-            UserName = userName,
-            CloudBoardId = cloudBoardId,
-            JoinedAt = DateTime.UtcNow
-        });
-
-        Console.WriteLine($"User {userName} joined CloudBoard {cloudBoardId}");
-    }
-
-    // Leave a specific CloudBoard room
-    public async Task LeaveCloudBoard(string cloudBoardId)
-    {
-        var userId = GetUserId();
-        var userName = GetUserName();
-        var groupName = $"{CLOUDBOARD_GROUP_PREFIX}{cloudBoardId}";
-
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
-        
-        // Notify others in the group that a user left
-        await Clients.Group(groupName).SendAsync("UserLeft", new
-        {
-            UserId = userId,
-            UserName = userName,
-            CloudBoardId = cloudBoardId,
-            LeftAt = DateTime.UtcNow
-        });
-
-        Console.WriteLine($"User {userName} left CloudBoard {cloudBoardId}");
-    }
-
-    // Send a message to all users in a CloudBoard
-    public async Task SendMessageToCloudBoard(string cloudBoardId, string message)
-    {
-        var userId = GetUserId();
-        var userName = GetUserName();
-        var groupName = $"{CLOUDBOARD_GROUP_PREFIX}{cloudBoardId}";
-
-        await Clients.Group(groupName).SendAsync("MessageReceived", new
-        {
-            UserId = userId,
-            UserName = userName,
-            CloudBoardId = cloudBoardId,
-            Message = message,
-            Timestamp = DateTime.UtcNow
-        });
-    }
-
-    // Broadcast node position changes
-    public async Task UpdateNodePosition(string cloudBoardId, string nodeId, double x, double y)
-    {
-        var userId = GetUserId();
-        var userName = GetUserName();
-        var groupName = $"{CLOUDBOARD_GROUP_PREFIX}{cloudBoardId}";
-
-        await Clients.Group(groupName).SendAsync("NodePositionUpdated", new
-        {
-            UserId = userId,
-            UserName = userName,
-            CloudBoardId = cloudBoardId,
-            NodeId = nodeId,
-            X = x,
-            Y = y,
-            Timestamp = DateTime.UtcNow
-        });
-    }
-
-    // Broadcast node creation
-    public async Task CreateNode(string cloudBoardId, object nodeData)
-    {
-        var userId = GetUserId();
-        var userName = GetUserName();
-        var groupName = $"{CLOUDBOARD_GROUP_PREFIX}{cloudBoardId}";
-
-        await Clients.Group(groupName).SendAsync("NodeCreated", new
-        {
-            UserId = userId,
-            UserName = userName,
-            CloudBoardId = cloudBoardId,
-            NodeData = nodeData,
-            Timestamp = DateTime.UtcNow
-        });
-    }
-
-    // Broadcast node deletion
-    public async Task DeleteNode(string cloudBoardId, string nodeId)
-    {
-        var userId = GetUserId();
-        var userName = GetUserName();
-        var groupName = $"{CLOUDBOARD_GROUP_PREFIX}{cloudBoardId}";
-
-        await Clients.Group(groupName).SendAsync("NodeDeleted", new
-        {
-            UserId = userId,
-            UserName = userName,
-            CloudBoardId = cloudBoardId,
-            NodeId = nodeId,
-            Timestamp = DateTime.UtcNow
-        });
-    }
-
-    // Broadcast connection creation
-    public async Task CreateConnection(string cloudBoardId, object connectionData)
-    {
-        var userId = GetUserId();
-        var userName = GetUserName();
-        var groupName = $"{CLOUDBOARD_GROUP_PREFIX}{cloudBoardId}";
-
-        await Clients.Group(groupName).SendAsync("ConnectionCreated", new
-        {
-            UserId = userId,
-            UserName = userName,
-            CloudBoardId = cloudBoardId,
-            ConnectionData = connectionData,
-            Timestamp = DateTime.UtcNow
-        });
-    }
-
-    // Broadcast user cursor position for collaboration
-    public async Task UpdateCursorPosition(string cloudBoardId, double x, double y)
-    {
-        var userId = GetUserId();
-        var userName = GetUserName();
-        var groupName = $"{CLOUDBOARD_GROUP_PREFIX}{cloudBoardId}";
-
-        await Clients.Group(groupName).SendAsync("CursorPositionUpdated", new
-        {
-            UserId = userId,
-            UserName = userName,
-            CloudBoardId = cloudBoardId,
-            X = x,
-            Y = y,
-            Timestamp = DateTime.UtcNow
-        });
-    }
-
-    // Helper methods
-    private string GetUserId()
-    {
-        return Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-               ?? Context.User?.FindFirst("sub")?.Value 
-               ?? "unknown";
-    }
-
-    private string GetUserName()
-    {
-        return Context.User?.FindFirst(ClaimTypes.Name)?.Value 
-               ?? Context.User?.FindFirst("preferred_username")?.Value 
-               ?? Context.User?.FindFirst("name")?.Value 
-               ?? "Unknown User";
-    }
+    private Task BroadcastPresenceAsync(Guid boardId) =>
+        Clients.Group(GroupName(boardId)).SendAsync(BoardEvents.PresenceChanged, boardId, _presence.GetUsers(boardId));
 }

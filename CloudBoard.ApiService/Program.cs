@@ -1,10 +1,12 @@
 using System.Reflection;
 using AutoMapper;
+using CloudBoard.ApiService.Auth;
 using CloudBoard.ApiService.Data;
 using CloudBoard.ApiService.Endpoints;
 using CloudBoard.ApiService.Hubs;
 using CloudBoard.ApiService.Services;
 using CloudBoard.ApiService.Services.Contracts;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +34,21 @@ builder.Services.AddAuthentication()
                     {
                         options.RequireHttpsMetadata = false; // Set to true in production
                         options.Audience = "cloudboard-client";
+
+                        // Browsers can't set headers on WebSocket requests, so the SignalR
+                        // client sends the token in the query string for the hub endpoint.
+                        options.Events = new JwtBearerEvents
+                        {
+                            OnMessageReceived = context =>
+                            {
+                                var accessToken = context.Request.Query["access_token"];
+                                if (!string.IsNullOrEmpty(accessToken) && context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+                                {
+                                    context.Token = accessToken;
+                                }
+                                return Task.CompletedTask;
+                            }
+                        };
                     }
                 );
 builder.Services.AddAuthorizationBuilder();
@@ -62,8 +79,11 @@ builder.Services.AddScoped<IConnectorRepository, ConnectorRepository>();
 builder.Services.AddScoped<IConnectionService, ConnectionService>();
 builder.Services.AddScoped<IConnectionRepository, ConnectionRepository>();
 
-// Add SignalR hub service
-builder.Services.AddScoped<ICloudBoardHubService, CloudBoardHubService>();
+// Board access checks, sharing and real-time notifications
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IBoardAccessService, BoardAccessService>();
+builder.Services.AddSingleton<BoardPresenceTracker>();
+builder.Services.AddScoped<IBoardNotifier, BoardNotifier>();
 
 var app = builder.Build();
 

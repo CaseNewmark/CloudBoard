@@ -19,6 +19,10 @@ export interface CloudBoardDto {
   [key: string]: any;
 }
 
+export interface CloudBoardMembersDto {
+  emails: string[];
+}
+
 export interface ConnectionDto {
   id?: string;
   fromConnectorId: string;
@@ -76,6 +80,12 @@ export interface AuthHook {
 }
 
 let authHook: AuthHook | null = null;
+let hubConnectionIdProvider: (() => string | null) | null = null;
+
+/** Lets the API skip broadcasting a change back to the hub connection that made it. */
+export function setHubConnectionIdProvider(provider: () => string | null): void {
+  hubConnectionIdProvider = provider;
+}
 
 /** Wired up once from the auth store at app startup; keeps this module decoupled from Pinia. */
 export function setAuthHook(hook: AuthHook): void {
@@ -99,6 +109,9 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
       const token = authHook.getAccessToken();
       if (token) headers['Authorization'] = `Bearer ${token}`;
     }
+
+    const hubConnectionId = hubConnectionIdProvider?.();
+    if (hubConnectionId) headers['X-SignalR-Connection-Id'] = hubConnectionId;
 
     return fetch(url, {
       method,
@@ -151,6 +164,14 @@ export const apiClient = {
 
   deleteCloudBoard(cloudboardId: string): Promise<boolean> {
     return request('DELETE', `/api/cloudboard/${encodeURIComponent(cloudboardId)}`);
+  },
+
+  getCloudBoardMembers(cloudboardId: string): Promise<CloudBoardMembersDto> {
+    return request('GET', `/api/cloudboard/${encodeURIComponent(cloudboardId)}/members`);
+  },
+
+  updateCloudBoardMembers(cloudboardId: string, body: CloudBoardMembersDto): Promise<CloudBoardMembersDto> {
+    return request('PUT', `/api/cloudboard/${encodeURIComponent(cloudboardId)}/members`, body);
   },
 
   createNode(cloudboardId: string, body: NodeDto): Promise<NodeDto> {

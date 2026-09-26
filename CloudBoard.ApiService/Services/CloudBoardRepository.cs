@@ -29,11 +29,36 @@ public class CloudBoardRepository : ICloudBoardRepository
             .FirstOrDefaultAsync(d => d.Id == id);
     }
 
-    public async Task<IEnumerable<Data.CloudBoard>> GetAllDocumentsByUserAsync(string userId)
+    public async Task<IEnumerable<Data.CloudBoard>> GetAllDocumentsByUserAsync(string userId, string? verifiedEmail)
     {
         return await _dbContext.CloudBoardDocuments
-            .Where(d => d.CreatedBy == userId)
+            .Where(d => d.CreatedBy == userId
+                        || (verifiedEmail != null && d.Members.Any(m => m.Email == verifiedEmail)))
             .ToListAsync();
+    }
+
+    public async Task<IReadOnlyList<string>> GetMemberEmailsAsync(Guid documentId)
+    {
+        return await _dbContext.CloudBoardMembers
+            .Where(m => m.CloudBoardDocumentId == documentId)
+            .OrderBy(m => m.Email)
+            .Select(m => m.Email)
+            .ToListAsync();
+    }
+
+    public async Task<IReadOnlyList<string>> ReplaceMembersAsync(Guid documentId, IReadOnlyCollection<string> emails)
+    {
+        var existing = await _dbContext.CloudBoardMembers
+            .Where(m => m.CloudBoardDocumentId == documentId)
+            .ToListAsync();
+
+        _dbContext.CloudBoardMembers.RemoveRange(existing.Where(m => !emails.Contains(m.Email)));
+        _dbContext.CloudBoardMembers.AddRange(emails
+            .Where(email => existing.All(m => m.Email != email))
+            .Select(email => new CloudBoardMember { CloudBoardDocumentId = documentId, Email = email }));
+
+        await _dbContext.SaveChangesAsync();
+        return await GetMemberEmailsAsync(documentId);
     }
 
     public async Task UpdateDocumentAsync(Data.CloudBoard document)

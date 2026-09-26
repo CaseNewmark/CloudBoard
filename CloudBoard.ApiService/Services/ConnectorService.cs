@@ -60,6 +60,12 @@ public class ConnectorService : IConnectorService
         }
     }
 
+    public async Task<Guid?> GetNodeIdAsync(Guid connectorId)
+    {
+        var connector = await _connectorRepository.GetConnectorByIdAsync(connectorId);
+        return connector?.NodeId;
+    }
+
     public async Task<ConnectorDto> CreateConnectorAsync(string id, ConnectorDto connectorDto)
     {
         var nodeId = Guid.Parse(id);

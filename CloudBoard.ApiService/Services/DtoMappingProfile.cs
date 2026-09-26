@@ -48,7 +48,8 @@ public class DtoMappingProfile : Profile
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()));
             
         CreateMap<CloudBoardDto, Data.CloudBoard>()
-            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => string.IsNullOrEmpty(src.Id) ? Guid.Empty : Guid.Parse(src.Id)));
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => string.IsNullOrEmpty(src.Id) ? Guid.Empty : Guid.Parse(src.Id)))
+            .ForMember(dest => dest.Members, opt => opt.Ignore());
     }
 }
 
