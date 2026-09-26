@@ -16,7 +16,7 @@ function login(): void {
           <i class="pi pi-clipboard text-purple-800" style="font-size: 3rem"></i>
         </div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Sign in to CloudBoard</h2>
-        <p class="mt-2 text-center text-sm text-gray-600">Access your projects, Cloudboards, and timeline</p>
+        <p class="mt-2 text-center text-sm text-gray-600">Access your Cloudboards</p>
       </div>
       <div class="mt-8 space-y-6">
         <div class="text-center">

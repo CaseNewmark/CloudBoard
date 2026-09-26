@@ -83,15 +83,36 @@ public static class ConnectionEndpoints
         .ProducesValidationProblem()
         .RequireAuthorization();
 
-        app.MapDelete("/api/connection/{connectionId:guid}", async (Guid connectionId, IConnectionService connectionService, IBoardAccessService boardAccess, IBoardNotifier notifier, HttpContext context) =>
+        app.MapDelete("/api/connection/{connectionId:guid}", async (Guid connectionId, IConnectionService connectionService, IConnectorService connectorService, INodeService nodeService, IBoardAccessService boardAccess, IBoardNotifier notifier, HttpContext context) =>
         {
             var access = await boardAccess.ForConnectionAsync(connectionId, context.User);
             if (access.DenyUnlessCanEdit() is { } denied) return denied;
 
+            // Deleting a connection also removes its connectors, which changes the nodes they sat on.
+            var nodeIds = new HashSet<Guid>();
+            if (await connectionService.GetConnectionByIdAsync(connectionId.ToString()) is { } connection)
+            {
+                foreach (var connectorId in new[] { connection.FromConnectorId, connection.ToConnectorId })
+                {
+                    if (Guid.TryParse(connectorId, out var id) && await connectorService.GetNodeIdAsync(id) is { } nodeId)
+                    {
+                        nodeIds.Add(nodeId);
+                    }
+                }
+            }
+
             var deleted = await connectionService.DeleteConnectionAsync(connectionId.ToString());
             if (deleted)
             {
-                await notifier.ConnectionDeletedAsync(access.BoardId!.Value, connectionId);
+                var boardId = access.BoardId!.Value;
+                await notifier.ConnectionDeletedAsync(boardId, connectionId);
+                foreach (var nodeId in nodeIds)
+                {
+                    if (await nodeService.GetNodeByIdAsync(nodeId.ToString()) is { } node)
+                    {
+                        await notifier.NodeUpdatedAsync(boardId, node);
+                    }
+                }
             }
             return TypedResults.Ok(deleted);
         })

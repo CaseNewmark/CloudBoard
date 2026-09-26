@@ -21,7 +21,7 @@ export function useConnectionDrag(currentCloudBoard: Ref<CloudBoard | undefined>
       id: `temp-${type.toLowerCase()}-${node.id}`,
       type,
       position,
-      name: 'temp',
+      name: type.toLowerCase(),
     };
     if (!connectionDragging.value) {
       connectionSource.value = { node, connector };

@@ -44,7 +44,7 @@ src/
     ├── cloudboard/    # CloudboardView (canvas page), Toolbar, PropertiesPanel,
     │                  # CloudboardOpen/Edit dialogs, CloudboardNode (generic node
     │                  # wrapper + connector bars), nodes/ (the 5 node types)
-    └── *.vue          # Home, Login, AuthCallback, LogoutSuccess, Projects, Timeline
+    └── *.vue          # Home, Login, AuthCallback, LogoutSuccess
 ```
 
 Unlike the Angular services (which held `BehaviorSubject`s the components subscribed to),

@@ -14,18 +14,6 @@ const router = createRouter({
       component: () => import('@/views/cloudboard/CloudboardView.vue'),
       meta: { requiresAuth: true },
     },
-    {
-      path: '/projects',
-      name: 'projects',
-      component: () => import('@/views/ProjectsView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/timeline',
-      name: 'timeline',
-      component: () => import('@/views/TimelineView.vue'),
-      meta: { requiresAuth: true },
-    },
     { path: '/logout-success', name: 'logout-success', component: () => import('@/views/LogoutSuccessView.vue') },
   ],
 });
