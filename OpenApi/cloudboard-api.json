@@ -718,6 +718,10 @@
           "name": {
             "type": "string"
           },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
           "createdBy": {
             "type": "string"
           },

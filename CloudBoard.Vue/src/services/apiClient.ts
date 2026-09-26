@@ -10,6 +10,7 @@
 export interface CloudBoardDto {
   id?: string;
   name?: string;
+  description?: string | null;
   createdBy?: string;
   createdAt?: string;
   nodes?: NodeDto[];

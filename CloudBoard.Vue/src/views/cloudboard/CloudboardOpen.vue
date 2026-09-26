@@ -21,12 +21,10 @@ onMounted(refreshBoards);
 async function refreshBoards(): Promise<void> {
   try {
     const boards = await cloudboardService.listCloudBoards();
-    availableBoards.value = boards.sort((a, b) => {
-      if (a?.createdAt && b?.createdAt) {
-        return a.createdAt < b.createdAt ? -1 : 1;
-      }
-      return 0;
-    });
+    // Newest first; boards without a timestamp go last.
+    availableBoards.value = boards.sort(
+      (a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0),
+    );
   } catch (error) {
     console.error('Error fetching cloudboards', error);
   }
@@ -119,7 +117,12 @@ function onDelete(boardId: string, event: Event): void {
           class="w-full justify-stretch! gap-2 items-center flex"
         >
           <i class="pi pi-file"></i>
-          <span class="grow text-left truncate">{{ board.name }}</span>
+          <span class="grow flex flex-col text-left min-w-0">
+            <span class="truncate">{{ board.name }}</span>
+            <span v-if="board.description" class="truncate text-xs text-gray-500" :title="board.description">
+              {{ board.description }}
+            </span>
+          </span>
           <i class="pi pi-pencil z-10" @click="onEdit(board, $event)" title="Edit board"></i>
           <i class="pi pi-trash z-10" @click="onDelete(board.id, $event)" title="Delete board"></i>
         </Button>
