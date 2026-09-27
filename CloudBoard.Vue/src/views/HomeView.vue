@@ -18,8 +18,8 @@ function login(): void {
         </div>
         <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">Welcome to CloudBoard</h1>
         <p class="mt-6 text-lg leading-8 text-gray-600">
-          Your centralized platform for project management, workflow visualization, and timeline tracking. Sign in
-          to access your projects and create new Cloudboards.
+          A visual canvas for notes, cards, links, images and code. Connect your ideas, share a board, and edit it
+          together in real time.
         </p>
         <div class="mt-10 flex items-center justify-center gap-x-6">
           <template v-if="!authStore.isLoggedIn">
@@ -35,13 +35,10 @@ function login(): void {
           </template>
           <template v-else>
             <RouterLink
-              to="/projects"
+              to="/cloudboard"
               class="rounded-md bg-purple-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-600"
             >
-              View Projects
-            </RouterLink>
-            <RouterLink to="/cloudboard" class="text-sm font-semibold leading-6 text-gray-900 hover:text-purple-600">
-              Create Cloudboard <span aria-hidden="true">&rarr;</span>
+              Open Cloudboards
             </RouterLink>
           </template>
         </div>
@@ -61,20 +58,20 @@ function login(): void {
 
           <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <div class="mb-4">
-              <i class="pi pi-folder text-purple-600" style="font-size: 2rem"></i>
+              <i class="pi pi-users text-purple-600" style="font-size: 2rem"></i>
             </div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Projects</h3>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Collaborate live</h3>
             <p class="text-gray-600">
-              Organize and manage your projects with comprehensive tracking and collaboration tools.
+              Share a board by email and edit it together. Changes and who's viewing show up as they happen.
             </p>
           </div>
 
           <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <div class="mb-4">
-              <i class="pi pi-calendar text-purple-600" style="font-size: 2rem"></i>
+              <i class="pi pi-th-large text-purple-600" style="font-size: 2rem"></i>
             </div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Timeline</h3>
-            <p class="text-gray-600">Track project milestones and deadlines with intuitive timeline visualization.</p>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Rich nodes</h3>
+            <p class="text-gray-600">Notes, cards, link collections, images and code blocks with syntax highlighting.</p>
           </div>
         </div>
       </div>

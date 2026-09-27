@@ -101,6 +101,31 @@ function toFlowEdge(connection: Connection): Edge {
   };
 }
 
+/**
+ * Removes connections from the board and canvas, along with connectors no remaining
+ * connection uses (the API deletes those together with the connection).
+ */
+function removeConnectionsLocally(board: CloudBoard, connectionIds: string[]): void {
+  if (connectionIds.length === 0) return;
+  const removed = board.connections.filter((c) => connectionIds.includes(c.id));
+  board.connections = board.connections.filter((c) => !connectionIds.includes(c.id));
+
+  const stillUsed = new Set(board.connections.flatMap((c) => [c.fromConnectorId, c.toConnectorId]));
+  const orphaned = new Set(
+    removed.flatMap((c) => [c.fromConnectorId, c.toConnectorId]).filter((id) => !stillUsed.has(id)),
+  );
+  const changedNodeIds: string[] = [];
+  for (const node of board.nodes) {
+    if (node.connectors.some((c) => orphaned.has(c.id))) {
+      node.connectors = node.connectors.filter((c) => !orphaned.has(c.id));
+      changedNodeIds.push(node.id);
+    }
+  }
+
+  removeEdges(connectionIds);
+  if (changedNodeIds.length) updateNodeInternals(changedNodeIds);
+}
+
 // --- live updates from other viewers -------------------------------------
 
 const realtime = useBoardRealtime({
@@ -144,9 +169,8 @@ const realtime = useBoardRealtime({
     const attached = board.connections.filter((conn) =>
       node.connectors.some((c) => c.id === conn.fromConnectorId || c.id === conn.toConnectorId),
     );
+    removeConnectionsLocally(board, attached.map((c) => c.id));
     board.nodes = board.nodes.filter((n) => n.id !== nodeId);
-    board.connections = board.connections.filter((c) => !attached.includes(c));
-    removeEdges(attached.map((c) => c.id));
     removeNodes([nodeId]);
 
     if (propertiesPanelNodeProperties.value?.id === nodeId) {
@@ -175,8 +199,7 @@ const realtime = useBoardRealtime({
   onConnectionDeleted(connectionId) {
     const board = currentCloudBoard.value;
     if (!board) return;
-    board.connections = board.connections.filter((c) => c.id !== connectionId);
-    removeEdges([connectionId]);
+    removeConnectionsLocally(board, [connectionId]);
   },
 
   onBoardUpdated({ name, description }) {
@@ -304,10 +327,9 @@ async function deleteNode(node: Node): Promise<void> {
 
   const success = await confirmAndDeleteNodesAndConnections([node.id], connectionsToDelete.map((c) => c.id));
   if (success) {
+    removeConnectionsLocally(board, connectionsToDelete.map((c) => c.id));
     board.nodes = board.nodes.filter((n) => n.id !== node.id);
-    board.connections = board.connections.filter((c) => !connectionsToDelete.some((conn) => conn.id === c.id));
     removeNodes([node.id]);
-    removeEdges(connectionsToDelete.map((c) => c.id));
   }
 }
 
@@ -449,10 +471,9 @@ function handleKeydown(event: KeyboardEvent): void {
 
   void confirmAndDeleteNodesAndConnections(selectedNodeIds, connectionsToDelete).then((success) => {
     if (!success) return;
+    removeConnectionsLocally(board, connectionsToDelete);
     board.nodes = board.nodes.filter((node) => !selectedNodeIds.includes(node.id));
-    board.connections = board.connections.filter((c) => !connectionsToDelete.includes(c.id));
     removeNodes(selectedNodeIds);
-    removeEdges(connectionsToDelete);
   });
 }
 

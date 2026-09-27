@@ -92,6 +92,13 @@ export function setAuthHook(hook: AuthHook): void {
   authHook = hook;
 }
 
+/** The access token, refreshed first if it has expired (e.g. after the laptop slept). */
+export async function getValidAccessToken(): Promise<string | null> {
+  if (!authHook) return null;
+  await authHook.ensureValidToken();
+  return authHook.getAccessToken();
+}
+
 let baseUrl = '';
 
 export function setApiBaseUrl(url: string): void {

@@ -93,7 +93,7 @@ The API uses the minimal APIs pattern. Every endpoint requires authentication, a
 - `GET /api/connection/{id}` - Get a connection
 - `GET /api/connector/{connectorId}/connections` - Get connections attached to a connector
 - `PUT /api/connection/{id}` - Update a connection
-- `DELETE /api/connection/{id}` - Delete a connection
+- `DELETE /api/connection/{id}` - Delete a connection, plus its connectors if no other connection uses them
 
 ## Authentication & Authorization
 

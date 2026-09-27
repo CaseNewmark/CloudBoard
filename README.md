@@ -16,7 +16,7 @@ CloudBoard provides an interactive canvas where users can:
 - Connect nodes with customizable connectors
 - Organize information visually through a drag-and-drop interface
 - Save and load board configurations
-- Manage multiple projects
+- Share boards and edit them together in real time
 
 The application uses a modern architecture:
 - Vue 3 + TypeScript frontend with PrimeVue components and Vue Flow for the visual canvas

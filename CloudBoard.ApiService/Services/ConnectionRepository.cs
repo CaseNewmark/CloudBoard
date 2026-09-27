@@ -111,8 +111,22 @@ public class ConnectionRepository : IConnectionRepository
                 return false;
             }
 
+            var connectorIds = new[] { connection.FromConnectorId, connection.ToConnectorId };
             _dbContext.Connections.Remove(connection);
             await _dbContext.SaveChangesAsync();
+
+            // Connectors only exist to anchor connections, so remove the ones no other
+            // connection uses. A bulk delete also tolerates connectors that were already
+            // removed with their node (a node and its connections are deleted together).
+            await _dbContext.Connectors
+                .Where(c => connectorIds.Contains(c.Id)
+                            && !_dbContext.Connections.Any(x => x.FromConnectorId == c.Id || x.ToConnectorId == c.Id))
+                .ExecuteDeleteAsync();
+
+            // The bulk delete bypasses the change tracker, so entities tracked earlier in this
+            // request (e.g. a node with the deleted connectors in its Connectors list) are now
+            // stale. Everything is saved, so start clean: later queries reload from the database.
+            _dbContext.ChangeTracker.Clear();
             return true;
         }
         catch (Exception ex)
