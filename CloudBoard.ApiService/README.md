@@ -86,6 +86,16 @@ The API uses the minimal APIs pattern. Every endpoint requires authentication, a
 - `PUT /api/connector/{id}` - Update a connector
 - `DELETE /api/connector/{id}` - Delete a connector
 
+### Image Endpoints
+
+Images are stored in the database (`BoardImages`, `bytea`), belong to a board and are deleted with it. Uploads are limited to 5 MB and to PNG, JPEG, GIF and WebP; the format is detected from the file's bytes, and SVG is rejected because it can carry scripts.
+
+- `POST /api/cloudboard/{cloudboardId}/images` - Upload an image (`multipart/form-data`, field `file`); returns `{ id, url, contentType, size }`
+- `GET /api/images/{id}` - The image bytes (owner or member of its board). Cached as immutable (a new upload always gets a new ID), with an ETag.
+- `POST /api/cloudboard/{cloudboardId}/images/{id}/copy` - Copy an image into another board (used when pasting nodes across boards); needs access to both
+
+Nodes reference stored images by the relative URL `/api/images/{id}`. Because it needs the bearer token, the frontend fetches these with `fetch` and displays them through object URLs.
+
 ### Connection Endpoints
 
 - `POST /api/cloudboard/{cloudboardId}/connection` - Create a connection (both connectors must be on this board)

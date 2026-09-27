@@ -84,7 +84,7 @@ This deletes all Keycloak users and settings.
 
 ## Backups
 
-Back up both databases. Boards live in `cloudboard`, users in `keycloak`:
+Back up both databases. Boards (including uploaded images, which are stored in the database) live in `cloudboard`, users in `keycloak`:
 
 ```bash
 cd CloudBoard/deploy

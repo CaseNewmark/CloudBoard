@@ -84,6 +84,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IBoardAccessService, BoardAccessService>();
 builder.Services.AddSingleton<BoardPresenceTracker>();
 builder.Services.AddScoped<IBoardNotifier, BoardNotifier>();
+builder.Services.AddScoped<IBoardImageService, BoardImageService>();
 
 var app = builder.Build();
 
@@ -105,6 +106,7 @@ app.MapCloudBoardEndpoints();
 app.MapNodeEndpoints();
 app.MapConnectorEndpoints();
 app.MapConnectionEndpoints();
+app.MapImageEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

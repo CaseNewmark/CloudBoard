@@ -1,12 +1,25 @@
 <script setup lang="ts">
 import Toolbar from 'primevue/toolbar';
 import Button from 'primevue/button';
-import { inject } from 'vue';
+import { inject, ref } from 'vue';
 import { useFlowControlStore } from '@/stores/flowControl';
 import { boardHistoryInjectionKey } from '@/composables/useBoardHistory';
+import { boardExportActionsKey } from './boardExportActions';
 
 const flowControlStore = useFlowControlStore();
 const history = inject(boardHistoryInjectionKey, undefined);
+const exportActions = inject(boardExportActionsKey, undefined);
+const exporting = ref<'png' | 'json'>();
+
+async function runExport(kind: 'png' | 'json'): Promise<void> {
+  if (!exportActions || exporting.value) return;
+  exporting.value = kind;
+  try {
+    await (kind === 'png' ? exportActions.exportPng() : exportActions.exportJson());
+  } finally {
+    exporting.value = undefined;
+  }
+}
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 const modifier = isMac ? '⌘' : 'Ctrl+';
 </script>
@@ -56,6 +69,26 @@ const modifier = isMac ? '⌘' : 'Ctrl+';
         aria-label="Minimap"
         @click="flowControlStore.minimapVisible = !flowControlStore.minimapVisible"
       />
+      <template v-if="exportActions">
+        <Button
+          icon="pi pi-fw pi-image"
+          text
+          severity="secondary"
+          aria-label="Download as PNG"
+          v-tooltip.right="'Download as PNG'"
+          :loading="exporting === 'png'"
+          @click="runExport('png')"
+        />
+        <Button
+          icon="pi pi-fw pi-download"
+          text
+          severity="secondary"
+          aria-label="Export as JSON"
+          v-tooltip.right="'Export as JSON (can be imported again)'"
+          :loading="exporting === 'json'"
+          @click="runExport('json')"
+        />
+      </template>
     </template>
   </Toolbar>
 </template>
