@@ -88,6 +88,7 @@ public class ConnectionRepository : IConnectionRepository
             // Update the properties
             existingConnection.FromConnectorId = connection.FromConnectorId;
             existingConnection.ToConnectorId = connection.ToConnectorId;
+            existingConnection.Label = connection.Label;
             // The board a connection belongs to never changes.
 
             await _dbContext.SaveChangesAsync();

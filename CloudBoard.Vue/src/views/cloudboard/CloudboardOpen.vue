@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
+import InputText from 'primevue/inputtext';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import type { CloudBoard } from '@/models/cloudboard';
@@ -20,6 +23,17 @@ function isOwner(board: CloudBoard): boolean {
 }
 
 const availableBoards = ref<CloudBoard[]>([]);
+const search = ref('');
+
+/** Boards whose name or description contains every word typed, ignoring case. */
+const filteredBoards = computed(() => {
+  const terms = search.value.toLowerCase().split(/\s+/).filter(Boolean);
+  if (terms.length === 0) return availableBoards.value;
+  return availableBoards.value.filter((board) => {
+    const text = `${board.name} ${board.description ?? ''}`.toLowerCase();
+    return terms.every((term) => text.includes(term));
+  });
+});
 const showEditDialog = ref(false);
 const editingBoard = ref<CloudBoard | null>(null);
 
@@ -114,14 +128,20 @@ function onDelete(boardId: string, event: Event): void {
         <i class="pi pi-folder text-gray-500" style="font-size: 2rem"></i>
         <h3 class="text-lg font-semibold text-gray-500">Open a Cloudboard...</h3>
       </div>
+      <IconField class="w-sm">
+        <InputIcon class="pi pi-search" />
+        <InputText v-model="search" placeholder="Search boards" aria-label="Search boards" class="w-full" size="small" />
+      </IconField>
       <div class="flex flex-col w-sm h-72 bg-white border-gray-300 border-1 rounded-sm p-2 gap-2 overflow-auto">
+        <p v-if="availableBoards.length === 0" class="m-auto text-sm text-gray-500">No boards yet. Create one to get started.</p>
+        <p v-else-if="filteredBoards.length === 0" class="m-auto text-sm text-gray-500">No boards match "{{ search.trim() }}".</p>
         <Button
-          v-for="board in availableBoards"
+          v-for="board in filteredBoards"
           :key="board.id"
           text
           severity="secondary"
           @click="onOpen(board.id)"
-          class="w-full justify-stretch! gap-2 items-center flex"
+          class="w-full shrink-0 justify-stretch! gap-2 items-center flex"
         >
           <i class="pi" :class="isOwner(board) ? 'pi-file' : 'pi-users'" :title="isOwner(board) ? undefined : 'Shared with you'"></i>
           <span class="grow flex flex-col text-left min-w-0">

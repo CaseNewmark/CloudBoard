@@ -840,6 +840,12 @@
           },
           "toConnectorId": {
             "type": "string"
+          },
+          "label": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

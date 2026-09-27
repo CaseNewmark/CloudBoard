@@ -27,6 +27,7 @@ export interface ConnectionDto {
   id?: string;
   fromConnectorId: string;
   toConnectorId: string;
+  label?: string | null;
 
   [key: string]: any;
 }

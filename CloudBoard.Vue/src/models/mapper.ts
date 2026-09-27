@@ -40,6 +40,7 @@ export function mapConnectionDtoToConnection(dto: ConnectionDto): Connection {
     id: dto.id!,
     fromConnectorId: dto.fromConnectorId!,
     toConnectorId: dto.toConnectorId!,
+    label: dto.label || undefined,
   };
 }
 
@@ -131,6 +132,7 @@ export function mapConnectionToConnectionDto(connection: Connection): Connection
     id: connection.id,
     fromConnectorId: connection.fromConnectorId,
     toConnectorId: connection.toConnectorId,
+    label: connection.label || null,
   };
 }
 
