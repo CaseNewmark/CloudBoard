@@ -3,6 +3,9 @@ import { type Component, computed, markRaw, onMounted, onUnmounted, provide, ref
 import { useRoute, useRouter } from 'vue-router';
 import { ConnectionLineType, ConnectionMode, type Edge, type Node as FlowNode, useVueFlow, VueFlow } from '@vue-flow/core';
 import '@vue-flow/core/dist/style.css';
+import { Background } from '@vue-flow/background';
+import { MiniMap } from '@vue-flow/minimap';
+import '@vue-flow/minimap/dist/style.css';
 import ContextMenu from 'primevue/contextmenu';
 import ProgressSpinner from 'primevue/progressspinner';
 import { useConfirm } from 'primevue/useconfirm';
@@ -46,6 +49,16 @@ const flowContextMenuItems = ref<MenuItem[]>([]);
 const nodeContextMenuItems = ref<MenuItem[]>([]);
 
 const connectionDrag = useConnectionDrag(currentCloudBoard);
+
+/** Spacing of the background grid, which is also what nodes snap to when snapping is on. */
+const GRID_SIZE = 20;
+
+function minimapNodeColor(flowNode: FlowNode): string {
+  const node = (flowNode.data as { node?: Node } | undefined)?.node;
+  const background = node?.properties?.['backgroundColor'];
+  if (typeof background === 'string' && background) return background;
+  return node?.type === NodeType.CodeBlock ? '#1e1e1e' : '#fde68a';
+}
 provide(connectionDragInjectionKey, connectionDrag);
 
 const rawCloudboardNode = markRaw(CloudboardNode);
@@ -506,7 +519,12 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
         :max-zoom="1"
         :delete-key-code="null"
         :connection-line-type="ConnectionLineType.SmoothStep"
-      />
+        :snap-to-grid="flowControlStore.snapToGrid"
+        :snap-grid="[GRID_SIZE, GRID_SIZE]"
+      >
+        <Background :gap="GRID_SIZE" pattern-color="#cbd5e1" />
+        <MiniMap v-if="flowControlStore.minimapVisible" pannable zoomable :node-color="minimapNodeColor" />
+      </VueFlow>
       <PropertiesPanel v-model:visible="propertiesPanelVisible" v-model:node-properties="propertiesPanelNodeProperties" />
     </div>
   </template>

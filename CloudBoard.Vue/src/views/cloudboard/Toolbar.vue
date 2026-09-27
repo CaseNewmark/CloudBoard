@@ -9,9 +9,27 @@ const flowControlStore = useFlowControlStore();
 <template>
   <Toolbar class="mt-3 board-toolbar">
     <template #center>
-      <Button icon="pi pi-fw pi-search-plus" text severity="secondary" @click="flowControlStore.zoomIn()" />
-      <Button icon="pi pi-fw pi-search-minus" text severity="secondary" @click="flowControlStore.zoomOut()" />
-      <Button icon="pi pi-fw pi-times-circle" text severity="secondary" @click="flowControlStore.resetZoom()" />
+      <Button icon="pi pi-fw pi-search-plus" text severity="secondary" aria-label="Zoom in" v-tooltip.right="'Zoom in'" @click="flowControlStore.zoomIn()" />
+      <Button icon="pi pi-fw pi-search-minus" text severity="secondary" aria-label="Zoom out" v-tooltip.right="'Zoom out'" @click="flowControlStore.zoomOut()" />
+      <Button icon="pi pi-fw pi-times-circle" text severity="secondary" aria-label="Fit board to screen" v-tooltip.right="'Fit to screen'" @click="flowControlStore.resetZoom()" />
+      <Button
+        icon="pi pi-fw pi-th-large"
+        text
+        :severity="flowControlStore.snapToGrid ? 'primary' : 'secondary'"
+        :aria-pressed="flowControlStore.snapToGrid"
+        v-tooltip.right="flowControlStore.snapToGrid ? 'Snap to grid: on' : 'Snap to grid: off'"
+        aria-label="Snap to grid"
+        @click="flowControlStore.snapToGrid = !flowControlStore.snapToGrid"
+      />
+      <Button
+        icon="pi pi-fw pi-map"
+        text
+        :severity="flowControlStore.minimapVisible ? 'primary' : 'secondary'"
+        :aria-pressed="flowControlStore.minimapVisible"
+        v-tooltip.right="flowControlStore.minimapVisible ? 'Hide minimap' : 'Show minimap'"
+        aria-label="Minimap"
+        @click="flowControlStore.minimapVisible = !flowControlStore.minimapVisible"
+      />
     </template>
   </Toolbar>
 </template>
