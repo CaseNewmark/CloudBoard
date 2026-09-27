@@ -63,6 +63,16 @@ To add a new node type:
 3. Register it in `contentComponents` in `CloudboardNode.vue`
 4. Add default properties/name in `src/services/nodeService.ts`
 
+Node components render inside PrimeVue's `Card`, which only renders named slots (`#title`, `#content`, ...);
+content in the default slot is silently dropped.
+
+### Editing and Undo
+
+- Double-click a note's text or a card's title, subtitle or body to edit it in place (`InlineEditableText.vue`); double-click elsewhere on a node opens the properties panel.
+- **Undo** `Ctrl/⌘+Z`, **redo** `Ctrl/⌘+Shift+Z` or `Ctrl+Y` (also in the toolbar). Shortcuts are ignored inside text fields, where the browser's own undo applies.
+- `composables/useBoardHistory.ts` records the current user's changes (add/delete/move/edit nodes, draw/delete connections) and replays undo/redo through the API, so other viewers see them live. It restores only the fields and property keys a change touched, so collaborators' edits to other fields survive. Elements recreated by undo get new IDs; the history maps old IDs to new ones.
+- Node components and the properties panel report saves via `inject(boardHistoryInjectionKey)`; anything that saves a node should call `history.recordNodeSaved(node)`.
+
 ## API Client
 
 `src/services/apiClient.ts` is hand-written (fetch + Promises) rather than generated. If

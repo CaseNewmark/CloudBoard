@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, watch } from 'vue';
+import { inject, onBeforeUnmount, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -9,6 +9,7 @@ import Select from 'primevue/select';
 import ToggleSwitch from 'primevue/toggleswitch';
 import { type LinkProperties, type Node, NodeType } from '@/models/cloudboard';
 import * as nodeService from '@/services/nodeService';
+import { boardHistoryInjectionKey } from '@/composables/useBoardHistory';
 
 const visible = defineModel<boolean>('visible', { default: false });
 const nodeProperties = defineModel<Node | undefined>('nodeProperties', { default: undefined });
@@ -24,9 +25,12 @@ watch(
 );
 onBeforeUnmount(flushPendingSave);
 
+const history = inject(boardHistoryInjectionKey, undefined);
+
 function saveNode(node: Node): void {
   cancelPendingSave();
   void nodeService.updateNode(node.id, node);
+  history?.recordNodeSaved(node);
 }
 
 function cancelPendingSave(): void {

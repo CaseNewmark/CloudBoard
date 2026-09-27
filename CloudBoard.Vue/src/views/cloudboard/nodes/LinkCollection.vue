@@ -17,20 +17,23 @@ function openLink(url: string, event: MouseEvent): void {
 </script>
 
 <template>
-  <Card :header="node.name" class="link-collection-card">
-    <div class="link-collection">
-      <div v-for="(link, index) in links" :key="index" class="link-item">
-        <a href="javascript:void(0)" class="link-button" @click="openLink(link.url, $event)">
-          <i :class="[link.iconClass || 'pi pi-link', 'link-icon']"></i>
-          <span class="text-xs text-gray-500">{{ index }}</span>
-          <span class="link-title">{{ link.title }}</span>
-        </a>
+  <Card class="link-collection-card">
+    <template #title>{{ node.name }}</template>
+    <template #content>
+      <div class="link-collection">
+        <div v-for="(link, index) in links" :key="index" class="link-item">
+          <a href="javascript:void(0)" class="link-button" @click="openLink(link.url, $event)">
+            <i :class="[link.iconClass || 'pi pi-link', 'link-icon']"></i>
+            <span class="text-xs text-gray-500">{{ index }}</span>
+            <span class="link-title">{{ link.title }}</span>
+          </a>
+        </div>
+        <div v-if="links.length === 0" class="text-center p-3 text-gray-500">
+          <i class="pi pi-info-circle mb-2" style="font-size: 1.5rem"></i>
+          <p>No links added yet</p>
+        </div>
       </div>
-      <div v-if="links.length === 0" class="text-center p-3 text-gray-500">
-        <i class="pi pi-info-circle mb-2" style="font-size: 1.5rem"></i>
-        <p>No links added yet</p>
-      </div>
-    </div>
+    </template>
   </Card>
 </template>
 

@@ -6,6 +6,7 @@ import PrimeVue from 'primevue/config';
 import Aura from '@primevue/themes/aura';
 import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
+import Tooltip from 'primevue/tooltip';
 
 import App from './App.vue';
 import router from './router';
@@ -28,6 +29,7 @@ app.use(ToastService);
 app.use(ConfirmationService);
 
 app.directive('blur-on-enter', blurOnEnter);
+app.directive('tooltip', Tooltip);
 
 // Instantiated right after Pinia is installed so its apiClient auth-hook and
 // token-refresh timer are wired up before the router runs its first guard.

@@ -2,23 +2,21 @@
 import { computed } from 'vue';
 import type { Node } from '@/models/cloudboard';
 import { useNodeProperty } from '@/composables/useNodeProperty';
+import InlineEditableText from './InlineEditableText.vue';
 
 const props = defineProps<{ node: Node }>();
 const { getProperty, updateProperty } = useNodeProperty(() => props.node);
 
-const content = computed({
-  get: () => getProperty<string>('content', 'Empty note...'),
-  set: (value) => updateProperty('content', value),
-});
+const content = computed(() => getProperty<string>('content', ''));
 const backgroundColor = computed(() => getProperty<string>('backgroundColor', 'rgb(255, 249, 212)'));
 const textColor = computed(() => getProperty<string>('textColor', '#000000'));
 </script>
 
 <template>
   <div class="simple-note shadow-md" :style="{ 'background-color': backgroundColor, color: textColor }">
-    <p class="m-0 whitespace-pre-wrap" :style="{ color: textColor }">
-      {{ content }}
-    </p>
+    <InlineEditableText :value="content" multiline label="Note text" @commit="(text) => updateProperty('content', text)">
+      <p class="m-0 whitespace-pre-wrap" :style="{ color: textColor }">{{ content || 'Empty note...' }}</p>
+    </InlineEditableText>
   </div>
 </template>
 

@@ -83,6 +83,9 @@ function handleType(connector: Connector): 'source' | 'target' {
   right: 0;
   bottom: 0;
   margin: 0;
+  /* The overlay spans the whole node; only the edge bars should catch the pointer,
+     so clicks and double-clicks reach the node's content (inline editing, links). */
+  pointer-events: none;
 
   display: grid;
   grid-template-rows: [top] 0 [middle] auto [bottom] 0;
@@ -90,6 +93,7 @@ function handleType(connector: Connector): 'source' | 'target' {
 }
 
 .connector-bar {
+  pointer-events: auto;
   display: flex;
   justify-content: center;
   align-items: center;

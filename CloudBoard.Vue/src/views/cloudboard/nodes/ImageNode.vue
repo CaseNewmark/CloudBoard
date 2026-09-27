@@ -14,11 +14,14 @@ const caption = computed(() => getProperty<string>('caption', ''));
 </script>
 
 <template>
-  <Card :header="node.name" class="image-node">
-    <Image :src="url" :alt="alt || node.name" image-class="w-full" :preview="true" />
-    <div class="image-caption">
-      {{ caption }}
-    </div>
+  <Card class="image-node">
+    <template #title>{{ node.name }}</template>
+    <template #content>
+      <Image :src="url" :alt="alt || node.name" image-class="w-full" :preview="true" />
+      <div class="image-caption">
+        {{ caption }}
+      </div>
+    </template>
   </Card>
 </template>
 

@@ -3,6 +3,9 @@ import { type Component, computed, markRaw, onMounted, onUnmounted, provide, ref
 import { useRoute, useRouter } from 'vue-router';
 import { ConnectionLineType, ConnectionMode, type Edge, type Node as FlowNode, useVueFlow, VueFlow } from '@vue-flow/core';
 import '@vue-flow/core/dist/style.css';
+import { Background } from '@vue-flow/background';
+import { MiniMap } from '@vue-flow/minimap';
+import '@vue-flow/minimap/dist/style.css';
 import ContextMenu from 'primevue/contextmenu';
 import ProgressSpinner from 'primevue/progressspinner';
 import { useConfirm } from 'primevue/useconfirm';
@@ -19,11 +22,14 @@ import { type CloudBoard, type Connection, type ConnectorPosition, type Node, ty
 import * as cloudboardService from '@/services/cloudboardService';
 import * as nodeService from '@/services/nodeService';
 import * as connectionService from '@/services/connectionService';
+import * as connectorService from '@/services/connectorService';
 import { getFlowContextMenuItems, getNodeContextMenuItems } from '@/services/contextMenu';
 import { useFlowControlStore, ZoomAction } from '@/stores/flowControl';
 import { connectionDragInjectionKey, useConnectionDrag } from '@/composables/useConnectionDrag';
 import { useBoardRealtime } from '@/composables/useBoardRealtime';
+import { boardHistoryInjectionKey, HistoryConflictError, useBoardHistory } from '@/composables/useBoardHistory';
 import { useAuthStore } from '@/stores/auth';
+import { isFromEditableElement } from '@/utils/keyboard';
 
 const route = useRoute();
 const router = useRouter();
@@ -47,6 +53,16 @@ const nodeContextMenuItems = ref<MenuItem[]>([]);
 
 const connectionDrag = useConnectionDrag(currentCloudBoard);
 provide(connectionDragInjectionKey, connectionDrag);
+
+/** Spacing of the background grid, which is also what nodes snap to when snapping is on. */
+const GRID_SIZE = 20;
+
+function minimapNodeColor(flowNode: FlowNode): string {
+  const node = (flowNode.data as { node?: Node } | undefined)?.node;
+  const background = node?.properties?.['backgroundColor'];
+  if (typeof background === 'string' && background) return background;
+  return node?.type === NodeType.CodeBlock ? '#1e1e1e' : '#fde68a';
+}
 
 const rawCloudboardNode = markRaw(CloudboardNode);
 const nodeTypes: Record<string, Component> = {
@@ -126,6 +142,123 @@ function removeConnectionsLocally(board: CloudBoard, connectionIds: string[]): v
   if (changedNodeIds.length) updateNodeInternals(changedNodeIds);
 }
 
+// --- undo / redo -------------------------------------------------------------
+
+/** Deletes nodes and connections through the API and removes them from the canvas. */
+async function removeElements(nodeIds: string[], connectionIds: string[]): Promise<void> {
+  const board = currentCloudBoard.value;
+  if (!board) return;
+  const nodeIdsToDelete = nodeIds.filter((id) => board.nodes.some((n) => n.id === id));
+  const deletedNodes = board.nodes.filter((n) => nodeIdsToDelete.includes(n.id));
+  // Connections attached to deleted nodes go too, even if they weren't listed.
+  const connectionIdsToDelete = Array.from(
+    new Set([
+      ...connectionIds.filter((id) => board.connections.some((c) => c.id === id)),
+      ...board.connections
+        .filter((c) => deletedNodes.some((n) => n.connectors.some((k) => k.id === c.fromConnectorId || k.id === c.toConnectorId)))
+        .map((c) => c.id),
+    ]),
+  );
+
+  await Promise.all([
+    ...nodeIdsToDelete.map((id) => nodeService.deleteNode(id)),
+    ...connectionIdsToDelete.map((id) => connectionService.deleteConnection(id)),
+  ]);
+
+  removeConnectionsLocally(board, connectionIdsToDelete);
+  board.nodes = board.nodes.filter((n) => !nodeIdsToDelete.includes(n.id));
+  removeNodes(nodeIdsToDelete);
+  if (propertiesPanelNodeProperties.value && nodeIdsToDelete.includes(propertiesPanelNodeProperties.value.id)) {
+    propertiesPanelVisible.value = false;
+    propertiesPanelNodeProperties.value = undefined;
+  }
+}
+
+const history = useBoardHistory({
+  board: () => currentCloudBoard.value,
+
+  async applyNodeFields(nodeId, patch) {
+    const node = currentCloudBoard.value?.nodes.find((n) => n.id === nodeId);
+    if (!node) throw new HistoryConflictError('someone else deleted the node.');
+
+    if (patch.name !== undefined) node.name = patch.name;
+    if (patch.type !== undefined) node.type = patch.type;
+    if (patch.position) node.position = { ...patch.position };
+    if (patch.properties) {
+      const properties = { ...node.properties };
+      for (const [key, value] of Object.entries(patch.properties)) {
+        if (value === undefined) delete properties[key];
+        else properties[key] = value;
+      }
+      node.properties = properties;
+    }
+
+    const flowNode = findNode(nodeId);
+    if (flowNode) {
+      flowNode.type = node.type;
+      flowNode.position = { ...node.position };
+    }
+    updateNodeInternals([nodeId]);
+    await nodeService.updateNode(nodeId, node);
+  },
+
+  deleteElements: removeElements,
+
+  async recreate(spec, resolveId) {
+    const board = currentCloudBoard.value;
+    if (!board) throw new HistoryConflictError('the board is closed.');
+    const created = new Map<string, string>();
+    const lookup = (id: string) => created.get(id) ?? resolveId(id);
+
+    for (const { nodeId } of spec.connectors) {
+      if (!board.nodes.some((n) => n.id === resolveId(nodeId))) {
+        throw new HistoryConflictError('someone else deleted a connected node.');
+      }
+    }
+
+    for (const node of spec.nodes) {
+      const createdNode = await nodeService.createNode(board.id, { ...node, id: '', connectors: [] });
+      created.set(node.id, createdNode.id);
+      board.nodes.push(createdNode);
+      addNodes([toFlowNode(createdNode)]);
+      history.trackNode(createdNode);
+    }
+
+    const connectorsToCreate = [
+      ...spec.nodes.flatMap((node) => node.connectors.map((connector) => ({ nodeId: node.id, connector }))),
+      ...spec.connectors,
+    ];
+    const changedNodeIds = new Set<string>();
+    for (const { nodeId, connector } of connectorsToCreate) {
+      const owner = board.nodes.find((n) => n.id === lookup(nodeId));
+      if (!owner) throw new HistoryConflictError('someone else deleted a connected node.');
+      if (owner.connectors.some((c) => c.id === lookup(connector.id))) continue;
+      const createdConnector = await connectorService.createConnector(owner.id, { ...connector, id: '' });
+      created.set(connector.id, createdConnector.id);
+      owner.connectors.push(createdConnector);
+      changedNodeIds.add(owner.id);
+    }
+    if (changedNodeIds.size) updateNodeInternals([...changedNodeIds]);
+
+    for (const connection of spec.connections) {
+      const createdConnection = await connectionService.createConnection(board.id, {
+        id: '',
+        fromConnectorId: lookup(connection.fromConnectorId),
+        toConnectorId: lookup(connection.toConnectorId),
+      });
+      created.set(connection.id, createdConnection.id);
+      board.connections.push(createdConnection);
+      addEdges([toFlowEdge(createdConnection)]);
+    }
+    return created;
+  },
+
+  notifyError(message) {
+    toast.add({ severity: 'warn', summary: 'Undo', detail: message, life: 6000 });
+  },
+});
+provide(boardHistoryInjectionKey, history);
+
 // --- live updates from other viewers -------------------------------------
 
 const realtime = useBoardRealtime({
@@ -134,6 +267,7 @@ const realtime = useBoardRealtime({
     if (!board || board.nodes.some((n) => n.id === node.id)) return;
     board.nodes.push(node);
     addNodes([toFlowNode(node)]);
+    history.trackNode(node);
   },
 
   onNodeUpdated(updated) {
@@ -143,6 +277,7 @@ const realtime = useBoardRealtime({
     if (!node) {
       board.nodes.push(updated);
       addNodes([toFlowNode(updated)]);
+      history.trackNode(updated);
       return;
     }
 
@@ -159,6 +294,7 @@ const realtime = useBoardRealtime({
       flowNode.position = { ...updated.position };
     }
     updateNodeInternals([node.id]);
+    history.trackNode(node);
   },
 
   onNodeDeleted(nodeId) {
@@ -217,6 +353,7 @@ const realtime = useBoardRealtime({
     });
     currentCloudBoard.value = undefined;
     propertiesPanelVisible.value = false;
+    history.clear();
     void router.push('/cloudboard');
   },
 
@@ -235,6 +372,7 @@ async function refreshCloudBoard(cloudboardId: string): Promise<void> {
     currentCloudBoard.value = cloudboard;
     setNodes(cloudboard.nodes.map(toFlowNode));
     setEdges(cloudboard.connections.map(toFlowEdge));
+    history.trackBoard(cloudboard);
   } catch (error) {
     console.error('Error refreshing cloudboard', error);
   }
@@ -262,6 +400,8 @@ async function loadCloudBoardById(cloudboardId: string): Promise<void> {
     currentCloudBoard.value = cloudboard;
     setNodes(cloudboard.nodes.map(toFlowNode));
     setEdges(cloudboard.connections.map(toFlowEdge));
+    history.clear();
+    history.trackBoard(cloudboard);
 
     await fitView();
     setTimeout(async () => {
@@ -295,25 +435,26 @@ async function addNode(nodeType: NodeType, position: NodePosition): Promise<void
   const createdNode = await nodeService.createNode(board.id, newNode);
   board.nodes.push(createdNode);
   addNodes([toFlowNode(createdNode)]);
+  history.recordNodeCreated(createdNode);
 }
 
-async function confirmAndDeleteNodesAndConnections(nodeIds: string[], connectionIds: string[]): Promise<boolean> {
-  return new Promise((resolve) => {
-    confirm.require({
-      message: `Are you sure you want to delete ${nodeIds.length} node${nodeIds.length > 1 ? 's' : ''} and ${connectionIds.length} connection${connectionIds.length > 1 ? 's' : ''}?`,
-      header: 'Delete Confirmation',
-      icon: 'pi pi-exclamation-triangle',
-      acceptProps: { severity: 'danger' },
-      rejectProps: { severity: 'secondary', variant: 'text' },
-      accept: async () => {
-        const results = await Promise.all([
-          ...nodeIds.map((id) => nodeService.deleteNode(id)),
-          ...connectionIds.map((id) => connectionService.deleteConnection(id)),
-        ]);
-        resolve(results.every((r) => r));
-      },
-      reject: () => resolve(false),
-    });
+/** Asks for confirmation, then deletes the nodes and connections (recording it for undo). */
+function confirmAndDeleteNodesAndConnections(nodeIds: string[], connectionIds: string[]): void {
+  confirm.require({
+    message: `Are you sure you want to delete ${nodeIds.length} node${nodeIds.length === 1 ? '' : 's'} and ${connectionIds.length} connection${connectionIds.length === 1 ? '' : 's'}?`,
+    header: 'Delete Confirmation',
+    icon: 'pi pi-exclamation-triangle',
+    acceptProps: { severity: 'danger' },
+    rejectProps: { severity: 'secondary', variant: 'text' },
+    accept: async () => {
+      history.recordDeleted(nodeIds, connectionIds);
+      try {
+        await removeElements(nodeIds, connectionIds);
+      } catch (error) {
+        console.error('Error deleting', error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete. Reload the board to see its current state.' });
+      }
+    },
   });
 }
 
@@ -325,12 +466,7 @@ async function deleteNode(node: Node): Promise<void> {
     node.connectors.some((c) => c.id === conn.fromConnectorId || c.id === conn.toConnectorId),
   );
 
-  const success = await confirmAndDeleteNodesAndConnections([node.id], connectionsToDelete.map((c) => c.id));
-  if (success) {
-    removeConnectionsLocally(board, connectionsToDelete.map((c) => c.id));
-    board.nodes = board.nodes.filter((n) => n.id !== node.id);
-    removeNodes([node.id]);
-  }
+  confirmAndDeleteNodesAndConnections([node.id], connectionsToDelete.map((c) => c.id));
 }
 
 function openPropertiesPanelForNode(node: Node): void {
@@ -346,7 +482,9 @@ onConnectStart(() => {
 
 onConnect(() => {
   void connectionDrag.finishConnectionDrag().then((connection) => {
-    if (connection) addEdges([toFlowEdge(connection)]);
+    if (!connection) return;
+    addEdges([toFlowEdge(connection)]);
+    history.recordConnectionCreated(connection);
   });
 });
 
@@ -390,16 +528,15 @@ function handleGlobalPointerMove(event: PointerEvent): void {
 onMounted(() => window.addEventListener('pointermove', handleGlobalPointerMove));
 onUnmounted(() => window.removeEventListener('pointermove', handleGlobalPointerMove));
 
-let positionUpdateTimer: ReturnType<typeof setTimeout> | undefined;
-
-onNodeDragStop(({ node: flowNode }) => {
-  const node = (flowNode.data as { node: Node }).node;
-  node.position = { x: flowNode.position.x, y: flowNode.position.y };
-
-  if (positionUpdateTimer) clearTimeout(positionUpdateTimer);
-  positionUpdateTimer = setTimeout(() => {
-    void nodeService.updateNode(node.id, node);
-  }, 300);
+// Dragging a selection moves every selected node, so save them all (as one undo step).
+onNodeDragStop(({ nodes: flowNodes }) => {
+  const moved = flowNodes.map((flowNode) => {
+    const node = (flowNode.data as { node: Node }).node;
+    node.position = { x: flowNode.position.x, y: flowNode.position.y };
+    return node;
+  });
+  for (const node of moved) void nodeService.updateNode(node.id, node);
+  history.recordNodesSaved(moved);
 });
 
 onNodeDoubleClick(({ node: flowNode }) => {
@@ -441,11 +578,23 @@ watch(
   },
 );
 
-// --- delete key -----------------------------------------------------------
+// --- keyboard: delete, undo, redo ---------------------------------------------
 
 function handleKeydown(event: KeyboardEvent): void {
   const board = currentCloudBoard.value;
-  if (event.key !== 'Delete' || !board) return;
+  // Keys pressed in a text field (properties panel, inline editing) edit the text,
+  // including the browser's own undo there.
+  if (!board || isFromEditableElement(event)) return;
+
+  const key = event.key.toLowerCase();
+  if ((event.ctrlKey || event.metaKey) && (key === 'z' || key === 'y')) {
+    event.preventDefault();
+    if (key === 'y' || event.shiftKey) void history.redo();
+    else void history.undo();
+    return;
+  }
+
+  if (event.key !== 'Delete') return;
 
   event.preventDefault();
 
@@ -469,12 +618,7 @@ function handleKeydown(event: KeyboardEvent): void {
     ]),
   );
 
-  void confirmAndDeleteNodesAndConnections(selectedNodeIds, connectionsToDelete).then((success) => {
-    if (!success) return;
-    removeConnectionsLocally(board, connectionsToDelete);
-    board.nodes = board.nodes.filter((node) => !selectedNodeIds.includes(node.id));
-    removeNodes(selectedNodeIds);
-  });
+  confirmAndDeleteNodesAndConnections(selectedNodeIds, connectionsToDelete);
 }
 
 onMounted(() => window.addEventListener('keydown', handleKeydown));
@@ -506,7 +650,12 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
         :max-zoom="1"
         :delete-key-code="null"
         :connection-line-type="ConnectionLineType.SmoothStep"
-      />
+        :snap-to-grid="flowControlStore.snapToGrid"
+        :snap-grid="[GRID_SIZE, GRID_SIZE]"
+      >
+        <Background :gap="GRID_SIZE" pattern-color="#cbd5e1" />
+        <MiniMap v-if="flowControlStore.minimapVisible" pannable zoomable :node-color="minimapNodeColor" />
+      </VueFlow>
       <PropertiesPanel v-model:visible="propertiesPanelVisible" v-model:node-properties="propertiesPanelNodeProperties" />
     </div>
   </template>
