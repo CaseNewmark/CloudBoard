@@ -27,6 +27,7 @@ import { useFlowControlStore, ZoomAction } from '@/stores/flowControl';
 import { connectionDragInjectionKey, useConnectionDrag } from '@/composables/useConnectionDrag';
 import { useBoardRealtime } from '@/composables/useBoardRealtime';
 import { useAuthStore } from '@/stores/auth';
+import { isFromEditableElement } from '@/utils/keyboard';
 
 const route = useRoute();
 const router = useRouter();
@@ -458,7 +459,8 @@ watch(
 
 function handleKeydown(event: KeyboardEvent): void {
   const board = currentCloudBoard.value;
-  if (event.key !== 'Delete' || !board) return;
+  // Delete inside a text field (properties panel, inline editing) edits the text.
+  if (event.key !== 'Delete' || !board || isFromEditableElement(event)) return;
 
   event.preventDefault();
 

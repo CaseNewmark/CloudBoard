@@ -4,9 +4,10 @@ import Card from 'primevue/card';
 import Image from 'primevue/image';
 import type { Node } from '@/models/cloudboard';
 import { useNodeProperty } from '@/composables/useNodeProperty';
+import InlineEditableText from './InlineEditableText.vue';
 
 const props = defineProps<{ node: Node }>();
-const { getProperty } = useNodeProperty(() => props.node);
+const { getProperty, updateProperty } = useNodeProperty(() => props.node);
 
 const title = computed(() => getProperty<string>('title', 'Card Title'));
 const subtitle = computed(() => getProperty<string>('subtitle', ''));
@@ -21,14 +22,18 @@ const hasImage = computed(() => !!imageUrl.value && imageUrl.value.trim().length
       <Image class="pointer-events-none" :src="imageUrl" :alt="node.name" image-class="w-full h-auto" :preview="false" />
     </template>
     <template #title>
-      <div class="card-title">{{ title }}</div>
+      <InlineEditableText :value="title" label="Card title" @commit="(text) => updateProperty('title', text)">
+        <div class="card-title">{{ title }}</div>
+      </InlineEditableText>
     </template>
     <template v-if="subtitle" #subtitle>
-      <div class="card-subtitle">{{ subtitle }}</div>
+      <InlineEditableText :value="subtitle" label="Card subtitle" @commit="(text) => updateProperty('subtitle', text)">
+        <div class="card-subtitle">{{ subtitle }}</div>
+      </InlineEditableText>
     </template>
-    <div class="card-content">
-      {{ content }}
-    </div>
+    <InlineEditableText :value="content" multiline label="Card text" @commit="(text) => updateProperty('content', text)">
+      <div class="card-content">{{ content }}</div>
+    </InlineEditableText>
   </Card>
 </template>
 
