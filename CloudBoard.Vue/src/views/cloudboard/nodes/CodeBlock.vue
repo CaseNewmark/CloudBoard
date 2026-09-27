@@ -55,19 +55,22 @@ function escapeHtml(text: string): string {
 </script>
 
 <template>
-  <Card :header="node.name" class="code-block-node">
-    <div class="code-block">
-      <div class="code-header">
-        <span class="language-badge">{{ language }}</span>
+  <Card class="code-block-node">
+    <template #title>{{ node.name }}</template>
+    <template #content>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="language-badge">{{ language }}</span>
+        </div>
+        <div class="code-body">
+          <pre v-if="showLineNumbers" class="line-numbers" aria-hidden="true"><span
+            v-for="line in lineCount"
+            :key="line"
+          >{{ line }}</span></pre>
+          <pre class="code"><code v-html="highlightedCode"></code></pre>
+        </div>
       </div>
-      <div class="code-body">
-        <pre v-if="showLineNumbers" class="line-numbers" aria-hidden="true"><span
-          v-for="line in lineCount"
-          :key="line"
-        >{{ line }}</span></pre>
-        <pre class="code"><code v-html="highlightedCode"></code></pre>
-      </div>
-    </div>
+    </template>
   </Card>
 </template>
 

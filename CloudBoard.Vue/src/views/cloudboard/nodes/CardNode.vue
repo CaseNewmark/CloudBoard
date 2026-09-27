@@ -31,9 +31,11 @@ const hasImage = computed(() => !!imageUrl.value && imageUrl.value.trim().length
         <div class="card-subtitle">{{ subtitle }}</div>
       </InlineEditableText>
     </template>
-    <InlineEditableText :value="content" multiline label="Card text" @commit="(text) => updateProperty('content', text)">
-      <div class="card-content">{{ content }}</div>
-    </InlineEditableText>
+    <template #content>
+      <InlineEditableText :value="content" multiline label="Card text" @commit="(text) => updateProperty('content', text)">
+        <div class="card-content">{{ content }}</div>
+      </InlineEditableText>
+    </template>
   </Card>
 </template>
 
