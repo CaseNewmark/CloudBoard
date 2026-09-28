@@ -6,10 +6,12 @@ import { nextTick, ref } from 'vue';
  * or Ctrl/Cmd+Enter (multiline) or clicking away to save, Escape to cancel. The
  * double-click doesn't reach the node, so it doesn't also open the properties panel.
  */
-const props = withDefaults(defineProps<{ value: string; multiline?: boolean; label: string }>(), {
+const props = withDefaults(defineProps<{ value: string; multiline?: boolean; label: string; maxlength?: number }>(), {
   multiline: false,
+  maxlength: undefined,
 });
-const emit = defineEmits<{ commit: [value: string] }>();
+/** `commit` fires only when the text changed; `done` whenever editing ends (saved or cancelled). */
+const emit = defineEmits<{ commit: [value: string]; done: [] }>();
 
 const editing = ref(false);
 const draft = ref('');
@@ -27,11 +29,15 @@ function commit(): void {
   if (!editing.value) return;
   editing.value = false;
   if (draft.value !== props.value) emit('commit', draft.value);
+  emit('done');
 }
 
 function cancel(): void {
   editing.value = false;
+  emit('done');
 }
+
+defineExpose({ startEditing });
 
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape') {
@@ -62,6 +68,7 @@ function onKeydown(event: KeyboardEvent): void {
     v-model="draft"
     class="inline-editor nodrag nopan"
     :aria-label="label"
+    :maxlength="maxlength"
     @keydown="onKeydown"
     @blur="commit"
     @dblclick.stop

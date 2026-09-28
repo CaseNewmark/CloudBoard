@@ -121,9 +121,19 @@ public static class ConnectionEndpoints
         .RequireAuthorization();
     }
 
-    /// <summary>Both ends of a connection must be connectors on the connection's own board.</summary>
+    private const int MaxLabelLength = 200;
+
+    /// <summary>Both ends of a connection must be connectors on the connection's own board, and the label must fit.</summary>
     private static async Task<IResult?> ValidateConnectorsAsync(ConnectionDto connectionDto, Guid boardId, IBoardAccessService boardAccess, HttpContext context)
     {
+        if (connectionDto.Label is { Length: > MaxLabelLength })
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(ConnectionDto.Label)] = new[] { $"A connection label can be at most {MaxLabelLength} characters." }
+            });
+        }
+
         foreach (var connectorId in new[] { connectionDto.FromConnectorId, connectionDto.ToConnectorId })
         {
             var onBoard = Guid.TryParse(connectorId, out var id)

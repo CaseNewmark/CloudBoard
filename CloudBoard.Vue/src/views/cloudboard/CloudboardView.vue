@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { type Component, computed, markRaw, onMounted, onUnmounted, provide, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ConnectionLineType, ConnectionMode, type Edge, type Node as FlowNode, useVueFlow, VueFlow } from '@vue-flow/core';
+import { ConnectionLineType, ConnectionMode, type Edge, MarkerType, type Node as FlowNode, useVueFlow, VueFlow } from '@vue-flow/core';
 import '@vue-flow/core/dist/style.css';
 import { Background } from '@vue-flow/background';
 import { MiniMap } from '@vue-flow/minimap';
@@ -17,6 +17,8 @@ import CloudboardToolbar from './Toolbar.vue';
 import PropertiesPanel from './PropertiesPanel.vue';
 import CloudboardNode from './CloudboardNode.vue';
 import PresenceAvatars from './PresenceAvatars.vue';
+import LabeledEdge from './LabeledEdge.vue';
+import { connectionLabelEditingKey } from './connectionLabelEditing';
 
 import { type CloudBoard, type Connection, type ConnectorPosition, type Node, type NodePosition, NodeType } from '@/models/cloudboard';
 import * as cloudboardService from '@/services/cloudboardService';
@@ -27,7 +29,8 @@ import { getFlowContextMenuItems, getNodeContextMenuItems } from '@/services/con
 import { useFlowControlStore, ZoomAction } from '@/stores/flowControl';
 import { connectionDragInjectionKey, useConnectionDrag } from '@/composables/useConnectionDrag';
 import { useBoardRealtime } from '@/composables/useBoardRealtime';
-import { boardHistoryInjectionKey, HistoryConflictError, useBoardHistory } from '@/composables/useBoardHistory';
+import { boardHistoryInjectionKey, HistoryConflictError, type RecreateSpec, useBoardHistory } from '@/composables/useBoardHistory';
+import { buildClipboardPayload, type ClipboardPayload, parseClipboardPayload, toPasteSpec } from '@/utils/boardClipboard';
 import { useAuthStore } from '@/stores/auth';
 import { isFromEditableElement } from '@/utils/keyboard';
 
@@ -64,6 +67,8 @@ function minimapNodeColor(flowNode: FlowNode): string {
   return node?.type === NodeType.CodeBlock ? '#1e1e1e' : '#fde68a';
 }
 
+const edgeTypes: Record<string, Component> = { labeled: markRaw(LabeledEdge) };
+
 const rawCloudboardNode = markRaw(CloudboardNode);
 const nodeTypes: Record<string, Component> = {
   [NodeType.Note]: rawCloudboardNode,
@@ -81,12 +86,16 @@ const {
   removeNodes,
   removeEdges,
   getSelectedNodes,
+  getNodes,
+  addSelectedNodes,
+  removeSelectedNodes,
   getSelectedEdges,
   onConnect,
   onConnectStart,
   onConnectEnd,
   onNodeDragStop,
   onNodeDoubleClick,
+  onEdgeDoubleClick,
   onNodeContextMenu,
   onPaneContextMenu,
   onViewportChange,
@@ -113,9 +122,45 @@ function toFlowEdge(connection: Connection): Edge {
     sourceHandle: connection.fromConnectorId,
     target: connectorNodeId(connection.toConnectorId)!,
     targetHandle: connection.toConnectorId,
-    type: 'smoothstep',
+    type: 'labeled',
+    // Connections run from an Out connector to an In connector; the arrow shows which way.
+    markerEnd: { type: MarkerType.ArrowClosed, color: 'rgba(0, 0, 0, 0.55)', width: 18, height: 18 },
+    data: { connection },
   };
 }
+
+// --- connection labels ------------------------------------------------------
+
+const editingConnectionLabelId = ref<string>();
+
+async function saveConnectionLabel(connectionId: string, text: string): Promise<void> {
+  const connection = currentCloudBoard.value?.connections.find((c) => c.id === connectionId);
+  if (!connection) return;
+  const before = connection.label ?? '';
+  const after = text.trim();
+  if (before === after) return;
+  connection.label = after || undefined;
+  try {
+    await connectionService.updateConnection(connection);
+    history.recordConnectionLabelChanged(connectionId, before, after);
+  } catch (error) {
+    console.error('Error saving connection label', error);
+    connection.label = before || undefined;
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save the connection label', life: 5000 });
+  }
+}
+
+provide(connectionLabelEditingKey, {
+  editingId: editingConnectionLabelId,
+  save: (connectionId, text) => void saveConnectionLabel(connectionId, text),
+  stop: (connectionId) => {
+    if (editingConnectionLabelId.value === connectionId) editingConnectionLabelId.value = undefined;
+  },
+});
+
+onEdgeDoubleClick(({ edge }) => {
+  editingConnectionLabelId.value = edge.id;
+});
 
 /**
  * Removes connections from the board and canvas, along with connectors no remaining
@@ -174,6 +219,57 @@ async function removeElements(nodeIds: string[], connectionIds: string[]): Promi
   }
 }
 
+/** Creates nodes, connectors and connections from a spec (undo of a delete, redo, paste). */
+async function recreateElements(spec: RecreateSpec, resolveId: (id: string) => string): Promise<Map<string, string>> {
+  const board = currentCloudBoard.value;
+  if (!board) throw new HistoryConflictError('the board is closed.');
+  const created = new Map<string, string>();
+  const lookup = (id: string) => created.get(id) ?? resolveId(id);
+
+  for (const { nodeId } of spec.connectors) {
+    if (!board.nodes.some((n) => n.id === resolveId(nodeId))) {
+      throw new HistoryConflictError('someone else deleted a connected node.');
+    }
+  }
+
+  for (const node of spec.nodes) {
+    const createdNode = await nodeService.createNode(board.id, { ...node, id: '', connectors: [] });
+    created.set(node.id, createdNode.id);
+    board.nodes.push(createdNode);
+    addNodes([toFlowNode(createdNode)]);
+    history.trackNode(createdNode);
+  }
+
+  const connectorsToCreate = [
+    ...spec.nodes.flatMap((node) => node.connectors.map((connector) => ({ nodeId: node.id, connector }))),
+    ...spec.connectors,
+  ];
+  const changedNodeIds = new Set<string>();
+  for (const { nodeId, connector } of connectorsToCreate) {
+    const owner = board.nodes.find((n) => n.id === lookup(nodeId));
+    if (!owner) throw new HistoryConflictError('someone else deleted a connected node.');
+    if (owner.connectors.some((c) => c.id === lookup(connector.id))) continue;
+    const createdConnector = await connectorService.createConnector(owner.id, { ...connector, id: '' });
+    created.set(connector.id, createdConnector.id);
+    owner.connectors.push(createdConnector);
+    changedNodeIds.add(owner.id);
+  }
+  if (changedNodeIds.size) updateNodeInternals([...changedNodeIds]);
+
+  for (const connection of spec.connections) {
+    const createdConnection = await connectionService.createConnection(board.id, {
+      id: '',
+      fromConnectorId: lookup(connection.fromConnectorId),
+      toConnectorId: lookup(connection.toConnectorId),
+      label: connection.label,
+    });
+    created.set(connection.id, createdConnection.id);
+    board.connections.push(createdConnection);
+    addEdges([toFlowEdge(createdConnection)]);
+  }
+  return created;
+}
+
 const history = useBoardHistory({
   board: () => currentCloudBoard.value,
 
@@ -202,56 +298,16 @@ const history = useBoardHistory({
     await nodeService.updateNode(nodeId, node);
   },
 
+  async applyConnectionLabel(connectionId, label) {
+    const connection = currentCloudBoard.value?.connections.find((c) => c.id === connectionId);
+    if (!connection) throw new HistoryConflictError('someone else deleted the connection.');
+    connection.label = label || undefined;
+    await connectionService.updateConnection(connection);
+  },
+
   deleteElements: removeElements,
 
-  async recreate(spec, resolveId) {
-    const board = currentCloudBoard.value;
-    if (!board) throw new HistoryConflictError('the board is closed.');
-    const created = new Map<string, string>();
-    const lookup = (id: string) => created.get(id) ?? resolveId(id);
-
-    for (const { nodeId } of spec.connectors) {
-      if (!board.nodes.some((n) => n.id === resolveId(nodeId))) {
-        throw new HistoryConflictError('someone else deleted a connected node.');
-      }
-    }
-
-    for (const node of spec.nodes) {
-      const createdNode = await nodeService.createNode(board.id, { ...node, id: '', connectors: [] });
-      created.set(node.id, createdNode.id);
-      board.nodes.push(createdNode);
-      addNodes([toFlowNode(createdNode)]);
-      history.trackNode(createdNode);
-    }
-
-    const connectorsToCreate = [
-      ...spec.nodes.flatMap((node) => node.connectors.map((connector) => ({ nodeId: node.id, connector }))),
-      ...spec.connectors,
-    ];
-    const changedNodeIds = new Set<string>();
-    for (const { nodeId, connector } of connectorsToCreate) {
-      const owner = board.nodes.find((n) => n.id === lookup(nodeId));
-      if (!owner) throw new HistoryConflictError('someone else deleted a connected node.');
-      if (owner.connectors.some((c) => c.id === lookup(connector.id))) continue;
-      const createdConnector = await connectorService.createConnector(owner.id, { ...connector, id: '' });
-      created.set(connector.id, createdConnector.id);
-      owner.connectors.push(createdConnector);
-      changedNodeIds.add(owner.id);
-    }
-    if (changedNodeIds.size) updateNodeInternals([...changedNodeIds]);
-
-    for (const connection of spec.connections) {
-      const createdConnection = await connectionService.createConnection(board.id, {
-        id: '',
-        fromConnectorId: lookup(connection.fromConnectorId),
-        toConnectorId: lookup(connection.toConnectorId),
-      });
-      created.set(connection.id, createdConnection.id);
-      board.connections.push(createdConnection);
-      addEdges([toFlowEdge(createdConnection)]);
-    }
-    return created;
-  },
+  recreate: recreateElements,
 
   notifyError(message) {
     toast.add({ severity: 'warn', summary: 'Undo', detail: message, life: 6000 });
@@ -474,6 +530,67 @@ function openPropertiesPanelForNode(node: Node): void {
   propertiesPanelVisible.value = true;
 }
 
+// --- copy / paste / duplicate ------------------------------------------------
+
+const PASTE_OFFSET = 40;
+/** Repeated pastes of the same copy step further out instead of stacking exactly. */
+let lastPaste: { text: string; count: number } | undefined;
+
+async function pasteElements(payload: ClipboardPayload, offset: number): Promise<void> {
+  const spec = toPasteSpec(payload, offset);
+  const count = spec.nodes.length;
+  try {
+    const created = await recreateElements(spec, (id) => id);
+    history.recordCreated(spec, created, count === 1 ? 'Paste node' : `Paste ${count} nodes`);
+    const pastedIds = new Set(spec.nodes.map((n) => created.get(n.id)));
+    removeSelectedNodes(getSelectedNodes.value);
+    addSelectedNodes(getNodes.value.filter((n) => pastedIds.has(n.id)));
+  } catch (error) {
+    console.error('Error pasting', error);
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to paste. Reload the board to see its current state.', life: 5000 });
+  }
+}
+
+function onCopy(event: ClipboardEvent): void {
+  const board = currentCloudBoard.value;
+  if (!board || isFromEditableElement(event)) return;
+  const payload = buildClipboardPayload(board, getSelectedNodes.value.map((n) => n.id));
+  if (!payload) return;
+  // Plain text on the system clipboard, so it also pastes into other boards and tabs.
+  event.clipboardData?.setData('text/plain', JSON.stringify(payload));
+  event.preventDefault();
+  lastPaste = undefined;
+}
+
+function onPaste(event: ClipboardEvent): void {
+  if (!currentCloudBoard.value || isFromEditableElement(event)) return;
+  const text = event.clipboardData?.getData('text/plain');
+  const payload = parseClipboardPayload(text);
+  if (!payload || !text) return;
+  event.preventDefault();
+  lastPaste = lastPaste?.text === text ? { text, count: lastPaste.count + 1 } : { text, count: 1 };
+  void pasteElements(payload, PASTE_OFFSET * lastPaste.count);
+}
+
+/** Duplicates the selection, or just `node` if it isn't part of the selection. */
+function duplicateNodes(node?: Node): void {
+  const board = currentCloudBoard.value;
+  if (!board) return;
+  const selectedIds = getSelectedNodes.value.map((n) => n.id);
+  const ids = node && !selectedIds.includes(node.id) ? [node.id] : selectedIds;
+  const payload = buildClipboardPayload(board, ids);
+  if (payload) void pasteElements(payload, PASTE_OFFSET);
+}
+
+onMounted(() => {
+  window.addEventListener('copy', onCopy);
+  window.addEventListener('paste', onPaste);
+});
+onUnmounted(() => {
+  window.removeEventListener('copy', onCopy);
+  window.removeEventListener('paste', onPaste);
+});
+
 // --- Vue Flow event wiring ----------------------------------------------
 
 onConnectStart(() => {
@@ -545,7 +662,7 @@ onNodeDoubleClick(({ node: flowNode }) => {
 
 onNodeContextMenu(({ event, node: flowNode }) => {
   const node = (flowNode.data as { node: Node }).node;
-  nodeContextMenuItems.value = getNodeContextMenuItems(node, deleteNode, openPropertiesPanelForNode);
+  nodeContextMenuItems.value = getNodeContextMenuItems(node, deleteNode, openPropertiesPanelForNode, duplicateNodes);
   nodeContextMenu.value?.show(event);
   event.preventDefault();
 });
@@ -578,7 +695,7 @@ watch(
   },
 );
 
-// --- keyboard: delete, undo, redo ---------------------------------------------
+// --- keyboard: delete, duplicate, undo, redo -------------------------------------
 
 function handleKeydown(event: KeyboardEvent): void {
   const board = currentCloudBoard.value;
@@ -587,6 +704,11 @@ function handleKeydown(event: KeyboardEvent): void {
   if (!board || isFromEditableElement(event)) return;
 
   const key = event.key.toLowerCase();
+  if ((event.ctrlKey || event.metaKey) && key === 'd') {
+    event.preventDefault(); // the browser's bookmark shortcut
+    duplicateNodes();
+    return;
+  }
   if ((event.ctrlKey || event.metaKey) && (key === 'z' || key === 'y')) {
     event.preventDefault();
     if (key === 'y' || event.shiftKey) void history.redo();
@@ -645,6 +767,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
         class="grow canvas-container"
         :class="{ 'canvas-hidden': !canvasVisible }"
         :node-types="nodeTypes"
+        :edge-types="edgeTypes"
         :connection-mode="ConnectionMode.Loose"
         :min-zoom="0.1"
         :max-zoom="1"

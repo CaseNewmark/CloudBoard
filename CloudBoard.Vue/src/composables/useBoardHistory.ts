@@ -32,6 +32,7 @@ export class HistoryConflictError extends Error {}
 export interface BoardHistoryOperations {
   board(): CloudBoard | undefined;
   applyNodeFields(nodeId: string, patch: NodeFieldPatch): Promise<void>;
+  applyConnectionLabel(connectionId: string, label: string): Promise<void>;
   deleteElements(nodeIds: string[], connectionIds: string[]): Promise<void>;
   /** Creates the elements and returns a map from each old ID to the new one the API assigned. */
   recreate(spec: RecreateSpec, resolveId: (id: string) => string): Promise<Map<string, string>>;
@@ -236,6 +237,32 @@ export function useBoardHistory(ops: BoardHistoryOperations) {
     });
   }
 
+  /** Records elements created from a spec (e.g. a paste); `created` maps the spec's IDs to the new ones. */
+  function recordCreated(spec: RecreateSpec, created: Map<string, string>, label: string): void {
+    mergeIdMap(created);
+    push({
+      label,
+      undo: () =>
+        ops.deleteElements(
+          spec.nodes.map((n) => resolveId(n.id)),
+          spec.connections.map((c) => resolveId(c.id)),
+        ),
+      redo: async () => {
+        mergeIdMap(await ops.recreate(spec, resolveId));
+      },
+    });
+  }
+
+  /** Records changing a connection's label. */
+  function recordConnectionLabelChanged(connectionId: string, before: string, after: string): void {
+    if (before === after) return;
+    push({
+      label: after ? 'Edit connection label' : 'Remove connection label',
+      undo: () => ops.applyConnectionLabel(resolveId(connectionId), before),
+      redo: () => ops.applyConnectionLabel(resolveId(connectionId), after),
+    });
+  }
+
   async function run(from: typeof undoStack, to: typeof redoStack, direction: 'undo' | 'redo'): Promise<void> {
     const entry = from.value.at(-1);
     if (!entry || running) return;
@@ -271,6 +298,8 @@ export function useBoardHistory(ops: BoardHistoryOperations) {
     recordNodeCreated,
     recordDeleted,
     recordConnectionCreated,
+    recordConnectionLabelChanged,
+    recordCreated,
   };
 }
 

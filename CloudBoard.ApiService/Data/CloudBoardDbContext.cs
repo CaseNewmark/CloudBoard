@@ -69,6 +69,7 @@ public class CloudBoardDbContext : DbContext
         {
             entity.Property(c => c.FromConnectorId).IsRequired();
             entity.Property(c => c.ToConnectorId).IsRequired();
+            entity.Property(c => c.Label).HasMaxLength(200);
             entity.ToTable("Connections");
         });
 

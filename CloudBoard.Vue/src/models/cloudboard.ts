@@ -90,6 +90,7 @@ export interface Connection {
   id: string;
   fromConnectorId: string;
   toConnectorId: string;
+  label?: string;
 }
 
 export interface CloudBoard {

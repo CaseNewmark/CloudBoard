@@ -4,6 +4,7 @@ import { type Node, type NodePosition, NodeType } from '@/models/cloudboard';
 export type AddNodeCallback = (nodeType: NodeType, position: NodePosition) => void;
 export type DeleteNodeCallback = (node: Node) => void;
 export type OpenPropertiesPanelForNodeCallback = (node: Node) => void;
+export type DuplicateNodeCallback = (node: Node) => void;
 
 export function getFlowContextMenuItems(position: NodePosition, addNode: AddNodeCallback): MenuItem[] {
   return [
@@ -29,8 +30,10 @@ export function getNodeContextMenuItems(
   node: Node,
   deleteNode: DeleteNodeCallback,
   openPropertiesPanelForNode: OpenPropertiesPanelForNodeCallback,
+  duplicateNode: DuplicateNodeCallback,
 ): MenuItem[] {
   return [
+    { label: 'Duplicate', icon: 'pi pi-clone', command: () => duplicateNode(node) },
     { label: 'Remove node', icon: 'pi pi-trash', command: () => deleteNode(node) },
     { separator: true },
     { label: 'Properties Panel', icon: 'pi pi-cog', command: () => openPropertiesPanelForNode(node) },
