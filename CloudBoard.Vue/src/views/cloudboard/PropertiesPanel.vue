@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, onBeforeUnmount, watch } from 'vue';
+import { inject, onBeforeUnmount, ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
@@ -10,6 +10,8 @@ import ToggleSwitch from 'primevue/toggleswitch';
 import { type LinkProperties, type Node, NodeType } from '@/models/cloudboard';
 import * as nodeService from '@/services/nodeService';
 import { boardHistoryInjectionKey } from '@/composables/useBoardHistory';
+import { ACCEPTED_IMAGE_TYPES } from '@/services/imageService';
+import { imageUploaderKey } from './imageUpload';
 
 const visible = defineModel<boolean>('visible', { default: false });
 const nodeProperties = defineModel<Node | undefined>('nodeProperties', { default: undefined });
@@ -26,6 +28,37 @@ watch(
 onBeforeUnmount(flushPendingSave);
 
 const history = inject(boardHistoryInjectionKey, undefined);
+const imageUploader = inject(imageUploaderKey, undefined);
+
+const imageFileInput = ref<HTMLInputElement>();
+const acceptedImageTypes = ACCEPTED_IMAGE_TYPES.join(',');
+/** The property the chosen file goes into ('url' for image nodes, 'imageUrl' for cards). */
+let imageTargetProperty = 'url';
+const uploadingImage = ref(false);
+
+function chooseImageFile(property: string): void {
+  imageTargetProperty = property;
+  imageFileInput.value?.click();
+}
+
+async function onImageFileChosen(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = ''; // choosing the same file again should still trigger a change
+  const node = nodeProperties.value;
+  if (!file || !node || !imageUploader) return;
+
+  uploadingImage.value = true;
+  try {
+    const url = await imageUploader.upload(file);
+    if (url && nodeProperties.value?.id === node.id) {
+      node.properties[imageTargetProperty] = url;
+      saveNode(node);
+    }
+  } finally {
+    uploadingImage.value = false;
+  }
+}
 
 function saveNode(node: Node): void {
   cancelPendingSave();
@@ -156,6 +189,14 @@ function updateProperty(): void {
         </Button>
       </div>
 
+      <input
+        ref="imageFileInput"
+        type="file"
+        :accept="acceptedImageTypes"
+        class="hidden"
+        data-testid="image-file-input"
+        @change="onImageFileChosen"
+      />
       <div v-if="nodeProperties" class="properties-content">
         <!-- Node Type Selector -->
         <div class="field mb-4">
@@ -224,11 +265,22 @@ function updateProperty(): void {
           </div>
           <div class="field mb-3">
             <label class="block mb-1 font-medium">Image URL</label>
-            <InputText
-              v-model="nodeProperties.properties['imageUrl']"
-              class="w-full"
-              @update:model-value="updateProperty"
-            />
+            <div class="flex gap-2">
+              <InputText
+                v-model="nodeProperties.properties['imageUrl']"
+                class="w-full"
+                @update:model-value="updateProperty"
+              />
+              <Button
+                icon="pi pi-upload"
+                severity="secondary"
+                outlined
+                aria-label="Upload card image"
+                v-tooltip.left="'Upload image'"
+                :loading="uploadingImage"
+                @click="chooseImageFile('imageUrl')"
+              />
+            </div>
           </div>
           <div class="field mb-3">
             <label class="block mb-1 font-medium">Content</label>
@@ -276,7 +328,19 @@ function updateProperty(): void {
         <div v-else-if="nodeProperties.type === NodeType.ImageNode" class="node-properties">
           <div class="field mb-3">
             <label class="block mb-1 font-medium">Image URL</label>
-            <InputText v-model="nodeProperties.properties['url']" class="w-full" @update:model-value="updateProperty" />
+            <div class="flex gap-2">
+              <InputText v-model="nodeProperties.properties['url']" class="w-full" @update:model-value="updateProperty" />
+              <Button
+                icon="pi pi-upload"
+                severity="secondary"
+                outlined
+                aria-label="Upload image"
+                v-tooltip.left="'Upload image'"
+                :loading="uploadingImage"
+                @click="chooseImageFile('url')"
+              />
+            </div>
+            <small class="text-gray-500">Or drop an image onto the board, or paste a screenshot.</small>
           </div>
           <div class="field mb-3">
             <label class="block mb-1 font-medium">Alt Text</label>

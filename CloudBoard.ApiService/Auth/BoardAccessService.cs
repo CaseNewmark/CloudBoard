@@ -32,6 +32,7 @@ public interface IBoardAccessService
     Task<BoardAccessResult> ForNodeAsync(Guid nodeId, ClaimsPrincipal user);
     Task<BoardAccessResult> ForConnectorAsync(Guid connectorId, ClaimsPrincipal user);
     Task<BoardAccessResult> ForConnectionAsync(Guid connectionId, ClaimsPrincipal user);
+    Task<BoardAccessResult> ForImageAsync(Guid imageId, ClaimsPrincipal user);
 }
 
 public class BoardAccessService : IBoardAccessService
@@ -92,6 +93,15 @@ public class BoardAccessService : IBoardAccessService
         var boardId = await _dbContext.Connections
             .Where(c => c.Id == connectionId)
             .Select(c => (Guid?)c.CloudBoardDocumentId)
+            .FirstOrDefaultAsync();
+        return await ForOptionalBoardAsync(boardId, user);
+    }
+
+    public async Task<BoardAccessResult> ForImageAsync(Guid imageId, ClaimsPrincipal user)
+    {
+        var boardId = await _dbContext.BoardImages
+            .Where(i => i.Id == imageId)
+            .Select(i => (Guid?)i.CloudBoardDocumentId)
             .FirstOrDefaultAsync();
         return await ForOptionalBoardAsync(boardId, user);
     }

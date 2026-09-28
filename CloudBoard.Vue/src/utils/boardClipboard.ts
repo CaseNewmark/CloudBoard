@@ -6,6 +6,8 @@ const FORMAT = 'cloudboard/nodes-v1';
 /** What goes on the clipboard: the copied nodes plus the connections between them. */
 export interface ClipboardPayload {
   format: typeof FORMAT;
+  /** The board the copy came from; pasting elsewhere copies its stored images across. */
+  sourceBoardId?: string;
   nodes: Node[];
   connections: Connection[];
 }
@@ -18,33 +20,43 @@ export function buildClipboardPayload(board: CloudBoard, nodeIds: string[]): Cli
   // Connectors only exist for connections, so drop the ones leading outside the copy.
   const usedConnectorIds = new Set(connections.flatMap((c) => [c.fromConnectorId, c.toConnectorId]));
   const copied = nodes.map((n) => ({ ...n, connectors: n.connectors.filter((c) => usedConnectorIds.has(c.id)) }));
-  return JSON.parse(JSON.stringify({ format: FORMAT, nodes: copied, connections }));
+  return JSON.parse(JSON.stringify({ format: FORMAT, sourceBoardId: board.id, nodes: copied, connections }));
 }
 
 const nodeTypes = new Set<string>(Object.values(NodeType));
+
+/** Checks the shape of nodes and connections read from outside the app (clipboard, imported files). */
+export function areValidElements(nodes: unknown, connections: unknown): boolean {
+  return (
+    Array.isArray(nodes) &&
+    Array.isArray(connections) &&
+    nodes.every(
+      (n: any) =>
+        typeof n?.id === 'string' &&
+        typeof n.name === 'string' &&
+        nodeTypes.has(n.type) &&
+        Number.isFinite(n.position?.x) &&
+        Number.isFinite(n.position?.y) &&
+        typeof n.properties === 'object' &&
+        n.properties !== null &&
+        Array.isArray(n.connectors),
+    ) &&
+    connections.every(
+      (c: any) =>
+        typeof c?.id === 'string' &&
+        typeof c.fromConnectorId === 'string' &&
+        typeof c.toConnectorId === 'string' &&
+        (c.label === undefined || c.label === null || typeof c.label === 'string'),
+    )
+  );
+}
 
 /** Parses clipboard text; anything that isn't a CloudBoard copy (or looks tampered with) returns undefined. */
 export function parseClipboardPayload(text: string | undefined): ClipboardPayload | undefined {
   if (!text || !text.includes(FORMAT)) return undefined;
   try {
     const data = JSON.parse(text);
-    const valid =
-      data?.format === FORMAT &&
-      Array.isArray(data.nodes) &&
-      Array.isArray(data.connections) &&
-      data.nodes.every(
-        (n: any) =>
-          typeof n?.id === 'string' &&
-          typeof n.name === 'string' &&
-          nodeTypes.has(n.type) &&
-          Number.isFinite(n.position?.x) &&
-          Number.isFinite(n.position?.y) &&
-          typeof n.properties === 'object' &&
-          Array.isArray(n.connectors),
-      ) &&
-      data.connections.every(
-        (c: any) => typeof c?.id === 'string' && typeof c.fromConnectorId === 'string' && typeof c.toConnectorId === 'string',
-      );
+    const valid = data?.format === FORMAT && areValidElements(data.nodes, data.connections);
     return valid && data.nodes.length > 0 ? (data as ClipboardPayload) : undefined;
   } catch {
     return undefined;

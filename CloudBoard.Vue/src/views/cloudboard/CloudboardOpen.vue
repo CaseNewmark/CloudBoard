@@ -11,6 +11,7 @@ import type { CloudBoard } from '@/models/cloudboard';
 import * as cloudboardService from '@/services/cloudboardService';
 import { useAuthStore } from '@/stores/auth';
 import CloudboardEdit from './CloudboardEdit.vue';
+import { importBoard, parseBoardExport } from '@/utils/boardExport';
 
 const router = useRouter();
 const confirm = useConfirm();
@@ -24,6 +25,37 @@ function isOwner(board: CloudBoard): boolean {
 
 const availableBoards = ref<CloudBoard[]>([]);
 const search = ref('');
+
+const importInput = ref<HTMLInputElement>();
+const importing = ref(false);
+const MAX_IMPORT_BYTES = 100 * 1024 * 1024;
+
+/** Creates a new board from a file saved with "Export as JSON". */
+async function onImportFile(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+
+  const data = file.size <= MAX_IMPORT_BYTES ? parseBoardExport(await file.text()) : undefined;
+  if (!data) {
+    toast.add({ severity: 'error', summary: 'Import failed', detail: `"${file.name}" isn't a CloudBoard export.`, life: 6000 });
+    return;
+  }
+
+  importing.value = true;
+  try {
+    const boardId = await importBoard(data);
+    toast.add({ severity: 'success', summary: 'Board imported', detail: `"${data.name}" was imported.`, life: 4000 });
+    await router.push(`/cloudboard/${boardId}`);
+  } catch (error) {
+    console.error('Import failed', error);
+    toast.add({ severity: 'error', summary: 'Import failed', detail: 'The board could not be imported completely.', life: 6000 });
+    await refreshBoards();
+  } finally {
+    importing.value = false;
+  }
+}
 
 /** Boards whose name or description contains every word typed, ignoring case. */
 const filteredBoards = computed(() => {
@@ -111,8 +143,9 @@ function onDelete(boardId: string, event: Event): void {
 
 <template>
   <div class="bg-amber-50 p-6 rounded-lg shadow-sm border border-gray-200 flex flex-row items-start gap-10">
+    <div class="self-center w-full flex flex-col items-center gap-2">
     <button
-      class="self-center w-full h-64 p-4 flex flex-col items-center justify-center gap-3.5 hover:bg-amber-100 hover:border-amber-300"
+      class="w-full h-64 p-4 flex flex-col items-center justify-center gap-3.5 hover:bg-amber-100 hover:border-amber-300"
       @click="onCreate"
     >
       <div class="flex flex-col items-center gap-3.5 mb-4">
@@ -120,6 +153,17 @@ function onDelete(boardId: string, event: Event): void {
         <h3 class="text-lg font-semibold text-gray-500">Create a new Cloudboard...</h3>
       </div>
     </button>
+    <Button
+      label="Import from file..."
+      icon="pi pi-upload"
+      text
+      size="small"
+      severity="secondary"
+      :loading="importing"
+      @click="importInput?.click()"
+    />
+    <input ref="importInput" type="file" accept=".json,application/json" class="hidden" aria-label="Import board file" @change="onImportFile" />
+    </div>
     <div class="self-center">
       <span class="text-gray-600 mb-2">OR</span>
     </div>

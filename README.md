@@ -15,7 +15,7 @@ CloudBoard provides an interactive canvas where users can:
 - Create different types of nodes (Notes, Cards, Link Collections, Images, Code Blocks)
 - Connect nodes with customizable connectors
 - Organize information visually through a drag-and-drop interface
-- Save and load board configurations
+- Upload images, and export boards as PNG or JSON (and import them again)
 - Share boards and edit them together in real time
 
 The application uses a modern architecture:

@@ -4,6 +4,7 @@ import Card from 'primevue/card';
 import Image from 'primevue/image';
 import type { Node } from '@/models/cloudboard';
 import { useNodeProperty } from '@/composables/useNodeProperty';
+import { useImageSource } from '@/composables/useImageSource';
 import InlineEditableText from './InlineEditableText.vue';
 
 const props = defineProps<{ node: Node }>();
@@ -13,13 +14,14 @@ const title = computed(() => getProperty<string>('title', 'Card Title'));
 const subtitle = computed(() => getProperty<string>('subtitle', ''));
 const imageUrl = computed(() => getProperty<string>('imageUrl', ''));
 const content = computed(() => getProperty<string>('content', 'Card content...'));
-const hasImage = computed(() => !!imageUrl.value && imageUrl.value.trim().length > 0);
+const { src: imageSrc } = useImageSource(() => imageUrl.value.trim() || undefined);
+const hasImage = computed(() => !!imageSrc.value);
 </script>
 
 <template>
   <Card class="card-node">
     <template v-if="hasImage" #header>
-      <Image class="pointer-events-none" :src="imageUrl" :alt="node.name" image-class="w-full h-auto" :preview="false" />
+      <Image class="pointer-events-none" :src="imageSrc" :alt="node.name" image-class="w-full h-auto" :preview="false" />
     </template>
     <template #title>
       <InlineEditableText :value="title" label="Card title" @commit="(text) => updateProperty('title', text)">

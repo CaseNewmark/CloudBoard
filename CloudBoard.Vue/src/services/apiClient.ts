@@ -19,6 +19,13 @@ export interface CloudBoardDto {
   [key: string]: any;
 }
 
+export interface BoardImageDto {
+  id: string;
+  url: string;
+  contentType: string;
+  size: number;
+}
+
 export interface CloudBoardMembersDto {
   emails: string[];
 }
@@ -106,11 +113,14 @@ export function setApiBaseUrl(url: string): void {
   baseUrl = url;
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+/** Sends an authenticated request, refreshing the token and retrying once on 401. */
+async function send(method: string, path: string, body?: unknown, accept = 'application/json'): Promise<Response> {
   const url = baseUrl + path;
+  const isForm = body instanceof FormData;
   const doFetch = async (): Promise<Response> => {
-    const headers: Record<string, string> = { Accept: 'application/json' };
-    if (body !== undefined) headers['Content-Type'] = 'application/json';
+    const headers: Record<string, string> = { Accept: accept };
+    // FormData sets its own multipart Content-Type (with the boundary).
+    if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
 
     if (authHook) {
       await authHook.ensureValidToken();
@@ -124,7 +134,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     return fetch(url, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
     });
   };
 
@@ -138,6 +148,11 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
       authHook.onUnauthorized();
     }
   }
+  return response;
+}
+
+async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const response = await send(method, path, body);
 
   if (response.status === 204) {
     return null as T;
@@ -153,7 +168,30 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return parsed as T;
 }
 
+/** Fetches a binary resource (e.g. a stored image) with the user's credentials. */
+async function requestBlob(path: string): Promise<Blob> {
+  const response = await send('GET', path, undefined, '*/*');
+  if (!response.ok) {
+    throw new ApiException('Failed to load the resource.', response.status, await response.text());
+  }
+  return response.blob();
+}
+
 export const apiClient = {
+  uploadImage(cloudboardId: string, file: Blob, fileName = 'image'): Promise<BoardImageDto> {
+    const form = new FormData();
+    form.append('file', file, fileName);
+    return request('POST', `/api/cloudboard/${encodeURIComponent(cloudboardId)}/images`, form);
+  },
+
+  copyImage(cloudboardId: string, imageId: string): Promise<BoardImageDto> {
+    return request('POST', `/api/cloudboard/${encodeURIComponent(cloudboardId)}/images/${encodeURIComponent(imageId)}/copy`);
+  },
+
+  getImageBlob(imageId: string): Promise<Blob> {
+    return requestBlob(`/api/images/${encodeURIComponent(imageId)}`);
+  },
+
   createCloudBoard(body: CloudBoardDto): Promise<CloudBoardDto> {
     return request('POST', '/api/cloudboard', body);
   },

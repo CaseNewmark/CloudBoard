@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import { type Component, computed, markRaw, onMounted, onUnmounted, provide, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ConnectionLineType, ConnectionMode, type Edge, MarkerType, type Node as FlowNode, useVueFlow, VueFlow } from '@vue-flow/core';
+import {
+  ConnectionLineType,
+  ConnectionMode,
+  type Edge,
+  getRectOfNodes,
+  MarkerType,
+  type Node as FlowNode,
+  useVueFlow,
+  VueFlow,
+} from '@vue-flow/core';
 import '@vue-flow/core/dist/style.css';
 import { Background } from '@vue-flow/background';
 import { MiniMap } from '@vue-flow/minimap';
@@ -19,18 +28,23 @@ import CloudboardNode from './CloudboardNode.vue';
 import PresenceAvatars from './PresenceAvatars.vue';
 import LabeledEdge from './LabeledEdge.vue';
 import { connectionLabelEditingKey } from './connectionLabelEditing';
+import { imageUploaderKey } from './imageUpload';
+import { boardExportActionsKey } from './boardExportActions';
+import { toPng } from 'html-to-image';
 
 import { type CloudBoard, type Connection, type ConnectorPosition, type Node, type NodePosition, NodeType } from '@/models/cloudboard';
 import * as cloudboardService from '@/services/cloudboardService';
 import * as nodeService from '@/services/nodeService';
 import * as connectionService from '@/services/connectionService';
 import * as connectorService from '@/services/connectorService';
+import { copyImageToBoard, imageFileProblem, storedImageId, uploadErrorMessage, uploadImage } from '@/services/imageService';
 import { getFlowContextMenuItems, getNodeContextMenuItems } from '@/services/contextMenu';
 import { useFlowControlStore, ZoomAction } from '@/stores/flowControl';
 import { connectionDragInjectionKey, useConnectionDrag } from '@/composables/useConnectionDrag';
 import { useBoardRealtime } from '@/composables/useBoardRealtime';
 import { boardHistoryInjectionKey, HistoryConflictError, type RecreateSpec, useBoardHistory } from '@/composables/useBoardHistory';
 import { buildClipboardPayload, type ClipboardPayload, parseClipboardPayload, toPasteSpec } from '@/utils/boardClipboard';
+import { buildBoardExport, downloadFile, fileNameFor } from '@/utils/boardExport';
 import { useAuthStore } from '@/stores/auth';
 import { isFromEditableElement } from '@/utils/keyboard';
 
@@ -536,7 +550,30 @@ const PASTE_OFFSET = 40;
 /** Repeated pastes of the same copy step further out instead of stacking exactly. */
 let lastPaste: { text: string; count: number } | undefined;
 
-async function pasteElements(payload: ClipboardPayload, offset: number): Promise<void> {
+/** Stored images belong to a board; nodes pasted into another board get their own copies. */
+async function copyImagesFromOtherBoard(payload: ClipboardPayload, boardId: string): Promise<ClipboardPayload> {
+  if (!payload.sourceBoardId || payload.sourceBoardId === boardId) return payload;
+  const copies = new Map<string, Promise<string>>();
+  const copy = (url: string) => {
+    if (!copies.has(url)) copies.set(url, copyImageToBoard(boardId, url).catch(() => url));
+    return copies.get(url)!;
+  };
+  const nodes = await Promise.all(
+    payload.nodes.map(async (node) => {
+      const properties = { ...node.properties };
+      for (const [key, value] of Object.entries(properties)) {
+        if (storedImageId(value)) properties[key] = await copy(value);
+      }
+      return { ...node, properties };
+    }),
+  );
+  return { ...payload, nodes };
+}
+
+async function pasteElements(original: ClipboardPayload, offset: number): Promise<void> {
+  const board = currentCloudBoard.value;
+  if (!board) return;
+  const payload = await copyImagesFromOtherBoard(original, board.id);
   const spec = toPasteSpec(payload, offset);
   const count = spec.nodes.length;
   try {
@@ -564,6 +601,15 @@ function onCopy(event: ClipboardEvent): void {
 
 function onPaste(event: ClipboardEvent): void {
   if (!currentCloudBoard.value || isFromEditableElement(event)) return;
+
+  // A pasted screenshot or image file becomes an image node in the middle of the view.
+  const imageFiles = Array.from(event.clipboardData?.files ?? []).filter((f) => f.type.startsWith('image/'));
+  if (imageFiles.length) {
+    event.preventDefault();
+    void addImageNodes(imageFiles, canvasCenter());
+    return;
+  }
+
   const text = event.clipboardData?.getData('text/plain');
   const payload = parseClipboardPayload(text);
   if (!payload || !text) return;
@@ -571,6 +617,138 @@ function onPaste(event: ClipboardEvent): void {
   lastPaste = lastPaste?.text === text ? { text, count: lastPaste.count + 1 } : { text, count: 1 };
   void pasteElements(payload, PASTE_OFFSET * lastPaste.count);
 }
+
+// --- images: upload, drop, paste ----------------------------------------------
+
+async function uploadImageToBoard(file: File): Promise<string | undefined> {
+  const board = currentCloudBoard.value;
+  if (!board) return undefined;
+  const problem = imageFileProblem(file);
+  if (problem) {
+    toast.add({ severity: 'warn', summary: 'Image not added', detail: problem, life: 5000 });
+    return undefined;
+  }
+  try {
+    return await uploadImage(board.id, file);
+  } catch (error) {
+    console.error('Error uploading image', error);
+    toast.add({ severity: 'error', summary: 'Upload failed', detail: uploadErrorMessage(error), life: 6000 });
+    return undefined;
+  }
+}
+
+provide(imageUploaderKey, { upload: uploadImageToBoard });
+
+/** Uploads image files and adds an image node for each, cascading from `position`. */
+async function addImageNodes(files: File[], position: NodePosition): Promise<void> {
+  const board = currentCloudBoard.value;
+  if (!board) return;
+  for (const [index, file] of files.entries()) {
+    const url = await uploadImageToBoard(file);
+    if (!url) continue;
+    const name = file.name && file.name !== 'image.png' ? file.name.replace(/\.[^.]+$/, '') : 'Pasted image';
+    const node = await nodeService.createNode(board.id, {
+      id: '',
+      name,
+      type: NodeType.ImageNode,
+      position: { x: position.x + index * 30, y: position.y + index * 30 },
+      connectors: [],
+      properties: { url, alt: name, caption: '' },
+    });
+    board.nodes.push(node);
+    addNodes([toFlowNode(node)]);
+    history.recordNodeCreated(node);
+  }
+}
+
+function canvasCenter(): NodePosition {
+  const rect = document.querySelector('.canvas-container')?.getBoundingClientRect();
+  if (!rect) return { x: 0, y: 0 };
+  return screenToFlowCoordinate({ x: rect.left + rect.width / 2 - 150, y: rect.top + rect.height / 2 - 100 });
+}
+
+function hasFiles(event: DragEvent): boolean {
+  return !!event.dataTransfer?.types.includes('Files');
+}
+
+function onCanvasDragOver(event: DragEvent): void {
+  if (!hasFiles(event)) return;
+  event.preventDefault();
+  event.dataTransfer!.dropEffect = 'copy';
+}
+
+function onCanvasDrop(event: DragEvent): void {
+  if (!hasFiles(event)) return;
+  event.preventDefault();
+  const files = Array.from(event.dataTransfer!.files).filter((f) => f.type.startsWith('image/'));
+  if (files.length === 0) {
+    toast.add({ severity: 'warn', summary: 'Nothing added', detail: 'Drop PNG, JPEG, GIF or WebP images onto the board.', life: 5000 });
+    return;
+  }
+  void addImageNodes(files, screenToFlowCoordinate({ x: event.clientX, y: event.clientY }));
+}
+
+// --- export --------------------------------------------------------------------
+
+const EXPORT_PADDING = 40;
+const EXPORT_MAX_SIDE = 4000;
+// A 1x1 transparent PNG, drawn instead of images the export can't read (e.g. another site's).
+const MISSING_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
+/** Renders every node and connection (not just what's in view) to a PNG. */
+async function exportPng(): Promise<void> {
+  const board = currentCloudBoard.value;
+  // The element carrying Vue Flow's pan/zoom transform: the export replaces that transform
+  // with one that fits every node, regardless of the current view.
+  const viewportElement = document.querySelector('.vue-flow__transformationpane') as HTMLElement | null;
+  if (!board || !viewportElement) return;
+  if (getNodes.value.length === 0) {
+    toast.add({ severity: 'info', summary: 'Nothing to export', detail: 'This board is empty.', life: 4000 });
+    return;
+  }
+
+  const bounds = getRectOfNodes(getNodes.value);
+  const scale = Math.min(1, EXPORT_MAX_SIDE / (Math.max(bounds.width, bounds.height) + 2 * EXPORT_PADDING));
+  const width = Math.ceil((bounds.width + 2 * EXPORT_PADDING) * scale);
+  const height = Math.ceil((bounds.height + 2 * EXPORT_PADDING) * scale);
+  // Place the nodes' bounding box at the padding offset, at the export scale.
+  const transform = { x: (EXPORT_PADDING - bounds.x) * scale, y: (EXPORT_PADDING - bounds.y) * scale, zoom: scale };
+  try {
+    const dataUrl = await toPng(viewportElement, {
+      backgroundColor: '#ffffff',
+      width,
+      height,
+      pixelRatio: 1,
+      imagePlaceholder: MISSING_IMAGE,
+      style: {
+        width: `${width}px`,
+        height: `${height}px`,
+        transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.zoom})`,
+      },
+    });
+    downloadFile(dataUrl, `${fileNameFor(board.name)}.png`);
+  } catch (error) {
+    console.error('PNG export failed', error);
+    toast.add({ severity: 'error', summary: 'Export failed', detail: 'The board could not be rendered as an image.', life: 6000 });
+  }
+}
+
+/** Saves the board as JSON, with stored images embedded, so it can be imported again. */
+async function exportJson(): Promise<void> {
+  const board = currentCloudBoard.value;
+  if (!board) return;
+  try {
+    const data = await buildBoardExport(board);
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    downloadFile(url, `${fileNameFor(board.name)}.cloudboard.json`);
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  } catch (error) {
+    console.error('JSON export failed', error);
+    toast.add({ severity: 'error', summary: 'Export failed', detail: 'The board could not be exported.', life: 6000 });
+  }
+}
+
+provide(boardExportActionsKey, { exportPng, exportJson });
 
 /** Duplicates the selection, or just `node` if it isn't part of the selection. */
 function duplicateNodes(node?: Node): void {
@@ -768,6 +946,8 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
         :class="{ 'canvas-hidden': !canvasVisible }"
         :node-types="nodeTypes"
         :edge-types="edgeTypes"
+        @dragover="onCanvasDragOver"
+        @drop="onCanvasDrop"
         :connection-mode="ConnectionMode.Loose"
         :min-zoom="0.1"
         :max-zoom="1"
