@@ -83,12 +83,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(): Promise<void> {
-    window.location.href = keycloakApi.buildLoginUrl();
+    window.location.href = await keycloakApi.buildLoginUrl();
   }
 
-  async function handleCallback(code: string): Promise<void> {
+  async function handleCallback(code: string, state: string | undefined): Promise<void> {
     try {
-      const tokens = await keycloakApi.exchangeCodeForTokens(code);
+      const tokens = await keycloakApi.exchangeCodeForTokens(code, state);
       tokenService.setTokens(tokens.access_token, tokens.refresh_token, tokens.id_token);
 
       const userInfo = await keycloakApi.getUserInfo(tokens.access_token);
@@ -97,7 +97,11 @@ export const useAuthStore = defineStore('auth', () => {
       isLoggedIn.value = true;
     } catch (error) {
       console.error('Authentication failed:', error);
-      logout();
+      // Clear local state only: redirecting to Keycloak's logout here would leave the
+      // user on its "log out?" page instead of the callback view's error message.
+      tokenService.clearTokens();
+      clearUser();
+      isLoggedIn.value = false;
       throw error;
     }
   }

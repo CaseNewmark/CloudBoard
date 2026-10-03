@@ -89,6 +89,11 @@ Keycloak Authorization Code flow: `stores/auth.ts` owns session state and wires 
 into `apiClient.ts` via `setAuthHook` so API requests carry a bearer token and retry once
 on a 401 (attempting a token refresh first).
 
+The login (`services/keycloakApi.ts`) uses PKCE (S256, required by the realm) and a `state`
+value checked on return. It sends `kc_idp_hint=google`, so Keycloak forwards straight to
+Google instead of showing its own login form; drop that parameter to reach Keycloak's form
+(e.g. for local test accounts).
+
 ## Testing
 
 No test runner is set up yet. Vitest is the natural fit for a Vite project.

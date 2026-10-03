@@ -41,8 +41,10 @@ services:
       KC_HEALTH_ENABLED: "true"
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Set KEYCLOAK_ADMIN_PASSWORD in deploy/.env}
-      # Substituted into the realm's redirect URIs and web origins on import.
+      # Substituted into the realm on import: redirect URIs/web origins and the Google identity provider.
       CLOUDBOARD_APP_URL: ${PUBLIC_URL}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Set GOOGLE_CLIENT_ID in deploy/.env}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?Set GOOGLE_CLIENT_SECRET in deploy/.env}
     volumes:
       - ../CloudBoard.AppHost/Realms:/opt/keycloak/data/import:ro
     depends_on:
