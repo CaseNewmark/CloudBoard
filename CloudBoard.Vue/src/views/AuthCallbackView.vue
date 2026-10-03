@@ -20,7 +20,7 @@ async function run(): Promise<void> {
     }
 
     if (code) {
-      await authStore.handleCallback(code);
+      await authStore.handleCallback(code, route.query['state'] as string | undefined);
 
       if (authStore.isLoggedIn) {
         await router.push('/cloudboard');

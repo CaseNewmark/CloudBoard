@@ -11,8 +11,41 @@ const keycloakUrl =
   import.meta.env.VITE_KEYCLOAK_URL ?? (import.meta.env.DEV ? 'http://localhost:8080' : `${window.location.origin}/keycloak`);
 const baseUrl = `${keycloakUrl.replace(/\/+$/, '')}/realms/cloudboard`;
 const clientId = 'cloudboard-client';
+/** Keycloak identity provider to send users to directly, skipping Keycloak's own login form. */
+const identityProvider = 'google';
 
-export async function exchangeCodeForTokens(code: string): Promise<TokenResponse> {
+// Per-login values kept across the redirect to Keycloak and back (this tab only).
+const STATE_KEY = 'oauth_state';
+const CODE_VERIFIER_KEY = 'oauth_code_verifier';
+
+function randomString(bytes = 32): string {
+  const values = crypto.getRandomValues(new Uint8Array(bytes));
+  return base64Url(values);
+}
+
+function base64Url(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/** PKCE (RFC 7636): the S256 challenge for a verifier. */
+async function codeChallenge(verifier: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+  return base64Url(new Uint8Array(digest));
+}
+
+/**
+ * Exchanges the code from the login redirect for tokens. `state` must match the one this
+ * tab sent, and the PKCE verifier proves the code was requested by this tab.
+ */
+export async function exchangeCodeForTokens(code: string, state: string | undefined): Promise<TokenResponse> {
+  const expectedState = sessionStorage.getItem(STATE_KEY);
+  const codeVerifier = sessionStorage.getItem(CODE_VERIFIER_KEY);
+  sessionStorage.removeItem(STATE_KEY);
+  sessionStorage.removeItem(CODE_VERIFIER_KEY);
+  if (!state || !expectedState || state !== expectedState || !codeVerifier) {
+    throw new Error('Login response does not match a login started in this tab');
+  }
+
   const response = await fetch(`${baseUrl}/protocol/openid-connect/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -20,6 +53,7 @@ export async function exchangeCodeForTokens(code: string): Promise<TokenResponse
       grant_type: 'authorization_code',
       client_id: clientId,
       code,
+      code_verifier: codeVerifier,
       redirect_uri: `${window.location.origin}/auth/callback`,
     }),
   });
@@ -60,12 +94,22 @@ export async function getUserInfo(accessToken: string): Promise<any> {
   return response.json();
 }
 
-export function buildLoginUrl(): string {
+/** The Keycloak login URL; `kc_idp_hint` makes Keycloak forward straight to Google. */
+export async function buildLoginUrl(): Promise<string> {
+  const state = randomString();
+  const codeVerifier = randomString(48);
+  sessionStorage.setItem(STATE_KEY, state);
+  sessionStorage.setItem(CODE_VERIFIER_KEY, codeVerifier);
+
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: `${window.location.origin}/auth/callback`,
     scope: 'openid profile email',
     response_type: 'code',
+    state,
+    code_challenge: await codeChallenge(codeVerifier),
+    code_challenge_method: 'S256',
+    kc_idp_hint: identityProvider,
   });
   return `${baseUrl}/protocol/openid-connect/auth?${params}`;
 }

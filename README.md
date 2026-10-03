@@ -93,9 +93,23 @@ For detailed development information, refer to the component-specific documentat
 
 > **Note:** The Vue frontend is automatically built and served by the .NET Aspire host, so there's no need to separately start it with `npm run dev`.
 
-### First Login
+### Signing In (Google)
 
-The `cloudboard` Keycloak realm is imported from `CloudBoard.AppHost/Realms/cloudboard.json` and ships without users. Create one in the Keycloak admin console (`http://localhost:8080`, username `admin`; the password is the generated `keycloak-password` parameter, visible in the Aspire dashboard and stored in the AppHost's user secrets): **cloudboard realm → Users → Add user**, then set a non-temporary password under **Credentials**. Give the user an email and turn on **Email verified**: boards are shared by email, and only verified emails are honoured.
+Users sign in with Google. Keycloak handles the login and forwards to Google (its "Google" identity provider, defined in `CloudBoard.AppHost/Realms/cloudboard.json`); the app still only talks to Keycloak.
+
+Before the first run, give the AppHost the credentials of a Google OAuth client:
+
+1. In the [Google Cloud Console](https://console.cloud.google.com/apis/credentials), create an **OAuth client ID** of type **Web application**. Leave *Authorized JavaScript origins* empty and add this *Authorized redirect URI*:
+   `http://localhost:8080/realms/cloudboard/broker/google/endpoint`
+2. Store the client ID and secret as AppHost user secrets:
+   ```bash
+   cd CloudBoard.AppHost
+   dotnet user-secrets set "Parameters:google-client-id" "<client id>"
+   dotnet user-secrets set "Parameters:google-client-secret" "<client secret>"
+   ```
+3. While the Google app's publishing status is **Testing**, only the Google accounts listed under **Test users** (Google Auth Platform → Audience) can sign in, which makes that list the allowlist.
+
+Accounts are created in Keycloak on first sign-in, with Google's verified email, so boards can be shared with them by email. The Keycloak admin console (`http://localhost:8080`, user `admin`, password = the `keycloak-password` parameter in the Aspire dashboard / user secrets) is only needed for administration.
 
 The frontend must run on `http://localhost:5173`, the only redirect origin the realm's `cloudboard-client` accepts.
 
