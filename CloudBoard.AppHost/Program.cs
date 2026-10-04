@@ -1,7 +1,16 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
+// Users sign in with Google through Keycloak. Set these as AppHost user secrets:
+//   dotnet user-secrets set "Parameters:google-client-id" "<client id>"
+//   dotnet user-secrets set "Parameters:google-client-secret" "<client secret>"
+var googleClientId = builder.AddParameter("google-client-id");
+var googleClientSecret = builder.AddParameter("google-client-secret", secret: true);
+
 var keycloak = builder.AddKeycloak("keycloak", 8080)
                       .WithRealmImport("./Realms/cloudboard.json")
+                      // Substituted into the realm's Google identity provider on import.
+                      .WithEnvironment("GOOGLE_CLIENT_ID", googleClientId)
+                      .WithEnvironment("GOOGLE_CLIENT_SECRET", googleClientSecret)
                       .WithDataVolume()
                       .PublishAsContainer();
 

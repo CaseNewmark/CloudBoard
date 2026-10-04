@@ -40,6 +40,7 @@ The files live in [`deploy/`](../deploy): `docker-compose.yml`, `Caddyfile`, `.e
    Edit `.env`:
    - `PUBLIC_URL`: the full origin, e.g. `https://cloudboard.example.com` (no trailing slash).
    - `POSTGRES_PASSWORD` and `KEYCLOAK_ADMIN_PASSWORD`: generate strong values, e.g. `openssl rand -base64 32`.
+   - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: the Google OAuth client for sign-in (see [Google Sign-In](#google-sign-in)).
    - `AUTOMAPPER_LICENSE_KEY`: optional, see the main README.
 
 3. Build and start:
@@ -50,14 +51,33 @@ The files live in [`deploy/`](../deploy): `docker-compose.yml`, `Caddyfile`, `.e
 
 4. Open `PUBLIC_URL` in a browser. You should see the CloudBoard home page.
 
-## Creating Users
+## Google Sign-In
 
-The realm ships without users. Create them in the Keycloak admin console:
+Users sign in with their Google account. Keycloak brokers the login: the app sends users to Keycloak, which forwards them to Google and creates their Keycloak account on first sign-in (with Google's verified email, so boards can be shared with them).
 
-1. Open `PUBLIC_URL/keycloak/admin` and sign in as `admin` with `KEYCLOAK_ADMIN_PASSWORD`.
-2. Switch to the **cloudboard** realm (top-left realm selector).
-3. **Users → Add user**: set username, email, first/last name, and turn on **Email verified**. Boards are shared by email, and only verified emails are honoured.
-4. On the user's **Credentials** tab, set a password (turn off **Temporary** unless the user should change it at first login).
+1. In the [Google Cloud Console](https://console.cloud.google.com/apis/credentials), create an **OAuth client ID** of type **Web application**:
+   - *Authorized JavaScript origins*: leave empty (the browser never calls Google from JavaScript).
+   - *Authorized redirect URIs*: `PUBLIC_URL/keycloak/realms/cloudboard/broker/google/endpoint`, e.g. `https://cloudboard.example.com/keycloak/realms/cloudboard/broker/google/endpoint`.
+2. Put the client ID and secret into `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `deploy/.env`.
+3. **Who can sign in:** while the Google app's publishing status is **Testing**, only the accounts listed under **Test users** (Google Auth Platform → Audience, up to 100) can sign in. Add each user's Google address there. If you publish the app, any Google account can sign in and create boards.
+
+The Keycloak admin console (`PUBLIC_URL/keycloak/admin`, user `admin`, `KEYCLOAK_ADMIN_PASSWORD`) is only needed for administration, e.g. to disable a user.
+
+### Switching an existing deployment to Google sign-in
+
+The realm file is only imported when the realm doesn't exist yet, so an existing deployment keeps its old login until Keycloak's database is recreated. Recreating it removes all existing Keycloak accounts; boards belong to accounts, so to start fresh, recreate the app database too:
+
+```bash
+cd CloudBoard/deploy
+# GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET set in .env first
+docker compose stop api keycloak
+docker compose exec postgres psql -U cloudboard -d postgres \
+  -c 'DROP DATABASE cloudboard;' -c 'CREATE DATABASE cloudboard;' \
+  -c 'DROP DATABASE keycloak;' -c 'CREATE DATABASE keycloak;'
+docker compose up -d --build
+```
+
+The API recreates its tables on startup and Keycloak imports the realm, now with Google.
 
 ## Updating
 
@@ -140,6 +160,8 @@ How the pieces find each other:
 ## Troubleshooting
 
 - **No certificate / browser warns about HTTPS.** Check that DNS points at the server and ports 80/443 are open, then read `docker compose logs web`.
+- **Google shows "Error 400: redirect_uri_mismatch".** The redirect URI in the Google OAuth client must be exactly `PUBLIC_URL/keycloak/realms/cloudboard/broker/google/endpoint`. Google can take a few minutes to apply changes.
+- **Google shows "Access blocked" / "has not completed the Google verification process".** The Google account isn't in the app's **Test users** list.
 - **Login page shows "Invalid parameter: redirect_uri".** The realm was imported with a different `PUBLIC_URL`. Fix the client's redirect URIs in the admin console (Clients → cloudboard-client), or recreate the Keycloak database as described above.
 - **API errors.** `docker compose logs -f api`.
 - **Keycloak slow to start.** Its first start takes a minute or two; the API waits until Keycloak reports healthy.
