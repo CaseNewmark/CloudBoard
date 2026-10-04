@@ -33,6 +33,9 @@ var apiService = builder.AddProject<Projects.CloudBoard_ApiService>("apiservice"
 builder.AddJavaScriptApp("vue", "../CloudBoard.Vue", "dev")
        .WithHttpEndpoint(port: 5173, env: "PORT", isProxied: false)
        .WithReference(apiService)
+       // Keycloak's URL as Aspire publishes it: https://localhost:8080 when a trusted ASP.NET
+       // dev certificate exists (Aspire then serves Keycloak over HTTPS only), otherwise http.
+       .WithEnvironment("VITE_KEYCLOAK_URL", keycloak.GetEndpoint("http"))
        .WaitFor(apiService)
        .WithExternalHttpEndpoints()
        .PublishAsStaticWebsite();

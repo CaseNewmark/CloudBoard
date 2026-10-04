@@ -99,8 +99,11 @@ Users sign in with Google. Keycloak handles the login and forwards to Google (it
 
 Before the first run, give the AppHost the credentials of a Google OAuth client:
 
-1. In the [Google Cloud Console](https://console.cloud.google.com/apis/credentials), create an **OAuth client ID** of type **Web application**. Leave *Authorized JavaScript origins* empty and add this *Authorized redirect URI*:
-   `http://localhost:8080/realms/cloudboard/broker/google/endpoint`
+1. In the [Google Cloud Console](https://console.cloud.google.com/apis/credentials), create an **OAuth client ID** of type **Web application**. Leave *Authorized JavaScript origins* empty and add these *Authorized redirect URIs*:
+   - `https://localhost:8080/realms/cloudboard/broker/google/endpoint`
+   - `http://localhost:8080/realms/cloudboard/broker/google/endpoint`
+
+   Aspire serves Keycloak over HTTPS when a trusted ASP.NET dev certificate exists (`dotnet dev-certs https --trust`), otherwise over plain HTTP. Registering both covers either case.
 2. Store the client ID and secret as AppHost user secrets:
    ```bash
    cd CloudBoard.AppHost
@@ -109,7 +112,7 @@ Before the first run, give the AppHost the credentials of a Google OAuth client:
    ```
 3. While the Google app's publishing status is **Testing**, only the Google accounts listed under **Test users** (Google Auth Platform → Audience) can sign in, which makes that list the allowlist.
 
-Accounts are created in Keycloak on first sign-in, with Google's verified email, so boards can be shared with them by email. The Keycloak admin console (`http://localhost:8080`, user `admin`, password = the `keycloak-password` parameter in the Aspire dashboard / user secrets) is only needed for administration.
+Accounts are created in Keycloak on first sign-in, with Google's verified email, so boards can be shared with them by email. The Keycloak admin console (`https://localhost:8080`, or `http://` without a dev certificate; user `admin`, password = the `keycloak-password` parameter in the Aspire dashboard / user secrets) is only needed for administration.
 
 The frontend must run on `http://localhost:5173`, the only redirect origin the realm's `cloudboard-client` accepts.
 
