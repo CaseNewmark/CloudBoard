@@ -4,9 +4,10 @@ export interface TokenResponse {
   id_token?: string;
 }
 
-// The dev server talks to the local Keycloak (the AppHost pins it to port 8080).
-// Production builds expect Keycloak behind the same origin under /keycloak, as set up
-// by deploy/Caddyfile. VITE_KEYCLOAK_URL overrides both at build time.
+// The dev server talks to the local Keycloak on port 8080; under the AppHost, VITE_KEYCLOAK_URL
+// carries its actual URL (https when Aspire found a trusted dev certificate). Production builds
+// expect Keycloak behind the same origin under /keycloak, as set up by deploy/Caddyfile.
+// VITE_KEYCLOAK_URL overrides both.
 const keycloakUrl =
   import.meta.env.VITE_KEYCLOAK_URL ?? (import.meta.env.DEV ? 'http://localhost:8080' : `${window.location.origin}/keycloak`);
 const baseUrl = `${keycloakUrl.replace(/\/+$/, '')}/realms/cloudboard`;

@@ -145,7 +145,7 @@ Then open `http://localhost:8088`. `compose.override.yml` is picked up automatic
 
 How the pieces find each other:
 
-- **Frontend → Keycloak.** Production builds use `<page origin>/keycloak`; the dev server uses `http://localhost:8080`. Set `VITE_KEYCLOAK_URL` at build time to override both (see `CloudBoard.Vue/src/services/keycloakApi.ts`).
+- **Frontend → Keycloak.** Production builds use `<page origin>/keycloak`; the dev server uses the URL the AppHost passes in `VITE_KEYCLOAK_URL` (`https://localhost:8080` with a trusted dev certificate, otherwise `http://localhost:8080`). Set `VITE_KEYCLOAK_URL` at build time to override both (see `CloudBoard.Vue/src/services/keycloakApi.ts`).
 - **Keycloak public URL.** `KC_HOSTNAME=${PUBLIC_URL}/keycloak`. Keycloak itself listens at `/` inside the Docker network; Caddy strips the `/keycloak` prefix. (It isn't `/auth` because the app's own login callback route is `/auth/callback`.)
 - **Keycloak realm.** Redirect URIs and web origins in `cloudboard.json` are `${CLOUDBOARD_APP_URL:http://localhost:5173}`: Compose sets `CLOUDBOARD_APP_URL=${PUBLIC_URL}`, and in development (Aspire) the default applies.
 - **API → Keycloak.** `services__keycloak__http__0=http://keycloak:8080` (Aspire service discovery). With `KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true`, the API fetches signing keys over the internal network, while tokens carry the public issuer.
